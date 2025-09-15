@@ -1,0 +1,191 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { getCloudflareImages } from '@/lib/cloudflare-images'
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const cookieStore = await cookies()
+  const { id: projectId } = await params
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
+
+  const cloudflareImages = getCloudflareImages()
+
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'No autorizado' },
+        { status: 401 }
+      )
+    }
+
+    // Verify project ownership
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('id, user_id')
+      .eq('id', projectId)
+      .single()
+
+    if (projectError || !project) {
+      return NextResponse.json(
+        { error: 'Proyecto no encontrado' },
+        { status: 404 }
+      )
+    }
+
+    if (project.user_id !== user.id) {
+      return NextResponse.json(
+        { error: 'No autorizado para este proyecto' },
+        { status: 403 }
+      )
+    }
+
+    const formData = await request.formData()
+    const file = formData.get('file') as File
+    const name = formData.get('name') as string | null
+
+    if (!file) {
+      return NextResponse.json(
+        { error: 'No se proporcionó archivo' },
+        { status: 400 }
+      )
+    }
+
+    // Validate image file using Cloudflare validation
+    const validation = cloudflareImages.validateImageFile(file)
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 }
+      )
+    }
+
+    // Get image dimensions
+    const dimensions = await cloudflareImages.getImageDimensions(file)
+
+    // Compress image if needed
+    let imageToUpload: File | Buffer = file
+    if (file.size > 5 * 1024 * 1024) { // If larger than 5MB, compress it
+      try {
+        imageToUpload = await cloudflareImages.compressImage(file)
+      } catch (error) {
+        console.warn('Could not compress image, uploading original:', error)
+        imageToUpload = file
+      }
+    }
+
+    // Generate unique filename
+    const uniqueFileName = cloudflareImages.generateUniqueFilename(file.name, user.id)
+
+    // Upload to Cloudflare Images
+    const uploadResponse = await cloudflareImages.uploadImage(
+      imageToUpload,
+      uniqueFileName,
+      {
+        metadata: {
+          userId: user.id,
+          projectId,
+          type: 'project_base_image',
+          originalName: file.name,
+          uploadedAt: new Date().toISOString(),
+          width: dimensions.width.toString(),
+          height: dimensions.height.toString(),
+        },
+      }
+    )
+
+    if (!uploadResponse.success) {
+      console.error('Cloudflare upload error:', uploadResponse.errors)
+      return NextResponse.json(
+        { error: 'Error al subir la imagen' },
+        { status: 500 }
+      )
+    }
+
+    // Get variant URLs
+    const imageUrls = cloudflareImages.getVariantUrls(uploadResponse.result.id)
+
+    // Get current image count for ordering
+    const { count } = await supabase
+      .from('project_images')
+      .select('*', { count: 'exact', head: true })
+      .eq('project_id', projectId)
+
+    // Create project_images record
+    const { data: projectImage, error: dbError } = await supabase
+      .from('project_images')
+      .insert({
+        project_id: projectId,
+        original_image_url: imageUrls.original,
+        original_cloudflare_id: uploadResponse.result.id,
+        image_name: name || file.name,
+        name: name || file.name.split('.')[0], // Use filename without extension as default name
+        upload_order: (count || 0) + 1,
+        status: 'uploaded'
+      })
+      .select()
+      .single()
+
+    if (dbError) {
+      console.error('Database error:', dbError)
+      // Try to delete uploaded file from Cloudflare
+      await cloudflareImages.deleteImage(uploadResponse.result.id)
+      
+      return NextResponse.json(
+        { error: 'Error al guardar información de la imagen' },
+        { status: 500 }
+      )
+    }
+
+    // Update project total_images count
+    await supabase
+      .from('projects')
+      .update({ 
+        total_images: (count || 0) + 1,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', projectId)
+
+    return NextResponse.json({
+      success: true,
+      projectImage: {
+        ...projectImage,
+        // Include URLs for immediate display
+        original_image_url: imageUrls.original,
+        thumbnail_url: imageUrls.thumbnail,
+        gallery_url: imageUrls.gallery,
+      },
+      urls: imageUrls,
+      dimensions
+    })
+  } catch (error) {
+    console.error('Upload image error:', error)
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    )
+  }
+}

@@ -1,0 +1,54 @@
+{
+    "mcpServers": {
+        "supabase": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@supabase/mcp-server-supabase@latest",
+                "--project-ref=yedbuogpoulcethpstgf"
+            ],
+            "env": {
+                "SUPABASE_ACCESS_TOKEN": "your_supabase_token"
+            }
+        },
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem"
+            ],
+            "env": {
+                "ALLOWED_DIRECTORIES": "/Users/lhenry/Development/virtualstagingcl"
+            }
+        },
+        "github": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-github"
+            ],
+            "env": {
+                "GITHUB_PERSONAL_ACCESS_TOKEN": "your_github_token"
+            }
+        },
+        "memory": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-memory"
+            ],
+            "env": {
+                "MEMORY_DIR": "/Users/lhenry/.claude-memory/modtok"
+            }
+        },
+        "git": {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-git"
+            ],
+            "env": {}
+        }
+    }
+}
