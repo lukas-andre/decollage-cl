@@ -122,6 +122,7 @@ interface DesignData {
     id: string
     name: string
     code: string
+    macrocategory?: string | null
     token_cost: number
   }>
   roomTypes: Array<{
@@ -172,6 +173,7 @@ export default function ProjectWorkspacePage({
   const [roomWidth, setRoomWidth] = useState('')
   const [roomHeight, setRoomHeight] = useState('')
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
+  const [selectedMacroCategory, setSelectedMacroCategory] = useState('')
 
   const router = useRouter()
   const { available: tokenBalance, hasTokens, isLow, deduct: deductTokens } = useTokenBalance()
@@ -251,6 +253,29 @@ export default function ProjectWorkspacePage({
       console.error('Error fetching all projects:', error)
     }
   }
+
+  // Computed filtered styles based on selected macrocategory
+  const filteredStyles = designData?.styles?.filter(style => {
+    if (!selectedMacroCategory || selectedMacroCategory === 'all') {
+      return true
+    }
+    return style.macrocategory === selectedMacroCategory
+  }) || []
+
+  // Get unique macrocategories from available styles
+  const availableMacroCategories = Array.from(
+    new Set(designData?.styles?.map(style => style.macrocategory).filter((cat): cat is string => Boolean(cat)))
+  ).sort()
+
+  // Reset selected style when macrocategory filter changes if current style is not in filtered list
+  useEffect(() => {
+    if (selectedStyle && filteredStyles.length > 0) {
+      const styleExists = filteredStyles.some(style => style.id === selectedStyle)
+      if (!styleExists) {
+        setSelectedStyle('')
+      }
+    }
+  }, [selectedMacroCategory, filteredStyles, selectedStyle])
 
   const fetchVariants = async (baseImageId: string) => {
     try {
@@ -511,7 +536,7 @@ export default function ProjectWorkspacePage({
       }
 
       // Deduct tokens optimistically
-      const tokenCost = designData?.styles.find(s => s.id === selectedStyle)?.token_cost || 1
+      const tokenCost = filteredStyles.find(s => s.id === selectedStyle)?.token_cost || 1
       deductTokens(tokenCost)
 
       // If the transformation is already completed (as shown in your response), add it immediately
@@ -794,6 +819,28 @@ export default function ProjectWorkspacePage({
 
                 <div className="flex-1 overflow-y-auto px-4 min-h-0">
                   <div className="space-y-3 pb-4">
+                  {/* Macrocategory Filter */}
+                  {availableMacroCategories.length > 0 && (
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">
+                        Categoría de Estilo
+                      </label>
+                      <Select value={selectedMacroCategory} onValueChange={setSelectedMacroCategory}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Todas las categorías" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todas las categorías</SelectItem>
+                          {availableMacroCategories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
                   <div>
                     <label className="text-xs font-medium mb-1 block">
                       Estilo de Diseño *
@@ -803,7 +850,7 @@ export default function ProjectWorkspacePage({
                         <SelectValue placeholder="Selecciona un estilo" />
                       </SelectTrigger>
                       <SelectContent>
-                        {designData?.styles?.map((style) => (
+                        {filteredStyles?.map((style) => (
                           <SelectItem key={style.id} value={style.id}>
                             {style.name} ({style.token_cost} tokens)
                           </SelectItem>
@@ -970,7 +1017,7 @@ export default function ProjectWorkspacePage({
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-4 w-4" />
-                        Generar Diseño ({designData?.styles.find(s => s.id === selectedStyle)?.token_cost || 1} tokens)
+                        Generar Diseño ({filteredStyles.find(s => s.id === selectedStyle)?.token_cost || 1} tokens)
                       </>
                     )}
                   </Button>
@@ -978,8 +1025,8 @@ export default function ProjectWorkspacePage({
                   {/* Token consumption preview */}
                   {selectedStyle && hasTokens && (
                     <div className="mt-2 text-xs text-muted-foreground text-center">
-                      Esto consumirá {designData?.styles.find(s => s.id === selectedStyle)?.token_cost || 1} tokens.
-                      Te quedarán {tokenBalance - (designData?.styles.find(s => s.id === selectedStyle)?.token_cost || 1)} tokens.
+                      Esto consumirá {filteredStyles.find(s => s.id === selectedStyle)?.token_cost || 1} tokens.
+                      Te quedarán {tokenBalance - (filteredStyles.find(s => s.id === selectedStyle)?.token_cost || 1)} tokens.
                     </div>
                   )}
 

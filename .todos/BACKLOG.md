@@ -2,10 +2,11 @@
 
 ## 🎯 IMMEDIATE PRIORITIES (Next Sprint)
 
-1. **M6: Project Management** - Fix create button, add image deletion
-2. **M8: Universal Sharing System** - Enable viral growth through sharing
-3. **M9: Unified Saved Content** - Create Pinterest-like collections
-4. **M10: Analytics System** - Track everything for data-driven decisions
+1. **M7.5: Furniture Preservation Controls** 🚀 EASY WIN - User control over furniture handling
+2. **M6: Project Management** - Fix create button, add image deletion
+3. **M8: Universal Sharing System** - Enable viral growth through sharing
+4. **M9: Unified Saved Content** - Create Pinterest-like collections
+5. **M10: Analytics System** - Track everything for data-driven decisions
 
 ## 🚀 GROWTH ACCELERATORS (Phase 2)
 
@@ -59,13 +60,13 @@ M1: Database Schema Migration ✅ COMPLETED
 - ⏳ Data migration scripts for existing users/projects to new structure (pending - to run after schema deployment)
 - ✅ Update TypeScript types to match new schema
 
-M2: Core Application Adaptation
+M2: Core Application Adaptation ✅ COMPLETED
 
-- Update Projects system to use new schema (projects table)
-- Migrate Transformations from staging_generations to transformations table
-- Update Images system to use new images table structure
-- Fix Authentication to work with enhanced profiles table
-- Update API routes to match new schema structure
+- ✅ Update Projects system to use new schema (projects table)
+- ✅ Migrate Transformations from staging_generations to transformations table
+- ✅ Update Images system to use new images table structure
+- ✅ Fix Authentication to work with enhanced profiles table
+- ✅ Update API routes to match new schema structure
 
 M3: Design System Database Migration ✅ COMPLETED
 
@@ -74,7 +75,7 @@ M3: Design System Database Migration ✅ COMPLETED
 - ✅ Create room_types seeder with local terminology
 - ✅ Create seasonal_themes seeder with Chilean holidays
 - ✅ Create comprehensive global design styles seeder (42 international styles)
-- Update AI service to fetch styles from database instead of files
+- ✅ Update AI service to fetch styles from database instead of files
 
 M4: Chilean Cultural Identity Integration ✅ COMPLETED
 
@@ -82,7 +83,7 @@ M4: Chilean Cultural Identity Integration ✅ COMPLETED
 - ✅ Add Chilean color palettes: Atardecer en Valparaíso, Verde Cordillera, etc.
 - ✅ Seasonal themes: Fiestas Patrias, Navidad Chilena, Verano Chileno
 - ✅ Create comprehensive documentation for seeded design system
-- Update UI copy to Chilean Spanish terminology
+- ✅ Update UI copy to Chilean Spanish terminology
 
 M5: Token Pricing & Package Strategy 🔴 CRITICAL
 
@@ -99,18 +100,36 @@ M6: Project Management Improvements 🔴 URGENT
 
 - Fix "Create New Project" button functionality on projects dashboard
 - Add image deletion capability (soft delete) in project workspace
-- Implement bulk image management in project view
-- Add project duplication feature
-- Create project templates for common room types
 
 M7: AI Prompt Improvements 🔴 CRITICAL
 
 - Refine prompts to preserve architecture - DECORATION ONLY by default
 - Add explicit instruction: "Maintain existing room structure and architecture"
 - Only modify structure when user explicitly requests it in custom prompt
-- Organize design styles into categories (Modern, Classic, Regional, Luxury, etc.)
-- Add prompt templates for common requests
-- Implement negative prompting to avoid unwanted changes
+- ✅ Organize design styles into categories (Modern, Classic, Regional, Luxury, etc.)
+
+M7.5: Furniture Preservation Controls 🔴 URGENT - EASY WIN 🚀
+
+**Furniture Handling Options** (Quick dropdown in generation panel):
+- **Keep All Furniture (Same Position)** - Preserve existing furniture exactly as is, only change decor/colors
+- **Keep Furniture (Allow Repositioning)** - Keep same furniture but AI can move/rearrange for better layout
+- **Keep + Add More** - Preserve existing furniture and add complementary pieces
+- **Replace All Furniture** - Complete furniture makeover (current default behavior)
+- **Selective Keep** - Advanced: User clicks on furniture items to preserve in image
+
+**Implementation Strategy**:
+- Add furniture_mode field to transformation request
+- Update AI prompts with specific furniture preservation instructions
+- Simple UI: Radio buttons or dropdown in generation form
+- Custom prompt injection based on selected mode
+- Examples: "Keep the existing sofa and coffee table in their current positions, only change wall colors and add decorative elements"
+
+**Business Impact**:
+- Addresses #1 user complaint about losing beloved furniture
+- Increases user satisfaction and generation success rate
+- Reduces token waste from unwanted results
+- Easy to implement, high user value (classic "easy win")
+- Differentiates from competitors who don't offer furniture control
 
 M8: Universal Content Sharing System 🔴 CRITICAL
 

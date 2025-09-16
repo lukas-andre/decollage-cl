@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
       name_en: style.name, // English name same as name for AI styles
       code: style.id,
       category: 'ai_generated',
+      macrocategory: 'Modern' as const, // AI styles default to Modern macrocategory
       description: style.description,
       base_prompt: style.keywords.join(', '),
       negative_prompt: null,

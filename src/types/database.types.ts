@@ -77,6 +77,7 @@ export type Database = {
           name_en: string | null
           description: string | null
           category: string | null
+          macrocategory: string | null
           base_prompt: string
           negative_prompt: string | null
           example_images: Json
@@ -96,6 +97,7 @@ export type Database = {
           name_en?: string | null
           description?: string | null
           category?: string | null
+          macrocategory?: string | null
           base_prompt: string
           negative_prompt?: string | null
           example_images?: Json
@@ -115,6 +117,7 @@ export type Database = {
           name_en?: string | null
           description?: string | null
           category?: string | null
+          macrocategory?: string | null
           base_prompt?: string
           negative_prompt?: string | null
           example_images?: Json
@@ -1470,8 +1473,9 @@ export type TokenTransactionType = 'purchase' | 'consumption' | 'bonus' | 'refun
 export type ModerationStatus = 'pending' | 'approved' | 'rejected'
 export type BudgetRange = 'economico' | 'medio' | 'premium'
 export type StyleCategory = 'clasico' | 'moderno' | 'rustico' | 'bohemio' | 'minimalista'
+export type StyleMacroCategory = 'Modern' | 'Classic' | 'Regional' | 'Luxury' | 'Nature' | 'Lifestyle'
 export type ColorMood = 'calido' | 'fresco' | 'acogedor' | 'energetico' | 'romantico'
-export type Season = 'verano' | 'otoño' | 'invierno' | 'primavera' | 'todo-el-año'
+export type Season = 'verano' | 'otoï¿½o' | 'invierno' | 'primavera' | 'todo-el-aï¿½o'
 export type HomeType = 'casa' | 'departamento' | 'oficina'
 export type InterestType = 'personal' | 'profesional' | 'curiosidad'
 export type ReferralSource = 'instagram' | 'facebook' | 'amiga' | 'google'

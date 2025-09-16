@@ -29,9 +29,9 @@ interface LightboxProps {
     result_image_url: string | null
     original_image_url?: string
     is_favorite: boolean
-    style?: { name: string }
+    style?: { name: string } | null
     room_type?: { name: string } | null
-    color_palette?: { name: string; hex_colors: string[] } | null
+    color_palette?: { name: string; hex_colors?: string[] } | null
     tokens_consumed: number
     created_at: string
   }>
@@ -146,13 +146,13 @@ export function Lightbox({
                     {currentImage.room_type.name}
                   </Badge>
                 )}
-                {currentImage.color_scheme && (
+                {currentImage.color_palette && (
                   <div className="flex items-center gap-1">
                     <span className="text-sm text-white/80">
-                      {currentImage.color_scheme.name}
+                      {currentImage.color_palette.name}
                     </span>
                     <div className="flex gap-0.5">
-                      {currentImage.color_scheme.hex_colors.slice(0, 3).map((color, i) => (
+                      {currentImage.color_palette.hex_colors?.slice(0, 3).map((color, i) => (
                         <div
                           key={i}
                           className="w-3 h-3 rounded-full border border-white/30"

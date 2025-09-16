@@ -25,8 +25,8 @@ interface VariantCardProps {
       id: string
       name: string
       code: string
-    }
-    room_type: {
+    } | null
+    room_type?: {
       id: string
       name: string
       code: string
