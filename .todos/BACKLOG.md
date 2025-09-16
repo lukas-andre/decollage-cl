@@ -62,6 +62,17 @@ M4: Chilean Cultural Identity Integration ✅ COMPLETED
 - ✅ Create comprehensive documentation for seeded design system
 - Update UI copy to Chilean Spanish terminology
 
+M5: Token Pricing & Package Strategy 🔴 CRITICAL
+
+- Review and validate token package pricing for Chilean market
+- Research competitor pricing (local and international)
+- Define clear feature differentiation between packages
+- Validate token-to-generation ratios (currently ~1 token = 1 transformation)
+- Consider seasonal promotions and launch discounts
+- Define upgrade/downgrade policies between packages
+- Establish bulk/enterprise pricing tiers
+- Create pricing psychology strategy (anchoring, decoy effect)
+
 ---
 🟡 SHOULD HAVE (Phase 2: Core Features - Weeks 4-6)
 
@@ -83,6 +94,7 @@ S2: Iterative Design System
 
 S3: Enhanced User Journey
 
+- **MISSING**: Email verification confirmation page/onboarding flow - User receives email, gets redirected, account activates but no confirmation or welcome experience
 - Onboarding flow with style personality quiz
 - Welcome project creation with Chilean examples
 - Progressive feature disclosure

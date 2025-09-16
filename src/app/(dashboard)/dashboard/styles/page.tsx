@@ -1,719 +1,448 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { 
-  Plus, 
-  Palette, 
-  Search, 
-  Star, 
-  Users, 
-  Lock, 
-  Globe, 
-  Edit, 
-  Trash2, 
-  Copy,
-  MoreVertical,
+  Heart,
+  Palette,
+  Search,
+  Star,
+  Plus,
   Sparkles,
-  TrendingUp,
-  Eye,
-  Download,
-  Upload,
-  Filter
+  Mountain,
+  Waves,
+  TreePine,
+  Home,
+  Grape,
+  Sun,
+  Snowflake,
+  Calendar,
+  ArrowRight,
+  Eye
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { createBrowserClient } from '@supabase/ssr'
 
-interface CustomStyle {
+interface ChileanStyle {
   id: string
   name: string
-  description: string | null
-  prompt_template: string
-  category: 'modern' | 'classic' | 'minimalist' | 'luxury' | 'rustic' | 'industrial' | 'custom'
-  is_public: boolean
-  usage_count: number
-  created_at: string
-  updated_at: string
-  user_id: string
-  examples?: string[]
+  description: string
+  category: 'coastal' | 'andean' | 'desert' | 'patagonian' | 'urban' | 'seasonal'
+  colors: string[]
+  inspiration: string
+  popularity: number
+  preview?: string
 }
 
-const styleCategories = [
-  { value: 'all', label: 'Todas las categorías' },
-  { value: 'modern', label: 'Moderno' },
-  { value: 'classic', label: 'Clásico' },
-  { value: 'minimalist', label: 'Minimalista' },
-  { value: 'luxury', label: 'Lujo' },
-  { value: 'rustic', label: 'Rústico' },
-  { value: 'industrial', label: 'Industrial' },
-  { value: 'custom', label: 'Personalizado' }
+const chileanStyles: ChileanStyle[] = [
+  {
+    id: '1',
+    name: 'Mediterráneo Chileno',
+    description: 'Inspirado en la costa de Viña del Mar con azules y blancos',
+    category: 'coastal',
+    colors: ['#4A90E2', '#FFFFFF', '#F5F5DC', '#87CEEB'],
+    inspiration: 'Costa del Pacífico chileno',
+    popularity: 95
+  },
+  {
+    id: '2',
+    name: 'Boho Valparaíso',
+    description: 'Colores vibrantes y arte urbano de los cerros porteños',
+    category: 'coastal',
+    colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A'],
+    inspiration: 'Cerros de Valparaíso',
+    popularity: 88
+  },
+  {
+    id: '3',
+    name: 'Rústico del Sur',
+    description: 'Maderas nobles y texturas de la Patagonia chilena',
+    category: 'patagonian',
+    colors: ['#8B4513', '#D2B48C', '#228B22', '#696969'],
+    inspiration: 'Bosques patagónicos',
+    popularity: 82
+  },
+  {
+    id: '4',
+    name: 'Minimalista Santiago',
+    description: 'Elegancia urbana con toques de la cordillera',
+    category: 'urban',
+    colors: ['#F5F5F5', '#333333', '#A3B1A1', '#E8E8E8'],
+    inspiration: 'Arquitectura capitalina',
+    popularity: 91
+  },
+  {
+    id: '5',
+    name: 'Desierto Florido',
+    description: 'Colores del fenómeno único del norte de Chile',
+    category: 'desert',
+    colors: ['#DDA0DD', '#FFB6C1', '#F0E68C', '#98FB98'],
+    inspiration: 'Desierto de Atacama en flor',
+    popularity: 76
+  },
+  {
+    id: '6',
+    name: 'Otoño Austral',
+    description: 'Tonos cálidos del otoño en el sur de Chile',
+    category: 'seasonal',
+    colors: ['#D2691E', '#CD853F', '#B22222', '#DEB887'],
+    inspiration: 'Otoño en la Región de los Lagos',
+    popularity: 85
+  }
 ]
 
-export default function StylesPage() {
-  const [myStyles, setMyStyles] = useState<CustomStyle[]>([])
-  const [publicStyles, setPublicStyles] = useState<CustomStyle[]>([])
-  const [loading, setLoading] = useState(true)
+const seasonalCollections = [
+  {
+    id: 'fiestas-patrias',
+    name: 'Fiestas Patrias',
+    description: 'Celebra septiembre con orgullo chileno',
+    colors: ['#DC143C', '#FFFFFF', '#191970'],
+    season: 'Septiembre',
+    icon: <Star className="h-6 w-6" />
+  },
+  {
+    id: 'verano-costero',
+    name: 'Verano Costero',
+    description: 'Frescura del litoral chileno',
+    colors: ['#87CEEB', '#F0F8FF', '#20B2AA'],
+    season: 'Diciembre - Marzo',
+    icon: <Waves className="h-6 w-6" />
+  },
+  {
+    id: 'invierno-acogedor',
+    name: 'Invierno Acogedor',
+    description: 'Calidez durante los fríos meses',
+    colors: ['#8B4513', '#D2B48C', '#A0522D'],
+    season: 'Junio - Agosto',
+    icon: <Snowflake className="h-6 w-6" />
+  }
+]
+
+const categoryIcons = {
+  coastal: <Waves className="h-5 w-5" />,
+  andean: <Mountain className="h-5 w-5" />,
+  desert: <Sun className="h-5 w-5" />,
+  patagonian: <TreePine className="h-5 w-5" />,
+  urban: <Home className="h-5 w-5" />,
+  seasonal: <Calendar className="h-5 w-5" />
+}
+
+const categoryNames = {
+  coastal: 'Costero',
+  andean: 'Andino',
+  desert: 'Desértico',
+  patagonian: 'Patagónico',
+  urban: 'Urbano',
+  seasonal: 'Estacional'
+}
+
+export default function EstilosChilenosPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('all')
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [editingStyle, setEditingStyle] = useState<CustomStyle | null>(null)
-  
-  // Form state
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    prompt_template: '',
-    category: 'custom' as CustomStyle['category'],
-    is_public: false
-  })
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [activeTab, setActiveTab] = useState('chilean')
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const categories = ['all', ...Object.keys(categoryNames)] as const
 
-  useEffect(() => {
-    fetchStyles()
-  }, [])
-
-  const fetchStyles = async () => {
-    try {
-      setLoading(true)
-      
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      // Fetch user's custom styles
-      const { data: userStyles, error: userError } = await supabase
-        .from('custom_styles')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (userError) throw userError
-      setMyStyles(userStyles || [])
-
-      // Fetch public styles from other users
-      const { data: publicStylesData, error: publicError } = await supabase
-        .from('custom_styles')
-        .select('*')
-        .eq('is_public', true)
-        .neq('user_id', user.id)
-        .order('usage_count', { ascending: false })
-        .limit(20)
-
-      if (publicError) throw publicError
-      setPublicStyles(publicStylesData || [])
-
-    } catch (error) {
-      console.error('Error fetching styles:', error)
-      toast.error('Error al cargar los estilos')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleCreateStyle = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data, error } = await supabase
-        .from('custom_styles')
-        .insert([{
-          ...formData,
-          user_id: user.id
-        }])
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setMyStyles([data, ...myStyles])
-      setShowCreateDialog(false)
-      resetForm()
-      toast.success('Estilo creado exitosamente')
-
-    } catch (error) {
-      console.error('Error creating style:', error)
-      toast.error('Error al crear el estilo')
-    }
-  }
-
-  const handleUpdateStyle = async () => {
-    if (!editingStyle) return
-
-    try {
-      const { data, error } = await supabase
-        .from('custom_styles')
-        .update(formData)
-        .eq('id', editingStyle.id)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setMyStyles(myStyles.map(s => s.id === editingStyle.id ? data : s))
-      setEditingStyle(null)
-      resetForm()
-      toast.success('Estilo actualizado exitosamente')
-
-    } catch (error) {
-      console.error('Error updating style:', error)
-      toast.error('Error al actualizar el estilo')
-    }
-  }
-
-  const handleDeleteStyle = async (styleId: string) => {
-    try {
-      const { error } = await supabase
-        .from('custom_styles')
-        .delete()
-        .eq('id', styleId)
-
-      if (error) throw error
-
-      setMyStyles(myStyles.filter(s => s.id !== styleId))
-      toast.success('Estilo eliminado exitosamente')
-
-    } catch (error) {
-      console.error('Error deleting style:', error)
-      toast.error('Error al eliminar el estilo')
-    }
-  }
-
-  const handleDuplicateStyle = async (style: CustomStyle) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data, error } = await supabase
-        .from('custom_styles')
-        .insert([{
-          name: `${style.name} (Copia)`,
-          description: style.description,
-          prompt_template: style.prompt_template,
-          category: style.category,
-          is_public: false,
-          user_id: user.id
-        }])
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setMyStyles([data, ...myStyles])
-      toast.success('Estilo duplicado exitosamente')
-
-    } catch (error) {
-      console.error('Error duplicating style:', error)
-      toast.error('Error al duplicar el estilo')
-    }
-  }
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      prompt_template: '',
-      category: 'custom',
-      is_public: false
-    })
-  }
-
-  const filteredMyStyles = myStyles.filter(style => {
+  const filteredStyles = chileanStyles.filter(style => {
     const matchesSearch = style.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (style.description && style.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    const matchesCategory = categoryFilter === 'all' || style.category === categoryFilter
+                         style.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesCategory = selectedCategory === 'all' || style.category === selectedCategory
     return matchesSearch && matchesCategory
   })
-
-  const filteredPublicStyles = publicStyles.filter(style => {
-    const matchesSearch = style.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (style.description && style.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    const matchesCategory = categoryFilter === 'all' || style.category === categoryFilter
-    return matchesSearch && matchesCategory
-  })
-
-  const promptTemplates = [
-    {
-      name: 'Moderno Minimalista',
-      template: 'Una habitación moderna y minimalista con líneas limpias, paleta de colores neutros, muebles funcionales de diseño escandinavo, iluminación natural abundante, espacios abiertos y despejados'
-    },
-    {
-      name: 'Lujo Contemporáneo',
-      template: 'Un espacio lujoso y sofisticado con materiales premium como mármol y terciopelo, paleta de colores elegante con dorados y negros, muebles de diseñador, iluminación dramática con candelabros modernos'
-    },
-    {
-      name: 'Industrial Urbano',
-      template: 'Un espacio de estilo industrial con ladrillos expuestos, vigas de metal, muebles de madera recuperada y metal negro, iluminación Edison vintage, paleta de colores tierra y grises'
-    },
-    {
-      name: 'Escandinavo Hygge',
-      template: 'Un espacio acogedor estilo escandinavo con tonos blancos y maderas claras, textiles suaves y naturales, plantas verdes, iluminación cálida y difusa, muebles simples pero funcionales'
-    },
-    {
-      name: 'Mediterráneo Costero',
-      template: 'Un espacio mediterráneo con colores azules y blancos, texturas naturales como ratán y lino, detalles náuticos, abundante luz natural, plantas mediterráneas, muebles de madera blanqueada'
-    }
-  ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Estilos Personalizados</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Crea y gestiona tus propios estilos de diseño para staging virtual
-              </p>
-            </div>
-            
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Crear Estilo
-            </Button>
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-light text-[#333333] font-[family-name:var(--font-cormorant)]">
+              Estilos Chilenos
+            </h1>
+            <p className="text-[#333333]/70 mt-2 font-[family-name:var(--font-lato)]">
+              Descubre la belleza de Chile en cada rincón de tu hogar
+            </p>
           </div>
+
+          <Button
+            variant="outline"
+            className="border-[#A3B1A1] text-[#A3B1A1] hover:bg-[#A3B1A1] hover:text-white"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Crear Estilo Personalizado
+          </Button>
         </div>
       </div>
 
-      <div className="p-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Mis Estilos</p>
-                  <p className="text-2xl font-bold">{myStyles.length}</p>
-                </div>
-                <Palette className="h-8 w-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Estilos Públicos</p>
-                  <p className="text-2xl font-bold">{myStyles.filter(s => s.is_public).length}</p>
-                </div>
-                <Globe className="h-8 w-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Total de Usos</p>
-                  <p className="text-2xl font-bold">
-                    {myStyles.reduce((acc, s) => acc + s.usage_count, 0)}
-                  </p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Más Popular</p>
-                  <p className="text-sm font-semibold truncate">
-                    {myStyles.length > 0 
-                      ? myStyles.sort((a, b) => b.usage_count - a.usage_count)[0].name
-                      : 'Sin estilos'}
-                  </p>
-                </div>
-                <Star className="h-8 w-8 text-yellow-500" />
-              </div>
-            </CardContent>
-          </Card>
+      {/* Search */}
+      <div className="mb-8">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Buscar estilos chilenos..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 border-gray-200/50 focus:border-[#A3B1A1] focus:ring-[#A3B1A1] bg-white/80"
+          />
         </div>
+      </div>
 
-        {/* Search and Filters */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Buscar estilos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[200px]">
-                <Filter className="mr-2 h-4 w-4" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {styleCategories.map(cat => (
-                  <SelectItem key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm">
+          <TabsTrigger value="chilean" className="data-[state=active]:bg-[#A3B1A1] data-[state=active]:text-white">
+            <Heart className="mr-2 h-4 w-4" />
+            Estilos Chilenos
+          </TabsTrigger>
+          <TabsTrigger value="seasonal" className="data-[state=active]:bg-[#C4886F] data-[state=active]:text-white">
+            <Calendar className="mr-2 h-4 w-4" />
+            Temporadas
+          </TabsTrigger>
+          <TabsTrigger value="personal" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#A3B1A1] data-[state=active]:to-[#C4886F] data-[state=active]:text-white">
+            <Sparkles className="mr-2 h-4 w-4" />
+            Mis Estilos
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Chilean Styles Tab */}
+        <TabsContent value="chilean" className="space-y-6">
+          {/* Category Filter */}
+          <div className="flex gap-2 flex-wrap">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory(category)}
+                className={cn(
+                  "transition-all duration-300",
+                  selectedCategory === category
+                    ? "bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white"
+                    : "border-gray-200 text-[#333333] hover:border-[#A3B1A1] hover:text-[#A3B1A1]"
+                )}
+              >
+                {category !== 'all' && categoryIcons[category as keyof typeof categoryIcons]}
+                <span className="ml-1">
+                  {category === 'all' ? 'Todos' : categoryNames[category as keyof typeof categoryNames]}
+                </span>
+              </Button>
+            ))}
           </div>
-        </div>
 
-        {/* Tabs for My Styles and Marketplace */}
-        <Tabs defaultValue="my-styles" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="my-styles">
-              <Lock className="mr-2 h-4 w-4" />
-              Mis Estilos
-            </TabsTrigger>
-            <TabsTrigger value="marketplace">
-              <Users className="mr-2 h-4 w-4" />
-              Marketplace
-            </TabsTrigger>
-            <TabsTrigger value="templates">
-              <Sparkles className="mr-2 h-4 w-4" />
-              Plantillas
-            </TabsTrigger>
-          </TabsList>
+          {/* Styles Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredStyles.map((style) => (
+              <Card
+                key={style.id}
+                className="group bg-white/80 backdrop-blur-sm border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 overflow-hidden cursor-pointer"
+              >
+                <div className="relative h-32 bg-gradient-to-br from-gray-100 to-gray-200">
+                  <div className="absolute inset-0 flex">
+                    {style.colors.map((color, index) => (
+                      <div
+                        key={index}
+                        className="flex-1 transition-all duration-300 group-hover:scale-105"
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
 
-          {/* My Styles Tab */}
-          <TabsContent value="my-styles">
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[...Array(6)].map((_, i) => (
-                  <Card key={i} className="h-48 animate-pulse" />
-                ))}
-              </div>
-            ) : filteredMyStyles.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Palette className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No tienes estilos aún</h3>
-                  <p className="text-sm text-gray-500 text-center mb-4">
-                    Crea tu primer estilo personalizado para comenzar
+                  <div className="absolute top-3 right-3">
+                    <Badge
+                      variant="secondary"
+                      className="bg-white/90 backdrop-blur-sm text-[#333333] border-white/50"
+                    >
+                      {categoryIcons[style.category]}
+                      <span className="ml-1">{categoryNames[style.category]}</span>
+                    </Badge>
+                  </div>
+
+                  <div className="absolute bottom-3 left-3">
+                    <div className="flex items-center gap-1 text-white text-xs bg-black/30 backdrop-blur-sm rounded-full px-2 py-1">
+                      <Heart className="h-3 w-3" />
+                      <span>{style.popularity}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <CardContent className="p-6">
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-lg font-normal text-[#333333] font-[family-name:var(--font-cormorant)] mb-1">
+                        {style.name}
+                      </h3>
+                      <p className="text-sm text-[#333333]/70 font-[family-name:var(--font-lato)]">
+                        {style.description}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="text-xs text-[#333333]/60 font-[family-name:var(--font-lato)]">
+                        Inspirado en: {style.inspiration}
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-[#C4886F] hover:text-[#C4886F]/80 p-0 h-auto"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-[#A3B1A1] hover:text-[#A3B1A1]/80 p-0 h-auto"
+                        >
+                          Usar
+                          <ArrowRight className="ml-1 h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* Seasonal Collections Tab */}
+        <TabsContent value="seasonal" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {seasonalCollections.map((collection) => (
+              <Card
+                key={collection.id}
+                className="group bg-white/80 backdrop-blur-sm border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 overflow-hidden cursor-pointer"
+              >
+                <div className="relative h-40 bg-gradient-to-br from-gray-100 to-gray-200">
+                  <div className="absolute inset-0 flex">
+                    {collection.colors.map((color, index) => (
+                      <div
+                        key={index}
+                        className="flex-1"
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      {collection.icon}
+                      <div className="text-xs mt-2 font-[family-name:var(--font-lato)]">
+                        {collection.season}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-normal text-[#333333] font-[family-name:var(--font-cormorant)] mb-2">
+                    {collection.name}
+                  </h3>
+                  <p className="text-sm text-[#333333]/70 font-[family-name:var(--font-lato)] mb-4">
+                    {collection.description}
                   </p>
-                  <Button onClick={() => setShowCreateDialog(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Crear Primer Estilo
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-[#C4886F] text-[#C4886F] hover:bg-[#C4886F] hover:text-white"
+                  >
+                    Explorar Colección
                   </Button>
                 </CardContent>
               </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredMyStyles.map((style) => (
-                  <Card key={style.id} className="hover:shadow-md transition-shadow">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-base">{style.name}</CardTitle>
-                          <CardDescription className="text-xs mt-1">
-                            {style.description || 'Sin descripción'}
-                          </CardDescription>
-                        </div>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {
-                              setEditingStyle(style)
-                              setFormData({
-                                name: style.name,
-                                description: style.description || '',
-                                prompt_template: style.prompt_template,
-                                category: style.category,
-                                is_public: style.is_public
-                              })
-                            }}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDuplicateStyle(style)}>
-                              <Copy className="mr-2 h-4 w-4" />
-                              Duplicar
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => handleDeleteStyle(style.id)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="text-xs text-gray-600 line-clamp-2">
-                          {style.prompt_template}
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="text-xs">
-                              {styleCategories.find(c => c.value === style.category)?.label || 'Personalizado'}
-                            </Badge>
-                            {style.is_public && (
-                              <Badge variant="outline" className="text-xs">
-                                <Globe className="mr-1 h-3 w-3" />
-                                Público
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Eye className="h-3 w-3" />
-                            {style.usage_count} usos
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Marketplace Tab */}
-          <TabsContent value="marketplace">
-            {filteredPublicStyles.length === 0 ? (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No hay estilos públicos disponibles</h3>
-                  <p className="text-sm text-gray-500">
-                    Sé el primero en compartir tus estilos con la comunidad
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredPublicStyles.map((style) => (
-                  <Card key={style.id} className="hover:shadow-md transition-shadow">
-                    <CardHeader>
-                      <CardTitle className="text-base">{style.name}</CardTitle>
-                      <CardDescription className="text-xs">
-                        {style.description || 'Sin descripción'}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="text-xs text-gray-600 line-clamp-2">
-                          {style.prompt_template}
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <Badge variant="secondary" className="text-xs">
-                            {styleCategories.find(c => c.value === style.category)?.label || 'Personalizado'}
-                          </Badge>
-                          
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">
-                              <Users className="inline h-3 w-3 mr-1" />
-                              {style.usage_count} usos
-                            </span>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleDuplicateStyle(style)}
-                            >
-                              <Copy className="h-3 w-3 mr-1" />
-                              Usar
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Templates Tab */}
-          <TabsContent value="templates">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {promptTemplates.map((template, index) => (
-                <Card key={index} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="text-base">{template.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-gray-600 mb-4">{template.template}</p>
-                    <Button 
-                      className="w-full" 
-                      size="sm"
-                      onClick={() => {
-                        setFormData({
-                          ...formData,
-                          name: template.name,
-                          prompt_template: template.template
-                        })
-                        setShowCreateDialog(true)
-                      }}
-                    >
-                      <Plus className="mr-2 h-3 w-3" />
-                      Usar Plantilla
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* Create/Edit Style Dialog */}
-      <Dialog open={showCreateDialog || !!editingStyle} onOpenChange={(open) => {
-        if (!open) {
-          setShowCreateDialog(false)
-          setEditingStyle(null)
-          resetForm()
-        }
-      }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingStyle ? 'Editar Estilo' : 'Crear Nuevo Estilo'}
-            </DialogTitle>
-            <DialogDescription>
-              Define los parámetros de tu estilo personalizado para staging virtual
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nombre del Estilo</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Ej: Moderno Minimalista"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Descripción (Opcional)</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Describe brevemente tu estilo..."
-                rows={2}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="prompt">Prompt del Estilo</Label>
-              <Textarea
-                id="prompt"
-                value={formData.prompt_template}
-                onChange={(e) => setFormData({ ...formData, prompt_template: e.target.value })}
-                placeholder="Describe en detalle cómo debe verse el espacio con este estilo..."
-                rows={4}
-                className="font-mono text-sm"
-              />
-              <p className="text-xs text-gray-500">
-                Tip: Sé específico con colores, materiales, iluminación y atmósfera deseada
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="category">Categoría</Label>
-                <Select 
-                  value={formData.category} 
-                  onValueChange={(value) => setFormData({ ...formData, category: value as CustomStyle['category'] })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {styleCategories.slice(1).map(cat => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="public">Visibilidad</Label>
-                <div className="flex items-center space-x-2 pt-2">
-                  <Switch
-                    id="public"
-                    checked={formData.is_public}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_public: checked })}
-                  />
-                  <Label htmlFor="public" className="text-sm font-normal">
-                    {formData.is_public ? 'Público' : 'Privado'}
-                  </Label>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setShowCreateDialog(false)
-                setEditingStyle(null)
-                resetForm()
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={editingStyle ? handleUpdateStyle : handleCreateStyle}>
-              {editingStyle ? 'Guardar Cambios' : 'Crear Estilo'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {/* Current Season Highlight */}
+          <Card className="bg-gradient-to-r from-[#A3B1A1]/10 to-[#C4886F]/10 border-gray-200/50 shadow-lg">
+            <CardContent className="p-8 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#A3B1A1] to-[#C4886F] rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="h-8 w-8 text-white" />
+              </div>
+
+              <h3 className="text-2xl font-light text-[#333333] mb-3 font-[family-name:var(--font-cormorant)]">
+                Estamos en Otoño Austral
+              </h3>
+
+              <p className="text-[#333333]/70 mb-6 font-[family-name:var(--font-lato)]">
+                Descubre los colores cálidos que abrazan durante esta temporada del año
+              </p>
+
+              <Button className="bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white">
+                <Palette className="mr-2 h-4 w-4" />
+                Ver Paleta de Otoño
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Personal Styles Tab */}
+        <TabsContent value="personal" className="space-y-6">
+          <Card className="bg-white/80 backdrop-blur-sm border-gray-200/50 shadow-lg">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-[#A3B1A1]/20 to-[#C4886F]/20 rounded-full flex items-center justify-center mb-6">
+                <Sparkles className="h-10 w-10 text-[#A3B1A1]" />
+              </div>
+
+              <h3 className="text-2xl font-light text-[#333333] mb-3 font-[family-name:var(--font-cormorant)]">
+                Crea tu estilo único
+              </h3>
+
+              <p className="text-[#333333]/70 mb-6 max-w-md font-[family-name:var(--font-lato)]">
+                Combina la inspiración chilena con tu toque personal para crear estilos únicos que reflejen tu personalidad
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button className="bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Crear Mi Primer Estilo
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-[#C4886F] text-[#C4886F] hover:bg-[#C4886F] hover:text-white"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  Ver Tutoriales
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Featured Chilean Inspiration */}
+      <div className="mt-12">
+        <h2 className="text-2xl font-light text-[#333333] mb-6 font-[family-name:var(--font-cormorant)]">
+          Inspiración desde Chile
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="group bg-white/80 backdrop-blur-sm border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-500 overflow-hidden cursor-pointer">
+            <div className="h-48 bg-gradient-to-br from-blue-400 to-blue-600 relative">
+              <div className="absolute inset-0 bg-black/20" />
+              <div className="absolute bottom-4 left-4 text-white">
+                <h3 className="text-lg font-normal font-[family-name:var(--font-cormorant)]">Rapa Nui Mystique</h3>
+                <p className="text-sm opacity-90 font-[family-name:var(--font-lato)]">Colores del atardecer en Isla de Pascua</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="group bg-white/80 backdrop-blur-sm border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-500 overflow-hidden cursor-pointer">
+            <div className="h-48 bg-gradient-to-br from-green-500 to-green-700 relative">
+              <div className="absolute inset-0 bg-black/20" />
+              <div className="absolute bottom-4 left-4 text-white">
+                <h3 className="text-lg font-normal font-[family-name:var(--font-cormorant)]">Valle Central</h3>
+                <p className="text-sm opacity-90 font-[family-name:var(--font-lato)]">Inspirado en los viñedos chilenos</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

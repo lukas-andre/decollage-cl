@@ -3,24 +3,23 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { 
-  Home, 
-  FolderOpen, 
-  Palette, 
-  Layers, 
-  Settings, 
-  CreditCard,
-  BarChart3,
-  LogOut,
+import {
+  Home,
+  FolderOpen,
+  Palette,
   Menu,
   X,
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Package,
-  ImageIcon
+  ImageIcon,
+  Camera,
+  Leaf,
+  User,
+  LogOut,
+  Settings
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { LogoutButton } from '@/components/dashboard/logout-button'
 
@@ -29,62 +28,78 @@ interface SidebarItem {
   href: string
   icon: React.ReactNode
   badge?: string
-  subItems?: { title: string; href: string }[]
+  children?: Array<{
+    title: string
+    href: string
+  }>
 }
 
 const sidebarItems: SidebarItem[] = [
   {
-    title: 'Panel Principal',
+    title: 'Inicio',
     href: '/dashboard',
-    icon: <Home className="h-5 w-5" />
+    icon: <Home className="h-4 w-4" />
   },
   {
-    title: 'Proyectos',
+    title: 'Mis Espacios',
     href: '/dashboard/projects',
-    icon: <FolderOpen className="h-5 w-5" />,
-    subItems: [
-      { title: 'Todos los Proyectos', href: '/dashboard/projects' },
-      { title: 'Plantillas', href: '/dashboard/projects/templates' }
+    icon: <FolderOpen className="h-4 w-4" />,
+    children: [
+      { title: 'Gestión de espacios', href: '/dashboard/projects' },
+      { title: 'Galería de imágenes', href: '/dashboard/projects/images' },
+      { title: 'Historial', href: '/dashboard/projects/transformations' }
     ]
   },
   {
-    title: 'Estilos',
-    href: '/dashboard/styles',
-    icon: <Palette className="h-5 w-5" />,
-    badge: 'Nuevo'
+    title: 'Moodboards',
+    href: '/dashboard/moodboards',
+    icon: <Camera className="h-4 w-4" />,
+    badge: 'Nuevo',
+    children: [
+      { title: 'Ver todos', href: '/dashboard/moodboards' },
+      { title: 'Crear nuevo', href: '/dashboard/moodboards/create' }
+    ]
   },
   {
     title: 'Galería',
-    href: '/dashboard/gallery',
-    icon: <ImageIcon className="h-5 w-5" />
+    href: '/gallery',
+    icon: <ImageIcon className="h-4 w-4" />,
+    children: [
+      { title: 'Explorar', href: '/gallery' },
+      { title: 'Tendencias', href: '/gallery/trending' },
+      // { title: 'Hogares chilenos', href: '/dashboard/gallery/chilean' }
+    ]
   },
   {
     title: 'Tokens',
-    href: '/dashboard/tokens',
-    icon: <CreditCard className="h-5 w-5" />
-  },
-  {
-    title: 'Análisis',
-    href: '/dashboard/analytics',
-    icon: <BarChart3 className="h-5 w-5" />
-  },
-  {
-    title: 'Configuración',
-    href: '/dashboard/settings',
-    icon: <Settings className="h-5 w-5" />
+    href: '/tokens',
+    icon: <Sparkles className="h-4 w-4" />,
+    children: [
+      { title: 'Mi balance', href: '/tokens' },
+      { title: 'Paquetes', href: '/tokens/packages' },
+      { title: 'Historial', href: '/tokens/history' }
+    ]
   }
 ]
 
-export function DashboardSidebar() {
+interface DashboardSidebarProps {
+  onCollapsedChange?: (collapsed: boolean) => void
+}
+
+export function DashboardSidebar({ onCollapsedChange }: DashboardSidebarProps = {}) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [expandedItems, setExpandedItems] = useState<string[]>([])
 
+  useEffect(() => {
+    onCollapsedChange?.(isCollapsed)
+  }, [isCollapsed, onCollapsedChange])
+
   const toggleExpanded = (href: string) => {
-    setExpandedItems(prev => 
-      prev.includes(href) 
-        ? prev.filter(h => h !== href)
+    setExpandedItems(prev =>
+      prev.includes(href)
+        ? prev.filter(item => item !== href)
         : [...prev, href]
     )
   }
@@ -95,152 +110,210 @@ export function DashboardSidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="lg:hidden fixed top-4 left-4 z-50 bg-white shadow-md"
+        className="lg:hidden fixed top-6 left-4 z-50 bg-white/95 backdrop-blur-sm shadow-lg border border-[#A3B1A1]/20"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
-        {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {isMobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
       </Button>
 
       {/* Overlay for mobile */}
       {isMobileOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+        <div
+          className="lg:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed left-0 top-0 h-full bg-gradient-to-b from-slate-900 to-slate-950 text-white transition-all duration-300 z-40",
-        isCollapsed ? "w-16" : "w-64",
+        "fixed left-0 top-0 h-full bg-white border-r border-[#A3B1A1]/10 transition-all duration-700 ease-out z-40 shadow-xl",
+        isCollapsed ? "w-20" : "w-80",
         isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         <div className="flex h-full flex-col">
           {/* Logo Section */}
-          <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800">
-            <Link 
-              href="/dashboard" 
-              className={cn(
-                "flex items-center gap-2 font-bold text-lg transition-opacity",
-                isCollapsed && "opacity-0"
-              )}
-            >
-              <Sparkles className="h-6 w-6 text-blue-400" />
-              <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                VirtualStaging
-              </span>
-            </Link>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden lg:flex text-slate-400 hover:text-white hover:bg-slate-800"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-            >
-              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </Button>
+          <div className="flex h-28 items-center justify-between px-6 border-b border-[#A3B1A1]/10 bg-gradient-to-b from-white to-[#F8F8F8]/30">
+            {!isCollapsed ? (
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-4 transition-all duration-700"
+              >
+                <div className="w-12 h-12 bg-gradient-to-br from-[#A3B1A1]/20 to-[#A3B1A1]/10 flex items-center justify-center shadow-sm">
+                  <Leaf className="h-7 w-7 text-[#A3B1A1]" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-cormorant font-light text-[#333333] leading-none tracking-tight">
+                    Decollage
+                  </span>
+                  <span className="text-[11px] font-lato text-[#A3B1A1] tracking-[0.2em] uppercase mt-1">
+                    Tu espacio soñado
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <div className="w-full flex justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#A3B1A1]/20 to-[#A3B1A1]/10 flex items-center justify-center shadow-sm">
+                  <Leaf className="h-7 w-7 text-[#A3B1A1]" />
+                </div>
+              </div>
+            )}
+
+            {!isCollapsed && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden lg:flex text-[#333333]/40 hover:text-[#333333] hover:bg-[#A3B1A1]/10 transition-all duration-500"
+                onClick={() => setIsCollapsed(!isCollapsed)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
+          {/* Collapse button for collapsed state */}
+          {isCollapsed && (
+            <div className="hidden lg:flex justify-center px-4 py-3 border-b border-[#A3B1A1]/5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-[#333333]/40 hover:text-[#333333] hover:bg-[#A3B1A1]/10 transition-all duration-500 w-full"
+                onClick={() => setIsCollapsed(false)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto p-4">
-            <ul className="space-y-1">
-              {sidebarItems.map((item) => {
-                const isActive = pathname === item.href || 
-                                (item.subItems && item.subItems.some(sub => pathname === sub.href))
-                const isExpanded = expandedItems.includes(item.href)
+          <nav className="flex-1 overflow-y-auto px-4 py-8 space-y-2">
+            {sidebarItems.map((item) => {
+              const isActive = pathname === item.href ||
+                (item.children && item.children.some(child => pathname === child.href))
+              const isExpanded = expandedItems.includes(item.href)
 
-                return (
-                  <li key={item.href}>
-                    <div className="relative">
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                          isActive 
-                            ? "bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-white border-l-4 border-blue-400" 
-                            : "text-slate-300 hover:text-white hover:bg-slate-800/50",
-                          isCollapsed && "justify-center"
-                        )}
-                        onClick={(e) => {
-                          if (item.subItems && !isCollapsed) {
-                            e.preventDefault()
-                            toggleExpanded(item.href)
-                          }
-                        }}
-                      >
-                        <span className={cn(
-                          "flex items-center justify-center",
-                          isActive && "text-blue-400"
-                        )}>
-                          {item.icon}
-                        </span>
-                        {!isCollapsed && (
-                          <>
-                            <span className="flex-1">{item.title}</span>
-                            {item.badge && (
-                              <span className={cn(
-                                "px-2 py-0.5 text-xs rounded-full font-semibold",
-                                item.badge === 'Nuevo' 
-                                  ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                  : "bg-purple-500/20 text-purple-400 border border-purple-500/30"
-                              )}>
-                                {item.badge}
-                              </span>
-                            )}
-                            {item.subItems && (
-                              <ChevronRight className={cn(
-                                "h-4 w-4 transition-transform",
-                                isExpanded && "rotate-90"
-                              )} />
-                            )}
-                          </>
-                        )}
-                      </Link>
+              return (
+                <div key={item.href}>
+                  <div
+                    className={cn(
+                      "group flex items-center gap-3 px-4 py-3.5 text-sm transition-all duration-500 cursor-pointer relative overflow-hidden",
+                      isActive
+                        ? "text-[#333333] font-medium bg-gradient-to-r from-[#A3B1A1]/10 to-transparent"
+                        : "text-[#333333]/60 hover:text-[#333333] hover:bg-[#F8F8F8]/50 font-light",
+                      isCollapsed && "justify-center px-3"
+                    )}
+                    onClick={() => {
+                      if (item.children && !isCollapsed) {
+                        toggleExpanded(item.href)
+                      }
+                    }}
+                  >
+                    {/* Active indicator */}
+                    {isActive && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#A3B1A1] to-[#A3B1A1]/60 transition-all duration-500" />
+                    )}
 
-                      {/* Subitems */}
-                      {!isCollapsed && item.subItems && isExpanded && (
-                        <ul className="mt-1 ml-8 space-y-1">
-                          {item.subItems.map((subItem) => (
-                            <li key={subItem.href}>
-                              <Link
-                                href={subItem.href}
-                                className={cn(
-                                  "block rounded-lg px-3 py-2 text-sm transition-all duration-200",
-                                  pathname === subItem.href
-                                    ? "text-blue-400 bg-slate-800/50"
-                                    : "text-slate-400 hover:text-white hover:bg-slate-800/30"
-                                )}
-                              >
-                                {subItem.title}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
+                    <Link href={item.href} className="flex items-center gap-3 flex-1">
+                      <span className={cn(
+                        "transition-all duration-500 transform",
+                        isActive ? "text-[#A3B1A1] scale-110" : "text-[#333333]/40 group-hover:scale-105"
+                      )}>
+                        {item.icon}
+                      </span>
+
+                      {!isCollapsed && (
+                        <div className="flex items-center justify-between flex-1">
+                          <span className="font-lato tracking-wide transition-all duration-500">{item.title}</span>
+                          {item.badge && (
+                            <span className="ml-auto px-2.5 py-1 text-[10px] bg-gradient-to-r from-[#C4886F]/10 to-[#C4886F]/5 text-[#C4886F] border border-[#C4886F]/20 font-lato tracking-[0.15em] uppercase shadow-sm">
+                              {item.badge}
+                            </span>
+                          )}
+                        </div>
                       )}
+                    </Link>
+
+                    {/* Expand indicator for items with children */}
+                    {item.children && !isCollapsed && (
+                      <ChevronRight className={cn(
+                        "h-3 w-3 text-[#333333]/30 transition-all duration-500",
+                        isExpanded && "rotate-90 text-[#A3B1A1]"
+                      )} />
+                    )}
+                  </div>
+
+                  {/* Children items */}
+                  {item.children && !isCollapsed && (
+                    <div className={cn(
+                      "overflow-hidden transition-all duration-500 ease-out",
+                      isExpanded ? "max-h-48 opacity-100" : "max-h-0 opacity-0"
+                    )}>
+                      <div className="ml-12 mt-2 space-y-1 pb-2">
+                        {item.children.map((child) => {
+                          const isChildActive = pathname === child.href
+                          return (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              className={cn(
+                                "block px-4 py-2.5 text-xs font-lato transition-all duration-300 relative",
+                                isChildActive
+                                  ? "text-[#A3B1A1] font-medium pl-6"
+                                  : "text-[#333333]/50 hover:text-[#333333] hover:pl-5"
+                              )}
+                            >
+                              {isChildActive && (
+                                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-[#A3B1A1] rounded-full" />
+                              )}
+                              {child.title}
+                            </Link>
+                          )
+                        })}
+                      </div>
                     </div>
-                  </li>
-                )
-              })}
-            </ul>
+                  )}
+                </div>
+              )
+            })}
           </nav>
 
           {/* User Section */}
-          <div className="border-t border-slate-800 p-4">
+          <div className="border-t border-[#A3B1A1]/10 p-6 bg-gradient-to-t from-[#F8F8F8]/30 to-transparent">
             <div className={cn(
               "flex items-center gap-3",
-              isCollapsed && "justify-center"
+              isCollapsed && "justify-center flex-col gap-3"
             )}>
-              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold">
-                U
+              <div className="h-12 w-12 bg-gradient-to-br from-[#F8F8F8] to-white border border-[#A3B1A1]/20 flex items-center justify-center shadow-sm transition-transform duration-300 hover:scale-105">
+                <User className="h-5 w-5 text-[#333333]/60" />
               </div>
               {!isCollapsed && (
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-white">Usuario</p>
-                  <p className="text-xs text-slate-400">Plan Pro</p>
+                  <p className="text-sm font-lato text-[#333333] font-medium">Sofía Mendoza</p>
+                  <p className="text-xs font-lato text-[#333333]/50">Mi espacio creativo</p>
                 </div>
               )}
               {!isCollapsed && (
-                <LogoutButton className="text-slate-400 hover:text-white" />
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-[#333333]/40 hover:text-[#333333] hover:bg-[#A3B1A1]/10 transition-all duration-300"
+                  >
+                    <Settings className="h-3 w-3" />
+                  </Button>
+                  <LogoutButton className="h-8 w-8 text-[#333333]/40 hover:text-[#C4886F] hover:bg-[#C4886F]/10 transition-all duration-300" />
+                </div>
+              )}
+              {isCollapsed && (
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-[#333333]/40 hover:text-[#333333] hover:bg-[#A3B1A1]/10 transition-all duration-300"
+                  >
+                    <Settings className="h-3 w-3" />
+                  </Button>
+                  <LogoutButton className="h-8 w-8 text-[#333333]/40 hover:text-[#C4886F] hover:bg-[#C4886F]/10 transition-all duration-300" />
+                </div>
               )}
             </div>
           </div>

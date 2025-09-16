@@ -4,13 +4,13 @@ import { useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select'
 import {
   DropdownMenu,
@@ -19,25 +19,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ProjectCard } from '@/components/projects/ProjectCard'
-import { ProjectCreateModal } from '@/components/projects/ProjectCreateModal'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Grid, 
-  List, 
-  Download, 
-  Archive, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Grid,
+  List,
   MoreVertical,
-  FileUp,
-  Copy,
-  FolderOpen,
   Home,
   Building,
   TreePine,
-  ChevronDown
+  Heart,
+  Sparkles,
+  Camera,
+  Clock,
+  Eye,
+  ArrowRight
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -68,28 +65,28 @@ interface Project {
   } | null
 }
 
-const environmentTypes = [
-  { value: 'all', label: 'Todos los tipos', icon: FolderOpen },
-  { value: 'interior', label: 'Interiores', icon: Home },
-  { value: 'exterior', label: 'Exteriores', icon: TreePine },
-  { value: 'commercial', label: 'Comerciales', icon: Building }
+const spaceTypes = [
+  { value: 'all', label: 'Todos mis espacios', icon: Sparkles, color: 'gradient' },
+  { value: 'interior', label: 'Interiores', icon: Home, color: '[#A3B1A1]' },
+  { value: 'exterior', label: 'Exteriores', icon: TreePine, color: '[#C4886F]' }
 ]
 
-export default function ProjectsPage() {
+export default function MisEspaciosPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('active')
   const [environmentFilter, setEnvironmentFilter] = useState('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [selectedProjects, setSelectedProjects] = useState<string[]>([])
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [showTemplates, setShowTemplates] = useState(false)
-  const [bulkActionLoading, setBulkActionLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     fetchProjects()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, environmentFilter])
 
   // Auto-create project for new users
@@ -107,8 +104,8 @@ export default function ProjectsPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: 'Mi Primer Proyecto',
-          description: 'Proyecto creado automáticamente',
+          name: 'Mi Primer Espacio',
+          description: 'Tu primer proyecto de transformación',
           metadata: {
             environment_type: 'interior'
           }
@@ -116,14 +113,12 @@ export default function ProjectsPage() {
       })
 
       const data = await response.json()
-      
+
       if (response.ok && data.project) {
-        // Redirect to the new project
         window.location.href = `/dashboard/projects/${data.project.id}`
       }
     } catch (error) {
       console.error('Error creating project:', error)
-      // If auto-create fails, show the modal as fallback
       setShowCreateModal(true)
     }
   }
@@ -133,16 +128,15 @@ export default function ProjectsPage() {
       setLoading(true)
       const response = await fetch(`/api/projects?status=${statusFilter}`)
       const data = await response.json()
-      
+
       if (!response.ok) {
-        throw new Error(data.error || 'Error al cargar proyectos')
+        throw new Error(data.error || 'Error al cargar espacios')
       }
 
       let filteredData = data.projects || []
-      
-      // Filter by environment type
+
       if (environmentFilter !== 'all') {
-        filteredData = filteredData.filter((p: Project) => 
+        filteredData = filteredData.filter((p: Project) =>
           p.metadata?.environment_type === environmentFilter
         )
       }
@@ -150,16 +144,11 @@ export default function ProjectsPage() {
       setProjects(filteredData)
     } catch (error) {
       console.error('Error fetching projects:', error)
-      toast.error('Error al cargar proyectos')
+      toast.error('Error al cargar tus espacios')
     } finally {
       setLoading(false)
     }
   }, [statusFilter, environmentFilter])
-
-  const handleProjectCreated = (newProject: unknown) => {
-    setProjects(prev => [newProject as Project, ...prev])
-    setShowCreateModal(false)
-  }
 
   const handleDeleteProject = async (projectId: string) => {
     try {
@@ -169,15 +158,14 @@ export default function ProjectsPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Error al eliminar proyecto')
+        throw new Error(data.error || 'Error al eliminar espacio')
       }
 
       setProjects(prev => prev.filter(p => p.id !== projectId))
-      setSelectedProjects(prev => prev.filter(id => id !== projectId))
-      toast.success('Proyecto eliminado correctamente')
+      toast.success('Espacio eliminado correctamente')
     } catch (error) {
       console.error('Error deleting project:', error)
-      toast.error(error instanceof Error ? error.message : 'Error al eliminar proyecto')
+      toast.error(error instanceof Error ? error.message : 'Error al eliminar espacio')
     }
   }
 
@@ -193,82 +181,21 @@ export default function ProjectsPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Error al archivar proyecto')
+        throw new Error(data.error || 'Error al archivar espacio')
       }
 
-      if (statusFilter !== 'all' && statusFilter !== 'archived') {
+      if (statusFilter !== 'archived') {
         setProjects(prev => prev.filter(p => p.id !== projectId))
       } else {
-        setProjects(prev => prev.map(p => 
+        setProjects(prev => prev.map(p =>
           p.id === projectId ? { ...p, status: 'archived' as const } : p
         ))
       }
 
-      setSelectedProjects(prev => prev.filter(id => id !== projectId))
-      toast.success('Proyecto archivado correctamente')
+      toast.success('Espacio archivado correctamente')
     } catch (error) {
       console.error('Error archiving project:', error)
-      toast.error(error instanceof Error ? error.message : 'Error al archivar proyecto')
-    }
-  }
-
-  const handleBulkAction = async (action: 'archive' | 'delete' | 'export' | 'duplicate') => {
-    if (selectedProjects.length === 0) {
-      toast.error('Selecciona al menos un proyecto')
-      return
-    }
-
-    setBulkActionLoading(true)
-
-    try {
-      switch (action) {
-        case 'archive':
-          for (const projectId of selectedProjects) {
-            await handleArchiveProject(projectId)
-          }
-          toast.success(`${selectedProjects.length} proyectos archivados`)
-          break
-        
-        case 'delete':
-          for (const projectId of selectedProjects) {
-            await handleDeleteProject(projectId)
-          }
-          toast.success(`${selectedProjects.length} proyectos eliminados`)
-          break
-        
-        case 'export':
-          toast.info('Preparando exportación...')
-          // TODO: Implement bulk export
-          break
-        
-        case 'duplicate':
-          toast.info('Duplicando proyectos...')
-          // TODO: Implement bulk duplicate
-          break
-      }
-
-      setSelectedProjects([])
-    } catch (error) {
-      console.error(`Error in bulk ${action}:`, error)
-      toast.error(`Error al ${action} proyectos`)
-    } finally {
-      setBulkActionLoading(false)
-    }
-  }
-
-  const toggleProjectSelection = (projectId: string) => {
-    setSelectedProjects(prev => 
-      prev.includes(projectId) 
-        ? prev.filter(id => id !== projectId)
-        : [...prev, projectId]
-    )
-  }
-
-  const selectAllProjects = () => {
-    if (selectedProjects.length === filteredProjects.length) {
-      setSelectedProjects([])
-    } else {
-      setSelectedProjects(filteredProjects.map(p => p.id))
+      toast.error(error instanceof Error ? error.message : 'Error al archivar espacio')
     }
   }
 
@@ -277,371 +204,382 @@ export default function ProjectsPage() {
     (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('es-CL', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    })
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-6 py-4">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Mis Proyectos</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Organiza y administra tus proyectos de staging virtual
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
+    <div className="min-h-screen">
+      {/* Header - Refined */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className={`text-2xl font-light text-[#333333] font-cormorant transition-all duration-500 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}`}>
+              Mis Espacios
+            </h1>
+            <p className={`text-sm text-[#333333]/60 mt-1 font-lato transition-all duration-500 delay-100 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}`}>
+              Organiza y transforma cada rincón de tu hogar
+            </p>
+          </div>
+
+          <Button
+            className="bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white transition-all duration-300"
+            size="sm"
+            onClick={() => setShowCreateModal(true)}
+          >
+            <Plus className="mr-2 h-3 w-3" />
+            Nuevo Espacio
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters Bar - Elegant */}
+      <div className={`bg-white border-0 p-5 mb-8 shadow-lg transition-all duration-500 delay-200 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+        <div className="flex flex-col lg:flex-row gap-4 items-center">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Buscar en mis espacios..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 border-[#A3B1A1]/20 focus:border-[#A3B1A1]/40 bg-[#F8F8F8]/50 text-sm"
+            />
+          </div>
+
+          {/* Filters */}
+          <div className="flex gap-3">
+            {/* Space Type Filter */}
+            <Select value={environmentFilter} onValueChange={setEnvironmentFilter}>
+              <SelectTrigger className="w-[180px] border-gray-200/50 focus:border-[#A3B1A1] focus:ring-[#A3B1A1]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {spaceTypes.map(type => {
+                  const Icon = type.icon
+                  return (
+                    <SelectItem key={type.value} value={type.value}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4" />
+                        {type.label}
+                      </div>
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+
+            {/* Status Filter */}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px] border-gray-200/50 focus:border-[#A3B1A1] focus:ring-[#A3B1A1]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Activos</SelectItem>
+                <SelectItem value="completed">Completados</SelectItem>
+                <SelectItem value="archived">Archivados</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* View Mode */}
+            <div className="flex border border-[#A3B1A1]/20 overflow-hidden bg-white">
+              <Button
+                variant="ghost"
                 size="sm"
-                onClick={() => setShowTemplates(true)}
+                className={cn(
+                  "rounded-none transition-colors duration-300",
+                  viewMode === 'grid' && "bg-[#A3B1A1]/10 text-[#A3B1A1]"
+                )}
+                onClick={() => setViewMode('grid')}
               >
-                <FileUp className="mr-2 h-4 w-4" />
-                Plantillas
+                <Grid className="h-3 w-3" />
               </Button>
-              <Button size="sm" onClick={() => setShowCreateModal(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Nuevo Proyecto
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "rounded-none transition-colors duration-300",
+                  viewMode === 'list' && "bg-[#A3B1A1]/10 text-[#A3B1A1]"
+                )}
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-3 w-3" />
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-6">
-        {/* Filters Bar */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Buscar proyectos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+      {/* Projects Grid */}
+      {loading ? (
+        <div className={cn(
+          viewMode === 'grid'
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            : "space-y-4"
+        )}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-64 bg-white/80 rounded-2xl animate-pulse border border-gray-200/50" />
+          ))}
+        </div>
+      ) : filteredProjects.length === 0 ? (
+        <Card className="border-0 shadow-lg bg-white">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#A3B1A1]/10 to-[#C4886F]/10 flex items-center justify-center mb-6">
+              <Home className="h-8 w-8 text-[#A3B1A1]" />
             </div>
-            
-            {/* Filters */}
-            <div className="flex flex-wrap gap-2">
-              {/* Status Filter */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[160px]">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Activos</SelectItem>
-                  <SelectItem value="completed">Completados</SelectItem>
-                  <SelectItem value="archived">Archivados</SelectItem>
-                  <SelectItem value="all">Todos</SelectItem>
-                </SelectContent>
-              </Select>
 
-              {/* Environment Type Filter */}
-              <Select value={environmentFilter} onValueChange={setEnvironmentFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {environmentTypes.map(type => {
-                    const Icon = type.icon
-                    return (
-                      <SelectItem key={type.value} value={type.value}>
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          {type.label}
-                        </div>
-                      </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
+            <h3 className="text-xl font-light text-[#333333] mb-2 font-cormorant">
+              {searchQuery || statusFilter !== 'active' || environmentFilter !== 'all'
+                ? 'No encontramos espacios'
+                : 'Tu primer espacio te espera'
+              }
+            </h3>
 
-              {/* View Mode */}
-              <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+            <p className="text-sm text-[#333333]/60 mb-6 max-w-md font-lato">
+              {searchQuery || statusFilter !== 'active' || environmentFilter !== 'all'
+                ? 'Intenta ajustar tus filtros de búsqueda'
+                : 'Cada gran transformación comienza con un solo espacio. Crea tu primer proyecto y descubre la magia'
+              }
+            </p>
+
+            {!searchQuery && statusFilter === 'active' && environmentFilter === 'all' && (
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  className="bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white transition-colors duration-300"
                   size="sm"
-                  className="rounded-none"
-                  onClick={() => setViewMode('grid')}
+                  onClick={() => setShowCreateModal(true)}
                 >
-                  <Grid className="h-4 w-4" />
+                  <Sparkles className="mr-2 h-3 w-3" />
+                  Crear Mi Primer Espacio
                 </Button>
                 <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  variant="outline"
                   size="sm"
-                  className="rounded-none"
-                  onClick={() => setViewMode('list')}
+                  className="border-[#C4886F]/30 text-[#C4886F] hover:bg-[#C4886F]/10 transition-colors duration-300"
+                  onClick={() => window.location.href = '/dashboard/gallery'}
                 >
-                  <List className="h-4 w-4" />
+                  <Eye className="mr-2 h-3 w-3" />
+                  Ver Inspiración
                 </Button>
               </div>
-            </div>
-          </div>
-
-          {/* Bulk Actions */}
-          {selectedProjects.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    checked={selectedProjects.length === filteredProjects.length}
-                    onCheckedChange={selectAllProjects}
+            )}
+          </CardContent>
+        </Card>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProjects.map((project) => (
+            <Card
+              key={project.id}
+              className="group bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-0.5 overflow-hidden"
+            >
+              <div className="relative h-40 bg-gradient-to-br from-[#A3B1A1]/5 to-[#C4886F]/5">
+                {project.featured_transformation?.result_image_url ? (
+                  <img
+                    src={project.featured_transformation.result_image_url}
+                    alt={project.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <span className="text-sm text-gray-600">
-                    {selectedProjects.length} proyecto{selectedProjects.length !== 1 && 's'} seleccionado{selectedProjects.length !== 1 && 's'}
-                  </span>
-                </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <Camera className="h-8 w-8 text-[#A3B1A1]/30" />
+                  </div>
+                )}
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleBulkAction('export')}
-                    disabled={bulkActionLoading}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Exportar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleBulkAction('duplicate')}
-                    disabled={bulkActionLoading}
-                  >
-                    <Copy className="mr-2 h-4 w-4" />
-                    Duplicar
-                  </Button>
+                <div className="absolute top-3 right-3">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="ghost"
                         size="sm"
-                        disabled={bulkActionLoading}
+                        className="h-7 w-7 p-0 bg-white/90 hover:bg-white transition-colors duration-300"
                       >
-                        Más acciones
-                        <ChevronDown className="ml-2 h-4 w-4" />
+                        <MoreVertical className="h-3 w-3" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleBulkAction('archive')}>
-                        <Archive className="mr-2 h-4 w-4" />
-                        Archivar seleccionados
+                      <DropdownMenuItem onClick={() => window.location.href = `/dashboard/projects/${project.id}`}>
+                        Abrir espacio
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleArchiveProject(project.id)}>
+                        Archivar
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem 
-                        onClick={() => handleBulkAction('delete')}
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteProject(project.id)}
                         className="text-red-600"
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Eliminar seleccionados
+                        Eliminar
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* Projects Grid/List */}
-        {loading ? (
-          <div className={cn(
-            viewMode === 'grid' 
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-              : "space-y-3"
-          )}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-48 bg-white rounded-lg animate-pulse border border-gray-200" />
-            ))}
-          </div>
-        ) : filteredProjects.length === 0 ? (
-          <Card className="bg-white">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <FolderOpen className="h-10 w-10 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {searchQuery || statusFilter !== 'active' || environmentFilter !== 'all'
-                  ? 'No se encontraron proyectos' 
-                  : 'No tienes proyectos aún'
-                }
-              </h3>
-              <p className="text-sm text-gray-500 text-center mb-6 max-w-md">
-                {searchQuery || statusFilter !== 'active' || environmentFilter !== 'all'
-                  ? 'Intenta ajustar tus filtros de búsqueda'
-                  : 'Crea tu primer proyecto para organizar tus generaciones de staging virtual'
-                }
-              </p>
-              {!searchQuery && statusFilter === 'active' && environmentFilter === 'all' && (
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setShowTemplates(true)}>
-                    <FileUp className="mr-2 h-4 w-4" />
-                    Usar Plantilla
-                  </Button>
-                  <Button onClick={() => setShowCreateModal(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Crear Proyecto
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredProjects.map((project) => (
-              <div key={project.id} className="relative">
-                {selectedProjects.length > 0 && (
-                  <div className="absolute top-3 left-3 z-10">
-                    <Checkbox
-                      checked={selectedProjects.includes(project.id)}
-                      onCheckedChange={() => toggleProjectSelection(project.id)}
-                      className="bg-white"
-                    />
+                {project.metadata?.environment_type && (
+                  <div className="absolute top-3 left-3">
+                    <Badge
+                      className={cn(
+                        "bg-white/90 border-0 text-[10px] px-2 py-0.5",
+                        project.metadata.environment_type === 'interior' && "text-[#A3B1A1]",
+                        project.metadata.environment_type === 'exterior' && "text-[#C4886F]"
+                      )}
+                    >
+                      {project.metadata.environment_type === 'interior' && (
+                        <>
+                          <Home className="mr-1 h-3 w-3" />
+                          Interior
+                        </>
+                      )}
+                      {project.metadata.environment_type === 'exterior' && (
+                        <>
+                          <TreePine className="mr-1 h-3 w-3" />
+                          Exterior
+                        </>
+                      )}
+                    </Badge>
                   </div>
                 )}
-                <ProjectCard
-                  project={project}
-                  onDelete={handleDeleteProject}
-                  onArchive={handleArchiveProject}
-                  isSelected={selectedProjects.includes(project.id)}
-                />
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredProjects.map((project) => (
-              <Card key={project.id} className="bg-white hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    {selectedProjects.length > 0 && (
-                      <Checkbox
-                        checked={selectedProjects.includes(project.id)}
-                        onCheckedChange={() => toggleProjectSelection(project.id)}
-                      />
-                    )}
-                    
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{project.name}</h3>
-                          {project.description && (
-                            <p className="text-sm text-gray-500 mt-1">{project.description}</p>
-                          )}
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                          {project.metadata?.environment_type && (
-                            <span className={cn(
-                              "px-2 py-1 text-xs font-medium rounded-full",
-                              project.metadata.environment_type === 'interior' && "bg-blue-100 text-blue-700",
-                              project.metadata.environment_type === 'exterior' && "bg-green-100 text-green-700",
-                              project.metadata.environment_type === 'commercial' && "bg-purple-100 text-purple-700"
-                            )}>
-                              {project.metadata.environment_type === 'interior' && 'Interior'}
-                              {project.metadata.environment_type === 'exterior' && 'Exterior'}
-                              {project.metadata.environment_type === 'commercial' && 'Comercial'}
-                            </span>
-                          )}
-                          
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => window.location.href = `/dashboard/projects/${project.id}`}>
-                                Abrir proyecto
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleArchiveProject(project.id)}>
-                                Archivar
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => handleDeleteProject(project.id)}
-                                className="text-red-600"
-                              >
-                                Eliminar
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                        <span>{project.images?.length || 0} imágenes</span>
-                        <span>{project.total_transformations} transformaciones</span>
-                        <span>
-                          Actualizado {new Date(project.updated_at).toLocaleDateString('es-CL')}
-                        </span>
-                      </div>
+
+              <CardContent className="p-5">
+                <div className="mb-3">
+                  <h3 className="font-normal text-base text-[#333333] font-cormorant mb-1">
+                    {project.name}
+                  </h3>
+                  {project.description && (
+                    <p className="text-xs text-[#333333]/60 font-lato line-clamp-2">
+                      {project.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-[10px] text-[#333333]/50 font-lato">
+                      <span className="flex items-center gap-1">
+                        <Camera className="h-3 w-3" />
+                        {project.images?.length || 0}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        {project.total_transformations}
+                      </span>
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-[#A3B1A1] hover:text-[#A3B1A1]/80 p-0 h-auto text-xs"
+                      onClick={() => window.location.href = `/dashboard/projects/${project.id}`}
+                    >
+                      Abrir
+                      <ArrowRight className="ml-1 h-2.5 w-2.5 group-hover:translate-x-0.5 transition-transform" />
+                    </Button>
+                  </div>
+
+                  <div className="pt-3 border-t border-[#A3B1A1]/10">
+                    <div className="flex items-center justify-between text-[10px] text-[#333333]/40 font-lato">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-2.5 w-2.5" />
+                        {formatDate(project.updated_at)}
+                      </span>
+                      {project.is_public && (
+                        <Badge className="bg-[#C4886F]/10 text-[#C4886F] border-0 text-[9px] px-1.5 py-0">
+                          Público
+                        </Badge>
+                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Create Project Modal */}
-        <ProjectCreateModal
-          open={showCreateModal}
-          onOpenChange={setShowCreateModal}
-          onSuccess={handleProjectCreated}
-        />
-
-        {/* Templates Modal */}
-        {showTemplates && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-2xl max-h-[80vh] overflow-auto">
-              <CardHeader>
-                <CardTitle>Plantillas de Proyecto</CardTitle>
-                <CardDescription>
-                  Comienza rápidamente con una plantilla prediseñada
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    { name: 'Casa Residencial', type: 'interior', rooms: 6 },
-                    { name: 'Departamento Moderno', type: 'interior', rooms: 4 },
-                    { name: 'Oficina Corporativa', type: 'commercial', rooms: 8 },
-                    { name: 'Local Comercial', type: 'commercial', rooms: 3 },
-                    { name: 'Jardín y Terraza', type: 'exterior', rooms: 2 },
-                    { name: 'Propiedad Completa', type: 'all', rooms: 10 }
-                  ].map((template, i) => (
-                    <Card 
-                      key={i} 
-                      className="cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => {
-                        setShowTemplates(false)
-                        setShowCreateModal(true)
-                        // TODO: Pre-fill modal with template data
-                      }}
-                    >
-                      <CardContent className="p-4">
-                        <h4 className="font-semibold text-sm">{template.name}</h4>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {template.rooms} espacios • Tipo: {template.type}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-                <div className="mt-6 flex justify-end">
-                  <Button variant="outline" onClick={() => setShowTemplates(false)}>
-                    Cancelar
-                  </Button>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredProjects.map((project) => (
+            <Card key={project.id} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#A3B1A1]/10 to-[#C4886F]/5 flex items-center justify-center flex-shrink-0">
+                    {project.metadata?.environment_type === 'interior' && <Home className="h-6 w-6 text-[#A3B1A1]" />}
+                    {project.metadata?.environment_type === 'exterior' && <TreePine className="h-6 w-6 text-[#C4886F]" />}
+                    {!project.metadata?.environment_type && <Sparkles className="h-6 w-6 text-[#A3B1A1]" />}
+                  </div>
+
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-normal text-base text-[#333333] font-cormorant">
+                          {project.name}
+                        </h3>
+                        {project.description && (
+                          <p className="text-xs text-[#333333]/60 mt-0.5 font-lato">
+                            {project.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-[#A3B1A1] hover:text-[#A3B1A1]/80 text-xs h-7"
+                          onClick={() => window.location.href = `/dashboard/projects/${project.id}`}
+                        >
+                          Abrir
+                          <ArrowRight className="ml-1 h-2.5 w-2.5" />
+                        </Button>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleArchiveProject(project.id)}>
+                              Archivar
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteProject(project.id)}
+                              className="text-red-600"
+                            >
+                              Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 mt-3 text-[10px] text-[#333333]/50 font-lato">
+                      <span className="flex items-center gap-1">
+                        <Camera className="h-2.5 w-2.5" />
+                        {project.images?.length || 0} imágenes
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Sparkles className="h-2.5 w-2.5" />
+                        {project.total_transformations} transformaciones
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-2.5 w-2.5" />
+                        {formatDate(project.updated_at)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* TODO: Add ProjectCreateModal component when needed */}
     </div>
   )
 }

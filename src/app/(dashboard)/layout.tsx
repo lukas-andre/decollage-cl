@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { DashboardSidebar } from '@/components/dashboard/sidebar'
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
+import { DashboardLayoutClient } from '@/components/dashboard/dashboard-layout-client'
 
 export default async function DashboardLayout({
   children,
@@ -43,17 +42,8 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardSidebar />
-      <main className="lg:pl-64 transition-all duration-300">
-        {/* Dashboard Header */}
-        <div className="border-b bg-white px-6 py-3">
-          <DashboardHeader />
-        </div>
-        <div className="min-h-screen">
-          {children}
-        </div>
-      </main>
-    </div>
+    <DashboardLayoutClient>
+      {children}
+    </DashboardLayoutClient>
   )
 }
