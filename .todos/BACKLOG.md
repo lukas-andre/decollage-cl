@@ -1,416 +1,251 @@
-# 📋 VirtualStaging.cl - Product Backlog
+🎨 Decollage.cl - Complete Development Plan & Backlog
 
-## 🎯 Priority Legend
-- **P0** - Critical/Blocker (MVP Required)
-- **P1** - High Priority (Core Features)
-- **P2** - Medium Priority (Enhanced Features)
-- **P3** - Low Priority (Nice to Have)
+📊 Current State Analysis
 
----
+✅ What's Already Built (Strong Foundation)
 
-## 🔴 P0 - MVP Critical Features (Week 1-2)
+- Next.js 15 + App Router - Modern React setup
+- Supabase Integration - Database and auth working
+- Beautiful Landing Page - Aligned with brand (The Magician + The Lover)
+- Authentication System - Complete auth flow
+- Dashboard Structure - Sidebar, header, navigation
+- Basic Projects System - CRUD operations working
+- Token Economy - Packages, transactions, balance tracking
+- Gemini AI Integration - State-of-the-art image generation
+- Cloudflare Images - Professional image handling
+- UI Components - Complete shadcn/ui system
 
-### Authentication & User Management
-- [x] Implement Supabase Auth with email/password
-- [x] Create login page (`/iniciar-sesion`)
-- [x] Create signup page (`/registrarse`)
-- [x] Implement password recovery flow (`/recuperar-contrasena`)
-- [ ] Create user profile setup/onboarding flow
-- [x] Implement auth middleware for protected routes
-- [x] Add session management and refresh tokens
-- [x] Create logout functionality
-- [ ] Add email verification flow
+❌ Critical Schema Mismatch Issues
 
-### Core Database & API Setup
-- [x] Set up Supabase client configuration
-- [x] Create API route handlers structure
-- [ ] Implement error handling middleware
-- [ ] Set up environment variables validation
-- [ ] Create database connection pooling
-- [ ] Implement request rate limiting
-- [ ] Add API response caching strategy
-
-### Landing Page & Marketing
-- [x] Create landing page (`/`) with hero section
-- [x] Add features showcase section
-- [x] Implement pricing section with plans
-- [ ] Add testimonials/social proof section
-- [ ] Create CTA buttons with tracking
-- [x] Add SEO meta tags and OpenGraph
-- [ ] Implement cookie consent banner
-- [ ] Add Google Analytics/tracking setup
-
-### User Dashboard
-- [x] Create dashboard layout (`/dashboard`)
-- [x] Implement token balance display component
-- [x] Add recent generations gallery
-- [x] Create generation statistics cards
-- [ ] Implement quick actions panel
-- [ ] Add notification system UI
-- [ ] Create empty states for new users
-
-## 🟡 P1 - Core Virtual Staging Features (Week 2-3)
-
-### Virtual Staging Generation Flow
-- [x] Create generation page (`/generar`)
-- [x] Implement image upload component with drag & drop
-- [x] Add image preview and validation (size, format)
-- [x] Create style selection grid UI
-- [x] Implement room type selector (living, bedroom, etc.)
-- [x] Add advanced options toggle (furniture density, color scheme)
-- [x] Create generation progress indicator
-- [x] Implement error handling and retry logic
-- [x] Add generation result display with before/after slider
-
-### Style Management
-- [x] Create styles API endpoints
-- [x] Implement style categories (Modern, Classic, etc.)
-- [x] Create style filtering system
-- [x] Add style search functionality
-- [x] Create admin style CRUD interface
-
-### Image Processing & Storage
-- [x] Integrate Cloudflare Images API
-- [x] Implement image upload to Cloudflare
-- [x] Create image optimization pipeline
-- [x] Add image variant generation (thumbnails, previews)
-- [x] Implement image CDN caching
-- [x] Create image download functionality
-- [ ] Add watermark option for free tier
-
-### AI Integration
-- [x] Research and select AI model provider (Google Gemini AI)
-- [x] Implement AI API client (Google GenAI with multimodal support)
-- [x] Create prompt engineering system (6 professional staging styles)
-- [x] Add prompt templates for styles (Modern, Scandinavian, Industrial, Classic, Minimalist, Bohemian)
-- [x] Implement retry logic with exponential backoff (withRetry, withResilientAI)
-- [x] Add timeout handling (120s-300s timeouts with progress tracking)
-- [ ] Create fallback AI providers // NOT REQUIRED FOR MPV
-- [x] Implement cost tracking per generation (CLP tracking with detailed breakdowns)
-
-### Token Economy System
-- [x] Create token balance API
-- [x] Implement token consumption logic
-- [x] Add token transaction history
-- [x] Create token purchase flow UI
-- [ ] Implement bonus token system
-- [ ] Add referral token rewards
-- [ ] Create low balance notifications
-
-## 🟢 P1 - Payment Integration (Week 3-4)
-
-### Flow Chile Payment Gateway
-- [ ] Set up Flow Chile merchant account
-- [ ] Implement Flow payment API client
-- [ ] Create payment initiation endpoint
-- [ ] Add payment confirmation webhook
-- [ ] Implement payment status polling
-- [ ] Create payment success/failure pages
-- [ ] Add payment retry logic
-- [ ] Implement refund functionality
-- [ ] Create payment receipt emails
-
-### Pricing & Packages
-- [ ] Create pricing plans management
-- [ ] Implement package selection UI
-- [ ] Add discount/coupon system
-- [ ] Create subscription management
-- [ ] Implement usage-based billing
-- [ ] Add invoice generation
-- [ ] Create payment history page
-
-## 🔵 P2 - Enhanced User Features (Week 4-5)
-
-### Gallery & History Management
-- [x] Create user gallery page (`/mi-galeria`)
-- [x] Implement gallery grid/list views
-- [x] Add filtering by date/style/status
-- [ ] Create search in gallery
-- [x] Implement batch operations (delete, download)
-- [ ] Add favorites/collections feature
-- [ ] Create sharing functionality
-- [ ] Implement public/private toggles
-
-### Projects & Workspaces
-- [ ] Create project management system
-- [ ] Implement project folders UI
-- [ ] Add project sharing with team
-- [ ] Create project templates
-- [ ] Implement batch processing
-- [ ] Add project notes/comments
-- [ ] Create project export feature
-
-### User Profile & Settings
-- [ ] Create profile page (`/perfil`)
-- [ ] Add profile customization options
-- [ ] Implement notification preferences
-- [ ] Create API key management
-- [ ] Add billing information management
-- [ ] Implement 2FA authentication
-- [ ] Create account deletion flow
-- [ ] Add data export functionality
-
-### Social Features
-- [ ] Create public gallery showcase
-- [ ] Implement like/favorite system
-- [ ] Add user follow functionality
-- [ ] Create trending styles section
-- [ ] Implement social sharing buttons
-- [ ] Add user reviews/ratings
-- [ ] Create community guidelines
-
-## 🟣 P2 - Admin Panel (Week 5-6)
-
-### Admin Dashboard
-- [x] Create admin layout (`/admin`)
-- [x] Implement admin authentication/authorization
-- [x] Add system metrics dashboard
-- [x] Create revenue analytics
-- [x] Implement user growth charts
-- [x] Add API usage statistics
-- [x] Create cost analysis tools
-
-### User Management
-- [x] Create user list with search/filter
-- [x] Implement user detail views
-- [ ] Add token grant/revoke functionality
-- [ ] Create user ban/suspend actions
-- [x] Implement role management
-- [ ] Add user impersonation (support)
-- [ ] Create bulk user operations
-
-### Content Management
-- [x] Create style management interface
-- [ ] Implement generation moderation queue
-- [ ] Add reported content review
-- [ ] Create promotional banner management
-- [ ] Implement FAQ/Help content editor
-- [ ] Add terms of service editor
-
-### Financial Management
-- [x] Create transaction monitoring
-- [ ] Implement refund processing
-- [ ] Add payment reconciliation tools
-- [x] Create financial reports
-- [ ] Implement tax reporting
-- [ ] Add accounting exports
-
-## ⚫ P3 - Advanced Features (Week 6+)
-
-### API & Integrations
-- [ ] Create public API documentation
-- [ ] Implement API rate limiting per tier
-- [ ] Add webhook system
-- [ ] Create Zapier integration
-- [ ] Implement WordPress plugin
-- [ ] Add Chrome extension
-- [ ] Create mobile app API
-
-### Performance & Optimization
-- [ ] Implement Redis caching
-- [ ] Add CDN for static assets
-- [ ] Create database query optimization
-- [ ] Implement lazy loading
-- [ ] Add progressive web app features
-- [ ] Create offline mode support
-- [ ] Implement WebSocket for real-time updates
-
-### Internationalization
-- [ ] Set up i18n infrastructure
-- [ ] Translate UI to English
-- [ ] Add language switcher
-- [ ] Implement locale-based formatting
-- [ ] Create multilingual support docs
-- [ ] Add RTL language support
-
-### Marketing & Growth
-- [ ] Implement A/B testing framework
-- [ ] Create referral program
-- [ ] Add affiliate system
-- [ ] Implement email marketing automation
-- [ ] Create blog/content system
-- [ ] Add testimonial collection
-- [ ] Implement review system
-- [ ] Create partnership portal
-
-### Enterprise Features
-- [ ] Implement SSO authentication
-- [ ] Add team management
-- [ ] Create usage quotas per team
-- [ ] Implement approval workflows
-- [ ] Add audit logging
-- [ ] Create white-label options
-- [ ] Implement SLA monitoring
-
-### Mobile Experience
-- [ ] Create responsive design system
-- [ ] Implement touch-optimized UI
-- [ ] Add mobile-specific features
-- [ ] Create React Native app
-- [ ] Implement push notifications
-- [ ] Add biometric authentication
-
-## 🛠️ Technical Debt & Infrastructure
-
-### Testing
-- [ ] Set up Playwright E2E tests
-- [ ] Create unit test suite
-- [ ] Implement integration tests
-- [ ] Add visual regression tests
-- [ ] Create load testing
-- [ ] Implement security testing
-- [ ] Add accessibility testing
-
-### DevOps & Deployment
-- [ ] Set up Railway deployment pipeline
-- [ ] Implement CI/CD with GitHub Actions
-- [ ] Create staging environment
-- [ ] Add monitoring with Sentry
-- [ ] Implement log aggregation
-- [ ] Create backup automation
-- [ ] Add disaster recovery plan
-
-### Security
-- [ ] Implement CSP headers
-- [ ] Add SQL injection prevention
-- [ ] Create XSS protection
-- [ ] Implement DDOS protection
-- attractive [ ] Add security audit logging
-- [ ] Create penetration testing
-- [ ] Implement data encryption at rest
-
-### Documentation
-- [ ] Create API documentation
-- [ ] Write user guides
-- [ ] Create video tutorials
-- [ ] Implement in-app help system
-- [ ] Write developer documentation
-- [ ] Create system architecture docs
-- [ ] Add troubleshooting guides
-
-## 📊 Analytics & Monitoring
-
-### Product Analytics
-- [ ] Implement Mixpanel/Amplitude
-- [ ] Create conversion funnel tracking
-- [ ] Add feature usage analytics
-- [ ] Implement cohort analysis
-- [ ] Create retention tracking
-- [ ] Add revenue analytics
-- [ ] Implement user journey mapping
-
-### Performance Monitoring
-- [ ] Set up performance monitoring
-- [ ] Create alert system
-- [ ] Implement uptime monitoring
-- [ ] Add API response time tracking
-- [ ] Create database query monitoring
-- [ ] Implement cost monitoring
-- [ ] Add resource usage alerts
-
-## 🎨 UI/UX Improvements
-
-### Design System
-- [ ] Create component library
-- [ ] Implement design tokens
-- [ ] Add dark mode support
-- [ ] Create animation library
-- [ ] Implement skeleton screens
-- [ ] Add micro-interactions
-- [ ] Create loading states
-
-### Accessibility
-- [ ] Implement WCAG compliance
-- [ ] Add keyboard navigation
-- [ ] Create screen reader support
-- [ ] Implement focus management
-- [ ] Add ARIA labels
-- [ ] Create high contrast mode
-- [ ] Add text size controls
-
-### User Experience
-- [ ] Implement onboarding tour
-- [ ] Create contextual help
-- [ ] Add tooltips system
-- [ ] Implement undo/redo
-- [ ] Create keyboard shortcuts
-- [ ] Add quick search (cmd+k)
-- [ ] Implement breadcrumbs
-
-## 📝 Legal & Compliance
-
-- [ ] Create Terms of Service
-- [ ] Write Privacy Policy
-- [ ] Implement GDPR compliance
-- [ ] Add cookie policy
-- [ ] Create data processing agreements
-- [ ] Implement age verification
-- [ ] Add content moderation policy
-- [ ] Create DMCA process
+- Current DB schema is B2B-focused vs new B2C-focused schema
+- Missing 15+ critical tables from new schema
+- Hardcoded styles in files vs database-driven design system
+- No social features (gallery, likes, comments)
+- Missing Chilean cultural elements
+- No moodboard/Pinterest integration
 
 ---
+🎯 MoSCoW Prioritized Backlog
 
-## 🚀 Launch Checklist
+🔴 MUST HAVE (Phase 1: Core Migration - Weeks 1-3)
 
-### Pre-Launch
-- [ ] Complete security audit
-- [ ] Perform load testing
-- [ ] Set up monitoring
-- [ ] Create support documentation
-- [ ] Prepare marketing materials
-- [ ] Set up customer support
-- [ ] Configure analytics
-- [ ] Test payment flows
+M1: Database Schema Migration ✅ COMPLETED
 
-### Launch Day
-- [ ] Deploy to production
-- [ ] Enable monitoring alerts
-- [ ] Announce on social media
-- [ ] Send launch emails
-- [ ] Monitor system health
-- [ ] Track initial metrics
-- [ ] Gather user feedback
+- ✅ Create new schema migration scripts to match supabase/migrations/001_decollage_core_schema.sql
+- ✅ Create new schema migration scripts to match supabase/migrations/002_auth_triggers.sql
+- ✅ Add support for admin role, this role should be able to enter to the admin dashboard
+- ⏳ Data migration scripts for existing users/projects to new structure (pending - to run after schema deployment)
+- ✅ Update TypeScript types to match new schema
 
-### Post-Launch
-- [ ] Monitor error rates
-- [ ] Track conversion metrics
-- [ ] Gather user feedback
-- [ ] Fix critical bugs
-- [ ] Optimize performance
-- [ ] Plan feature roadmap
-- [ ] Scale infrastructure
+M2: Core Application Adaptation
 
----
+- Update Projects system to use new schema (projects table)
+- Migrate Transformations from staging_generations to transformations table
+- Update Images system to use new images table structure
+- Fix Authentication to work with enhanced profiles table
+- Update API routes to match new schema structure
 
-## 📅 Sprint Planning
+M3: Design System Database Migration
 
-### Sprint 1 (Week 1-2): Foundation
-Focus: Authentication, Landing Page, Basic Dashboard
+- Create design_styles seeder with Chilean-themed styles from prompts.ts
+- Create color_palettes seeder with Chilean landscapes/culture
+- Create room_types seeder with local terminology
+- Create seasonal_themes seeder with Chilean holidays
+- Update AI service to fetch styles from database instead of files
 
-### Sprint 2 (Week 3-4): Core Features
-Focus: Generation Flow, Style System, Token Economy
+M4: Chilean Cultural Identity Integration
 
-### Sprint 3 (Week 5-6): Monetization
-Focus: Payment Integration, Pricing Plans, Admin Panel
-
-### Sprint 4 (Week 7-8): Polish & Launch
-Focus: Testing, Bug Fixes, Performance, Launch Preparation
+- Implement Chilean design styles: Mediterráneo Chileno, Boho Valparaíso, etc.
+- Add Chilean color palettes: Atardecer en Valparaíso, Verde Cordillera, etc.
+- Seasonal themes: Fiestas Patrias, Navidad Chilena, Verano Chileno
+- Update UI copy to Chilean Spanish terminology
 
 ---
+🟡 SHOULD HAVE (Phase 2: Core Features - Weeks 4-6)
 
-## 📌 Notes
+S1: Moodboard System (The Magician's Core Feature)
 
-- All UI text and routes should be in Spanish
-- Code and database should be in English
-- Prioritize mobile-responsive design
-- Focus on Chilean market initially
-- Ensure LATAM payment methods support
-- Consider slow internet connections
-- Implement progressive enhancement
-- Follow accessibility guidelines
+- Moodboard creation UI with drag-and-drop
+- Multi-image upload with composition tools
+- AI style synthesis from moodboard images
+- Inspiration weight controls (0-100% influence)
+- Moodboard sharing and collaboration features
+
+S2: Iterative Design System
+
+- Transformation iterations table implementation
+- Refinement UI for iterating on designs
+- History tracking of all refinements
+- Comparison tools between iterations
+- Save multiple variations functionality
+
+S3: Enhanced User Journey
+
+- Onboarding flow with style personality quiz
+- Welcome project creation with Chilean examples
+- Progressive feature disclosure
+- Tutorial overlays for first-time users
+- Achievement system for engagement
 
 ---
+🟢 COULD HAVE (Phase 3: Social & Discovery - Weeks 7-9)
 
-_Last Updated: [Current Date]_
-_Total Tasks: 200+_
-_Estimated Timeline: 8-12 weeks for MVP_
+C1: Social Gallery System
+
+- Public gallery with featured transformations
+- Like and save functionality
+- Comment system with moderation
+- User following and feed system
+- Featured content curation by admins
+
+C2: Pinterest Integration
+
+- Pinterest OAuth setup and authentication
+- Board import functionality with AI analysis
+- Pin synchronization and auto-sync
+- Style extraction from Pinterest pins
+- Moodboard creation from Pinterest boards
+
+C3: Advanced Analytics
+
+- User events tracking system
+- Usage analytics dashboard
+- Style popularity metrics
+- User journey analysis
+- A/B testing framework for features
+
+---
+🔵 WON'T HAVE (Phase 4: Polish & Advanced - Weeks 10+)
+
+W1: Back Office Administration
+
+- Admin dashboard for content management
+- Style management interface
+- Color palette creation tools
+- Seasonal theme management
+- User moderation tools
+- Analytics and reporting interface
+
+W2: Mobile Optimization
+
+- Mobile-first responsive design improvements
+- Touch interactions optimization
+- Mobile image upload optimization
+- Offline capabilities for viewing saved designs
+- PWA features for app-like experience
+
+W3: Advanced Features
+
+- AI prompt engineering interface for admins
+- Custom style creation for power users
+- Batch processing for multiple rooms
+- 3D visualization integration
+- Export to design tools (Photoshop, etc.)
+
+---
+🛠 Technical Implementation Strategy
+
+Database Migration Approach
+
+1. Backup current production data
+2. Create migration scripts that preserve existing user data
+3. Run migration in staging environment first
+4. Gradual rollout with feature flags
+5. Rollback plan in case of issues
+
+Code Organization
+
+src/
+├── lib/
+│   ├── db/
+│   │   ├── migrations/     # New schema migrations
+│   │   ├── seeders/        # Chilean cultural data
+│   │   └── types.ts        # Updated TypeScript types
+│   ├── chile/              # Chilean cultural components
+│   │   ├── styles.ts       # Chilean design styles
+│   │   ├── palettes.ts     # Chilean color palettes
+│   │   └── seasons.ts      # Chilean seasonal themes
+│   └── moodboards/         # Moodboard system
+├── app/(dashboard)/
+│   ├── moodboards/         # Moodboard management
+│   ├── gallery/            # Social gallery
+│   └── onboarding/         # User onboarding
+└── components/
+    ├── chile/              # Chilean-specific components
+    ├── moodboards/         # Moodboard components
+    └── social/             # Social feature components
+
+Design System Implementation
+
+- Brand Colors: Use exact colors from docs/LOOK.md (#A3B1A1, #C4886F, #333333, #F8F8F8)
+- Typography: Cormorant (display) + Lato (body) as specified
+- Component Patterns: Follow magazine-style layouts from LOOK.md
+- Chilean Aesthetics: Integrate local cultural elements throughout
+
+Performance Considerations
+
+- Image optimization with Cloudflare variants
+- Database indexing for social features queries
+- Caching strategy for frequently accessed cultural data
+- Progressive loading for moodboard galleries
+
+---
+📈 Success Metrics & KPIs
+
+User Engagement (The Magician)
+
+- Onboarding completion rate > 70%
+- First transformation within 10 minutes
+- Average iterations per project > 3
+- Moodboard creation rate > 40%
+
+Social Features (The Lover)
+
+- Gallery interaction rate > 25%
+- User-to-user follows > 10% of users
+- Public sharing rate > 15%
+- Comment engagement > 5%
+
+Cultural Resonance
+
+- Chilean style adoption > 60%
+- Seasonal theme engagement during holidays
+- Local color palette usage > 70%
+- Chilean Spanish terminology adoption
+
+Business Metrics
+
+- Token consumption increase by 40%
+- User retention at 30 days > 60%
+- Referral rate through social features > 20%
+- Premium feature adoption > 30%
+
+---
+🚀 Immediate Next Steps
+
+1. Validate and run new schema migrations in development
+2. Create data migration scripts for existing users
+3. Update TypeScript types to match new schema
+4. Begin Chilean cultural data implementation
+5. Start moodboard system development
+
+This plan transforms Decollage.cl from a basic virtual staging tool into the definitive Chilean home 
+design platform that embodies both The Magician (transformation) and The Lover (beauty & community) 
+archetypes while staying true to Chilean cultural identity.
+
+✻ Thinking…
+
+Great! The user has approved my comprehensive plan. Now I need to start implementing it. Looking at the plan,
+the most critical first step is the database schema migration since the current schema doesn't match the new
+comprehensive B2C-focused schema.
+
+Let me start by using the TodoWrite tool to create a focused todo list for the immediate next steps, and then
+begin with the schema migration work.
+
+I should start with:
+1. Create the todo list for Phase 1 (MUST HAVE items)
+2. Begin with the database schema migration
+3. Update TypeScript types
+4. Create the Chilean cultural data seeders
+
+Let me start with the TodoWrite tool to track this work.
