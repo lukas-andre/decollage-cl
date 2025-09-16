@@ -60,9 +60,10 @@ export async function POST(
 
     // Verify base image ownership and get details
     const { data: baseImage, error: baseImageError } = await supabase
-      .from('project_images')
-      .select('*, project:projects!inner(user_id)')
+      .from('images')
+      .select('*, project:projects(user_id)')
       .eq('id', baseImageId)
+      .eq('image_type', 'base')
       .single()
 
     if (baseImageError || !baseImage) {
@@ -72,9 +73,9 @@ export async function POST(
       )
     }
 
-    if (baseImage.project.user_id !== user.id) {
+    if (baseImage.user_id !== user.id) {
       return NextResponse.json(
-        { error: 'No autorizado para generar variantes' },
+        { error: 'No autorizado para generar transformaciones' },
         { status: 403 }
       )
     }
@@ -93,10 +94,10 @@ export async function POST(
       )
     }
 
-    // Get style details for token cost
+    // Get style details
     const { data: style, error: styleError } = await supabase
-      .from('staging_styles')
-      .select('token_cost, base_prompt, name, code')
+      .from('design_styles')
+      .select('base_prompt, name, code')
       .eq('id', style_id)
       .single()
 
@@ -107,7 +108,7 @@ export async function POST(
       )
     }
 
-    const tokenCost = style.token_cost || 1
+    const tokenCost = 10 // Standard token cost for transformations
 
     if (profile.tokens_available < tokenCost) {
       return NextResponse.json(
@@ -116,9 +117,9 @@ export async function POST(
       )
     }
 
-    // Get room type and color scheme details if provided
+    // Get room type and color palette details if provided
     let roomType = null
-    let colorScheme = null
+    let colorPalette = null
 
     if (room_type_id) {
       const { data: rt } = await supabase
@@ -130,12 +131,12 @@ export async function POST(
     }
 
     if (color_scheme_id) {
-      const { data: cs } = await supabase
-        .from('color_schemes')
-        .select('name, code, hex_colors')
+      const { data: cp } = await supabase
+        .from('color_palettes')
+        .select('name, code, primary_colors')
         .eq('id', color_scheme_id)
         .single()
-      colorScheme = cs
+      colorPalette = cp
     }
 
     // Build enhanced prompt
@@ -143,8 +144,8 @@ export async function POST(
     if (roomType) {
       customInstructions += ` for a ${roomType.name}`
     }
-    if (colorScheme) {
-      const colorNames = colorScheme.name.toLowerCase()
+    if (colorPalette) {
+      const colorNames = colorPalette.name.toLowerCase()
       customInstructions += ` with ${colorNames} color palette`
     }
     
@@ -161,41 +162,38 @@ export async function POST(
       customInstructions += `. Room dimensions: ${dimInfo.join(' by ')}`
     }
 
-    // Create staging generation record
-    const { data: generation, error: genError } = await supabase
-      .from('staging_generations')
+    // Create transformation record
+    const { data: transformation, error: transformationError } = await supabase
+      .from('transformations')
       .insert({
         user_id: user.id,
         project_id: baseImage.project_id,
-        project_image_id: baseImageId,
+        base_image_id: baseImageId,
         style_id,
-        room_type_id,
-        color_scheme_id,
-        original_image_url: baseImage.original_image_url,
-        original_cloudflare_id: baseImage.original_cloudflare_id,
+        palette_id: color_scheme_id || null,
         prompt_used: customInstructions,
-        custom_prompt: custom_prompt || null,
-        dimensions: dimensions || null,
-        provider: provider,
-        generation_params: {
+        custom_instructions: custom_prompt || null,
+        tokens_consumed: tokenCost,
+        status: 'processing',
+        is_favorite: false,
+        is_shared: false,
+        share_count: 0,
+        metadata: {
           style_name: style.name,
           room_type_name: roomType?.name,
-          color_scheme_name: colorScheme?.name,
-          color_palette: colorScheme?.hex_colors,
-          dimensions: dimensions || null
-        },
-        status: 'processing',
-        tokens_consumed: tokenCost,
-        is_favorite: false,
-        started_at: new Date().toISOString()
+          color_palette_name: colorPalette?.name,
+          color_palette: colorPalette?.primary_colors,
+          dimensions: dimensions || null,
+          provider: provider
+        }
       })
       .select()
       .single()
 
-    if (genError) {
-      console.error('Generation creation error:', genError)
+    if (transformationError) {
+      console.error('Transformation creation error:', transformationError)
       return NextResponse.json(
-        { error: 'Error al crear generación' },
+        { error: 'Error al crear transformación' },
         { status: 500 }
       )
     }
@@ -218,11 +216,11 @@ export async function POST(
 
     if (tokenError) {
       console.error('Token deduction error:', tokenError)
-      // Delete the generation record if token deduction fails
+      // Delete the transformation record if token deduction fails
       await supabase
-        .from('staging_generations')
+        .from('transformations')
         .delete()
-        .eq('id', generation.id)
+        .eq('id', transformation.id)
       
       return NextResponse.json(
         { error: 'Error al procesar tokens' },
@@ -237,50 +235,47 @@ export async function POST(
         user_id: user.id,
         type: 'consumption',
         amount: -tokenCost,
-        balance_before: profile.tokens_available,
-        balance_after: profile.tokens_available - tokenCost,
-        generation_id: generation.id,
-        description: `Generación de diseño ${style.name}`
+        description: `Transformación de diseño ${style.name}`
       })
 
-    // Get current project token usage
-    const { data: currentProject } = await supabase
-      .from('projects')
-      .select('total_tokens_used')
-      .eq('id', baseImage.project_id)
-      .single()
+    // Update project transformation count
+    if (baseImage.project_id) {
+      const { data: currentProject } = await supabase
+        .from('projects')
+        .select('total_transformations')
+        .eq('id', baseImage.project_id)
+        .single()
 
-    // Update project token usage
-    await supabase
-      .from('projects')
-      .update({
-        total_tokens_used: (currentProject?.total_tokens_used || 0) + tokenCost,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', baseImage.project_id)
+      await supabase
+        .from('projects')
+        .update({
+          total_transformations: (currentProject?.total_transformations || 0) + 1
+        })
+        .eq('id', baseImage.project_id)
+    }
 
-    // Process generation in background
-    processGeneration(
-      generation.id,
-      baseImage.original_image_url,
+    // Process transformation in background
+    processTransformation(
+      transformation.id,
+      baseImage.url,
       style.code,
       roomType?.code,
       customInstructions,
       user.id,
       provider,
       dimensions,
-      colorScheme?.name
+      colorPalette?.name
     ).catch(error => {
-      console.error('Background generation error:', error)
+      console.error('Background transformation error:', error)
     })
 
     return NextResponse.json({
       success: true,
-      generation: {
-        ...generation,
+      transformation: {
+        ...transformation,
         style,
         room_type: roomType,
-        color_scheme: colorScheme
+        color_palette: colorPalette
       }
     })
   } catch (error) {
@@ -293,8 +288,8 @@ export async function POST(
 }
 
 // Background processing function
-async function processGeneration(
-  generationId: string,
+async function processTransformation(
+  transformationId: string,
   originalImageUrl: string,
   styleCode: string,
   roomTypeCode: string | undefined,
@@ -331,7 +326,7 @@ async function processGeneration(
       roomType: roomTypeCode,
       customInstructions,
       userId,
-      generationId,
+      generationId: transformationId,
       options: {
         numberOfImages: 1,
         enhancePrompt: true,
@@ -339,7 +334,7 @@ async function processGeneration(
         dimensions: dimensions,
         colorScheme: colorScheme, // Pass color scheme for better styling
         progressCallback: (progress) => {
-          console.log(`Generation ${generationId}: ${progress.step}`)
+          console.log(`Transformation ${transformationId}: ${progress.step}`)
         }
       }
     })
@@ -368,14 +363,14 @@ async function processGeneration(
     }
     
     // Upload to Cloudflare
-    const uniqueFileName = `staged-${Date.now()}-${generationId}.jpg`
+    const uniqueFileName = `transformed-${Date.now()}-${transformationId}.jpg`
     const uploadResponse = await cloudflareImages.uploadImage(
       buffer,
       uniqueFileName,
       {
         metadata: {
-          generationId,
-          type: 'staged_image',
+          transformationId,
+          type: 'result_image',
           style: styleCode,
           roomType: roomTypeCode || '',
           prompt: customInstructions,
@@ -386,18 +381,18 @@ async function processGeneration(
     )
     
     if (!uploadResponse.success) {
-      throw new Error('Failed to upload staged image to Cloudflare')
+      throw new Error('Failed to upload transformed image to Cloudflare')
     }
     
     // Get variant URLs
     const imageUrls = cloudflareImages.getVariantUrls(uploadResponse.result.id)
     
-    // Update generation record - RLS disabled temporarily
+    // Update transformation record - RLS disabled temporarily
     const { error: updateError } = await supabase
-      .from('staging_generations')
+      .from('transformations')
       .update({
-        processed_image_url: imageUrls.original,
-        processed_cloudflare_id: uploadResponse.result.id,
+        result_image_url: imageUrls.original,
+        result_cloudflare_id: uploadResponse.result.id,
         status: 'completed',
         completed_at: new Date().toISOString(),
         processing_time_ms: Date.now() - startTime,
@@ -408,31 +403,31 @@ async function processGeneration(
           cloudflare_variants: imageUrls
         }
       })
-      .eq('id', generationId)
+      .eq('id', transformationId)
     
     if (updateError) {
-      console.error(`Failed to update generation ${generationId}:`, updateError)
+      console.error(`Failed to update transformation ${transformationId}:`, updateError)
       throw updateError
     }
     
-    console.log(`✅ Generation ${generationId} completed successfully!`, {
+    console.log(`✅ Transformation ${transformationId} completed successfully!`, {
       cloudflareId: uploadResponse.result.id,
       imageUrl: imageUrls.original,
       processingTime: Date.now() - startTime
     })
     
   } catch (error) {
-    console.error(`Generation ${generationId} failed:`, error)
+    console.error(`Transformation ${transformationId} failed:`, error)
     
-    // Update generation record with failure
+    // Update transformation record with failure
     await supabase
-      .from('staging_generations')
+      .from('transformations')
       .update({
         status: 'failed',
         error_message: error instanceof Error ? error.message : 'Unknown error',
         completed_at: new Date().toISOString(),
         processing_time_ms: Date.now() - startTime
       })
-      .eq('id', generationId)
+      .eq('id', transformationId)
   }
 }

@@ -64,11 +64,13 @@ import { VariantGallery } from '@/components/projects/VariantGallery'
 interface BaseImage {
   id: string
   name: string | null
-  image_name: string
-  original_image_url: string
-  upload_order: number
+  url: string
+  upload_order: number | null
   created_at: string
-  variant_count: number
+  transformations?: Array<{
+    id: string
+    status: string
+  }>
 }
 
 interface Project {
@@ -76,11 +78,10 @@ interface Project {
   name: string
   description: string | null
   status: 'active' | 'completed' | 'archived'
-  total_images: number
-  total_tokens_used: number
+  total_transformations: number
   created_at: string
   updated_at: string
-  base_images: BaseImage[]
+  images: BaseImage[]
 }
 
 interface Variant {
@@ -197,9 +198,9 @@ export default function ProjectWorkspacePage({
       setProject(data.project)
       setProjectName(data.project.name)
       
-      // Auto-select first base image if available
-      if (data.project.base_images?.length > 0 && !selectedBaseImage) {
-        setSelectedBaseImage(data.project.base_images[0])
+      // Auto-select first image if available
+      if (data.project.images?.length > 0 && !selectedBaseImage) {
+        setSelectedBaseImage(data.project.images[0])
       }
     } catch (error) {
       console.error('Error fetching project:', error)
@@ -332,9 +333,9 @@ export default function ProjectWorkspacePage({
       if (data.projectImage) {
         // Wait for project to be updated, then select the new image
         setTimeout(() => {
-          const newBaseImage = project.base_images.find(img => img.id === data.projectImage.id)
-          if (newBaseImage) {
-            setSelectedBaseImage(newBaseImage)
+          const newImage = project.images.find(img => img.id === data.projectImage.id)
+          if (newImage) {
+            setSelectedBaseImage(newImage)
           }
         }, 100)
       }
@@ -663,10 +664,10 @@ export default function ProjectWorkspacePage({
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline">
-              {project.total_images} imagen{project.total_images !== 1 ? 'es' : ''}
+              {project.images?.length || 0} imagen{(project.images?.length || 0) !== 1 ? 'es' : ''}
             </Badge>
             <Badge variant="outline">
-              {project.total_tokens_used} tokens usados
+              {project.total_transformations} transformaciones
             </Badge>
             <DashboardHeader />
           </div>
@@ -706,13 +707,13 @@ export default function ProjectWorkspacePage({
 
             <ScrollArea className="h-32">
               <div className="flex gap-2">
-                {project.base_images.length === 0 && !uploading ? (
+                {project.images.length === 0 && !uploading ? (
                   <div className="text-sm text-muted-foreground py-4 text-center w-full">
-                    No hay imágenes base. Sube una para comenzar.
+                    No hay imágenes. Sube una para comenzar.
                   </div>
                 ) : (
                   <>
-                    {project.base_images.map((image) => (
+                    {project.images.map((image) => (
                       <button
                         key={image.id}
                         onClick={() => setSelectedBaseImage(image)}
@@ -724,14 +725,14 @@ export default function ProjectWorkspacePage({
                         )}
                       >
                         <Image
-                          src={image.original_image_url}
-                          alt={image.name || image.image_name}
+                          src={image.url}
+                          alt={image.name || 'Imagen del proyecto'}
                           fill
                           className="object-cover"
                         />
-                        {image.variant_count > 0 && (
+                        {(image.transformations?.length || 0) > 0 && (
                           <div className="absolute bottom-0 right-0 bg-black/70 text-white text-xs px-1 rounded-tl">
-                            {image.variant_count}
+                            {image.transformations?.length || 0}
                           </div>
                         )}
                       </button>
@@ -766,8 +767,8 @@ export default function ProjectWorkspacePage({
                 ) : selectedBaseImage ? (
                   <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
                     <Image
-                      src={selectedBaseImage.original_image_url}
-                      alt={selectedBaseImage.name || selectedBaseImage.image_name}
+                      src={selectedBaseImage.url}
+                      alt={selectedBaseImage.name || 'Imagen del proyecto'}
                       fill
                       className="object-cover"
                     />
@@ -776,7 +777,7 @@ export default function ProjectWorkspacePage({
                 <p className="text-xs text-muted-foreground mt-2">
                   {uploading && !selectedBaseImage 
                     ? 'Subiendo imagen...' 
-                    : selectedBaseImage?.name || selectedBaseImage?.image_name}
+                    : selectedBaseImage?.name || 'Imagen del proyecto'}
                 </p>
               </div>
 
@@ -998,7 +999,7 @@ export default function ProjectWorkspacePage({
               variants={variants}
               loading={loadingVariants}
               onToggleFavorite={handleToggleFavorite}
-              originalImage={selectedBaseImage.original_image_url}
+              originalImage={selectedBaseImage.url}
             />
           )}
         </div>
@@ -1009,7 +1010,7 @@ export default function ProjectWorkspacePage({
         <ImageViewerModal
           isOpen={viewerModal.isOpen}
           onClose={() => setViewerModal({ isOpen: false })}
-          originalImage={selectedBaseImage.original_image_url}
+          originalImage={selectedBaseImage.url}
           processedImage={viewerModal.variant.processed_image_url!}
           styleName={viewerModal.variant.style?.name}
           roomType={viewerModal.variant.room_type?.name}

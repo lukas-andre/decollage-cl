@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     // Build query
     let query = supabase
-      .from('staging_styles')
+      .from('design_styles')
       .select('*')
       .eq('is_active', isActive)
       .order('sort_order', { ascending: true })
@@ -69,15 +69,18 @@ export async function GET(request: NextRequest) {
     const aiStyles = Object.values(stylesObject).map(style => ({
       id: `ai_${style.id}`,
       name: style.name,
+      name_en: style.name, // English name same as name for AI styles
       code: style.id,
       category: 'ai_generated',
       description: style.description,
       base_prompt: style.keywords.join(', '),
-      ai_config: {
-        keywords: style.keywords,
-      },
-      token_cost: 10,
-      example_image: null,
+      negative_prompt: null,
+      example_images: [],
+      inspiration_keywords: style.keywords,
+      usage_count: 0,
+      is_featured: false,
+      is_seasonal: false,
+      is_trending: false,
       is_active: true,
       sort_order: 999,
       created_at: new Date().toISOString(),
@@ -148,7 +151,21 @@ export async function POST(request: NextRequest) {
 
     // Get request body
     const body = await request.json()
-    const { name, code, category, description, base_prompt, ai_config, token_cost, example_image } = body
+    const { 
+      name, 
+      name_en, 
+      code, 
+      category, 
+      description, 
+      base_prompt, 
+      negative_prompt, 
+      example_images, 
+      inspiration_keywords,
+      is_featured,
+      is_seasonal,
+      is_trending,
+      sort_order
+    } = body
 
     // Validate required fields
     if (!name || !code || !base_prompt) {
@@ -160,16 +177,22 @@ export async function POST(request: NextRequest) {
 
     // Insert new style
     const { data: newStyle, error } = await supabase
-      .from('staging_styles')
+      .from('design_styles')
       .insert({
         name,
+        name_en: name_en || null,
         code,
-        category,
-        description,
+        category: category || null,
+        description: description || null,
         base_prompt,
-        ai_config,
-        token_cost: token_cost || 10,
-        example_image,
+        negative_prompt: negative_prompt || null,
+        example_images: example_images || [],
+        inspiration_keywords: inspiration_keywords || null,
+        usage_count: 0,
+        is_featured: is_featured || false,
+        is_seasonal: is_seasonal || false,
+        is_trending: is_trending || false,
+        sort_order: sort_order || 100,
         is_active: true,
       })
       .select()
@@ -187,7 +210,7 @@ export async function POST(request: NextRequest) {
     await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'create_style',
-      entity_type: 'staging_styles',
+      entity_type: 'design_styles',
       entity_id: newStyle.id,
       new_data: newStyle,
     })

@@ -41,7 +41,7 @@ export async function GET(
     }
 
     const { data: style, error } = await supabase
-      .from('staging_styles')
+      .from('design_styles')
       .select('*')
       .eq('id', id)
       .single()
@@ -124,7 +124,7 @@ export async function PATCH(
 
     // Get current style data for logging
     const { data: oldStyle } = await supabase
-      .from('staging_styles')
+      .from('design_styles')
       .select('*')
       .eq('id', id)
       .single()
@@ -134,11 +134,8 @@ export async function PATCH(
     
     // Update style
     const { data: updatedStyle, error } = await supabase
-      .from('staging_styles')
-      .update({
-        ...body,
-        updated_at: new Date().toISOString(),
-      })
+      .from('design_styles')
+      .update(body)
       .eq('id', id)
       .select()
       .single()
@@ -155,7 +152,7 @@ export async function PATCH(
     await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'update_style',
-      entity_type: 'staging_styles',
+      entity_type: 'design_styles',
       entity_id: id,
       old_data: oldStyle,
       new_data: updatedStyle,
@@ -225,17 +222,16 @@ export async function DELETE(
 
     // Get style data for logging
     const { data: styleToDelete } = await supabase
-      .from('staging_styles')
+      .from('design_styles')
       .select('*')
       .eq('id', id)
       .single()
 
     // Soft delete - just set is_active to false
     const { error } = await supabase
-      .from('staging_styles')
+      .from('design_styles')
       .update({ 
-        is_active: false,
-        updated_at: new Date().toISOString()
+        is_active: false
       })
       .eq('id', id)
 
@@ -251,7 +247,7 @@ export async function DELETE(
     await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'delete_style',
-      entity_type: 'staging_styles',
+      entity_type: 'design_styles',
       entity_id: id,
       old_data: styleToDelete,
     })

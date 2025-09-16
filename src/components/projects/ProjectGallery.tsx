@@ -38,26 +38,26 @@ import { BeforeAfterSlider } from '@/components/projects/BeforeAfterSlider'
 
 interface ProjectImage {
   id: string
-  original_image_url: string
-  image_name: string
-  tags: string[]
-  notes: string
-  status: 'uploaded' | 'processing' | 'completed' | 'failed'
-  upload_order: number
+  url: string
+  name: string
+  tags: string[] | null
+  description: string | null
+  image_type: string
+  upload_order: number | null
   created_at: string
-  staging_generation?: {
+  transformations?: {
     id: string
     status: string
-    processed_image_url: string | null
+    result_image_url: string | null
     tokens_consumed: number
     created_at: string
     completed_at: string | null
     metadata: Record<string, unknown>
-    staging_styles?: {
+    design_styles?: {
       name: string
       code: string
-    }
-  }
+    } | null
+  }[]
 }
 
 interface ProjectGalleryProps {
@@ -73,27 +73,23 @@ interface GenerateDialogProps {
   onGenerate: (style: string, roomType?: string, instructions?: string) => Promise<void>
 }
 
-const statusConfig = {
-  uploaded: { 
-    label: 'Subida', 
-    color: 'bg-blue-500',
-    icon: Clock
-  },
-  processing: { 
-    label: 'Procesando', 
-    color: 'bg-yellow-500',
-    icon: Loader2
-  },
-  completed: { 
-    label: 'Completada', 
-    color: 'bg-green-500',
-    icon: CheckCircle
-  },
-  failed: { 
-    label: 'Error', 
-    color: 'bg-red-500',
-    icon: AlertCircle
-  },
+const getImageStatus = (image: ProjectImage) => {
+  if (!image.transformations || image.transformations.length === 0) {
+    return { label: 'Sin procesar', color: 'bg-blue-500', icon: Clock }
+  }
+  
+  const latestTransformation = image.transformations[image.transformations.length - 1]
+  
+  switch (latestTransformation.status) {
+    case 'processing':
+      return { label: 'Procesando', color: 'bg-yellow-500', icon: Loader2 }
+    case 'completed':
+      return { label: 'Completada', color: 'bg-green-500', icon: CheckCircle }
+    case 'failed':
+      return { label: 'Error', color: 'bg-red-500', icon: AlertCircle }
+    default:
+      return { label: 'Pendiente', color: 'bg-gray-500', icon: Clock }
+  }
 }
 
 interface StagingStyle {
@@ -178,7 +174,7 @@ function GenerateDialog({ open, onOpenChange, image, onGenerate }: GenerateDialo
         <DialogHeader>
           <DialogTitle>Generar staging virtual</DialogTitle>
           <DialogDescription>
-            Configura los parámetros para generar el staging de &quot;{image?.image_name}&quot;
+            Configura los parámetros para generar el staging de &quot;{image?.name || 'esta imagen'}&quot;
           </DialogDescription>
         </DialogHeader>
 
@@ -341,25 +337,26 @@ export function ProjectGallery({
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {images.map((image) => {
-          const status = statusConfig[image.status]
+          const status = getImageStatus(image)
           const StatusIcon = status.icon
+          const latestTransformation = image.transformations?.[image.transformations.length - 1]
 
           return (
             <Card key={image.id} className="overflow-hidden">
               <div className="relative aspect-video bg-muted">
-                {image.staging_generation?.processed_image_url ? (
-                  // Show before/after comparison for completed generations
+                {latestTransformation?.result_image_url ? (
+                  // Show before/after comparison for completed transformations
                   <BeforeAfterSlider
-                    beforeImage={image.original_image_url}
-                    afterImage={image.staging_generation.processed_image_url}
+                    beforeImage={image.url}
+                    afterImage={latestTransformation.result_image_url}
                     beforeAlt="Original"
                     afterAlt="Staging virtual"
                   />
                 ) : (
                   // Show original image only
                   <Image
-                    src={image.original_image_url}
-                    alt={image.image_name}
+                    src={image.url}
+                    alt={image.name || 'Imagen del proyecto'}
                     fill
                     className="object-cover"
                   />
@@ -379,13 +376,13 @@ export function ProjectGallery({
 
                 {/* Actions overlay */}
                 <div className="absolute top-2 right-2 flex gap-1">
-                  {image.staging_generation?.processed_image_url && (
+                  {latestTransformation?.result_image_url && (
                     <Button
                       size="sm"
                       variant="secondary"
                       onClick={() => downloadImage(
-                        image.staging_generation!.processed_image_url!,
-                        `staged_${image.image_name}.jpg`
+                        latestTransformation.result_image_url!,
+                        `staged_${image.name || 'image'}.jpg`
                       )}
                     >
                       <Download className="h-4 w-4" />
@@ -404,25 +401,25 @@ export function ProjectGallery({
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold truncate" title={image.image_name}>
-                      {image.image_name}
+                    <h3 className="font-semibold truncate" title={image.name || 'Imagen del proyecto'}>
+                      {image.name || 'Imagen del proyecto'}
                     </h3>
-                    {image.staging_generation?.staging_styles && (
+                    {latestTransformation?.design_styles && (
                       <p className="text-sm text-muted-foreground">
-                        {image.staging_generation.staging_styles.name}
+                        {latestTransformation.design_styles.name}
                       </p>
                     )}
                   </div>
                   
-                  {image.staging_generation?.tokens_consumed && (
+                  {latestTransformation?.tokens_consumed && (
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Coins className="h-3 w-3" />
-                      {image.staging_generation.tokens_consumed}
+                      {latestTransformation.tokens_consumed}
                     </div>
                   )}
                 </div>
 
-                {image.tags.length > 0 && (
+                {image.tags && image.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-3">
                     {image.tags.slice(0, 2).map((tag) => (
                       <Badge key={tag} variant="outline" className="text-xs">
@@ -444,9 +441,9 @@ export function ProjectGallery({
                       locale: es 
                     })}
                   </span>
-                  {image.staging_generation?.completed_at && (
+                  {latestTransformation?.completed_at && (
                     <span>
-                      Completado {formatDistanceToNow(new Date(image.staging_generation.completed_at), { 
+                      Completado {formatDistanceToNow(new Date(latestTransformation.completed_at), { 
                         addSuffix: true,
                         locale: es 
                       })}
@@ -456,38 +453,16 @@ export function ProjectGallery({
 
                 {/* Action buttons */}
                 <div className="flex gap-2">
-                  {!image.staging_generation && image.status !== 'processing' && (
+                  {(!latestTransformation || latestTransformation.status !== 'processing') && (
                     <Button
                       size="sm"
                       onClick={() => openGenerateDialog(image)}
                       className="flex-1"
                     >
                       <Play className="mr-2 h-4 w-4" />
-                      Generar staging
-                    </Button>
-                  )}
-                  
-                  {image.status === 'failed' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openGenerateDialog(image)}
-                      className="flex-1"
-                    >
-                      <Play className="mr-2 h-4 w-4" />
-                      Reintentar
-                    </Button>
-                  )}
-
-                  {image.staging_generation?.status === 'completed' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openGenerateDialog(image)}
-                      className="flex-1"
-                    >
-                      <Palette className="mr-2 h-4 w-4" />
-                      Nuevo estilo
+                      {!latestTransformation ? 'Generar staging' : 
+                       latestTransformation.status === 'failed' ? 'Reintentar' :
+                       'Nuevo estilo'}
                     </Button>
                   )}
                 </div>
@@ -514,31 +489,34 @@ export function ProjectGallery({
         <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
           <DialogContent className="max-w-4xl">
             <DialogHeader>
-              <DialogTitle>{viewingImage.image_name}</DialogTitle>
-              {viewingImage.notes && (
-                <DialogDescription>{viewingImage.notes}</DialogDescription>
+              <DialogTitle>{viewingImage.name || 'Imagen del proyecto'}</DialogTitle>
+              {viewingImage.description && (
+                <DialogDescription>{viewingImage.description}</DialogDescription>
               )}
             </DialogHeader>
 
             <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-              {viewingImage.staging_generation?.processed_image_url ? (
-                <BeforeAfterSlider
-                  beforeImage={viewingImage.original_image_url}
-                  afterImage={viewingImage.staging_generation.processed_image_url}
-                  beforeAlt="Original"
-                  afterAlt="Staging virtual"
-                />
-              ) : (
-                <Image
-                  src={viewingImage.original_image_url}
-                  alt={viewingImage.image_name}
-                  fill
-                  className="object-contain"
-                />
-              )}
+              {(() => {
+                const latestTransformation = viewingImage.transformations?.[viewingImage.transformations.length - 1]
+                return latestTransformation?.result_image_url ? (
+                  <BeforeAfterSlider
+                    beforeImage={viewingImage.url}
+                    afterImage={latestTransformation.result_image_url}
+                    beforeAlt="Original"
+                    afterAlt="Staging virtual"
+                  />
+                ) : (
+                  <Image
+                    src={viewingImage.url}
+                    alt={viewingImage.name || 'Imagen del proyecto'}
+                    fill
+                    className="object-contain"
+                  />
+                )
+              })()}
             </div>
 
-            {viewingImage.tags.length > 0 && (
+            {viewingImage.tags && viewingImage.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {viewingImage.tags.map((tag) => (
                   <Badge key={tag} variant="outline">

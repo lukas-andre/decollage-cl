@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       .from('projects')
       .select(`
         *,
-        project_images:project_images(count)
+        images(count)
       `)
 
     // Add status filter if provided
@@ -68,16 +68,16 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // For each project, get favorite/latest generation
-    const projectsWithGenerations = await Promise.all(
+    // For each project, get favorite/latest transformation
+    const projectsWithTransformations = await Promise.all(
       (projects || []).map(async (project) => {
-        // Get favorite generation (if exists)
-        const { data: favoriteGeneration } = await supabase
-          .from('staging_generations')
+        // Get favorite transformation (if exists)
+        const { data: favoriteTransformation } = await supabase
+          .from('transformations')
           .select(`
             id,
-            processed_image_url,
-            staging_styles(name)
+            result_image_url,
+            design_styles(name)
           `)
           .eq('project_id', project.id)
           .eq('is_favorite', true)
@@ -86,16 +86,16 @@ export async function GET(request: NextRequest) {
           .limit(1)
           .single()
 
-        let latestGeneration = null
+        let latestTransformation = null
         
-        // If no favorite, get latest generation
-        if (!favoriteGeneration) {
+        // If no favorite, get latest transformation
+        if (!favoriteTransformation) {
           const { data } = await supabase
-            .from('staging_generations')
+            .from('transformations')
             .select(`
               id,
-              processed_image_url,
-              staging_styles(name)
+              result_image_url,
+              design_styles(name)
             `)
             .eq('project_id', project.id)
             .eq('status', 'completed')
@@ -103,17 +103,17 @@ export async function GET(request: NextRequest) {
             .limit(1)
             .single()
           
-          latestGeneration = data
+          latestTransformation = data
         }
 
         return {
           ...project,
-          featured_generation: favoriteGeneration || latestGeneration
+          featured_transformation: favoriteTransformation || latestTransformation
         }
       })
     )
 
-    return NextResponse.json({ projects: projectsWithGenerations })
+    return NextResponse.json({ projects: projectsWithTransformations })
   } catch (error) {
     console.error('Projects API error:', error)
     return NextResponse.json(
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, metadata = {} } = body
+    const { name, description, project_type = 'personal', space_type, metadata = {} } = body
 
     if (!name || name.trim().length === 0) {
       return NextResponse.json(
@@ -173,13 +173,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Generate a slug from the name
+    const slug = name.trim().toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+
     // Create project
     const { data: project, error } = await supabase
       .from('projects')
       .insert({
         user_id: user.id,
         name: name.trim(),
+        slug: slug || `project-${Date.now()}`,
         description: description?.trim() || null,
+        project_type,
+        space_type: space_type || null,
+        status: 'active',
+        completion_percentage: 0,
+        is_public: false,
+        is_featured: false,
+        total_transformations: 0,
+        total_inspirations: 0,
+        total_views: 0,
+        total_likes: 0,
+        tags: [],
         metadata,
       })
       .select()

@@ -85,30 +85,80 @@ export async function POST(request: NextRequest) {
 
     // Get style ID from database
     const { data: styleData } = await supabase
-      .from('staging_styles')
+      .from('design_styles')
       .select('id')
       .eq('code', style)
       .single()
 
-    // Create staging generation record
-    const { data: generation, error: generationError } = await supabase
-      .from('staging_generations')
+    // First upload the original image to create an images record
+    const originalImageUpload = await cloudflareImages.uploadImage(
+      image,
+      cloudflareImages.generateUniqueFilename(image.name, user.id),
+      {
+        metadata: {
+          userId: user.id,
+          type: 'base',
+        }
+      }
+    )
+
+    if (!originalImageUpload.success) {
+      return NextResponse.json(
+        { error: 'Error al subir imagen' },
+        { status: 500 }
+      )
+    }
+
+    const originalImageUrls = cloudflareImages.getVariantUrls(originalImageUpload.result.id)
+
+    // Create base image record
+    const { data: baseImage, error: imageError } = await supabase
+      .from('images')
       .insert({
         user_id: user.id,
-        style_id: styleData?.id,
-        original_image_url: '', // Will be updated after upload
-        processed_image_url: '', // Will be updated after generation (changed from staged_image_url)
-        user_prompt: customInstructions,
-        tokens_consumed: tokensRequired,
-        status: 'pending',
-        created_at: new Date().toISOString(),
+        url: originalImageUrls.public,
+        cloudflare_id: originalImageUpload.result.id,
+        thumbnail_url: originalImageUrls.thumbnail,
+        image_type: 'base',
+        source: 'upload',
+        name: image.name,
+        is_primary: true,
       })
       .select()
       .single()
 
-    if (generationError) {
+    if (imageError) {
       return NextResponse.json(
-        { error: 'Error al crear la generación' },
+        { error: 'Error al crear registro de imagen' },
+        { status: 500 }
+      )
+    }
+
+    // Create transformation record
+    const { data: transformation, error: transformationError } = await supabase
+      .from('transformations')
+      .insert({
+        user_id: user.id,
+        base_image_id: baseImage.id,
+        style_id: styleData?.id,
+        prompt_used: customInstructions,
+        custom_instructions: customInstructions,
+        tokens_consumed: tokensRequired,
+        status: 'pending',
+        is_favorite: false,
+        is_shared: false,
+        share_count: 0,
+        metadata: {
+          roomType: roomType || null,
+          originalFilename: image.name,
+        },
+      })
+      .select()
+      .single()
+
+    if (transformationError) {
+      return NextResponse.json(
+        { error: 'Error al crear la transformación' },
         { status: 500 }
       )
     }
@@ -119,31 +169,13 @@ export async function POST(request: NextRequest) {
       try {
         // Update status to processing
         await supabase
-          .from('staging_generations')
+          .from('transformations')
           .update({
             status: 'processing',
-            updated_at: new Date().toISOString(),
           })
-          .eq('id', generation.id)
+          .eq('id', transformation.id)
 
-        // Upload original image to Cloudflare
-        const originalImageUpload = await cloudflareImages.uploadImage(
-          image,
-          cloudflareImages.generateUniqueFilename(image.name, user.id),
-          {
-            metadata: {
-              userId: user.id,
-              generationId: generation.id,
-              type: 'original',
-            }
-          }
-        )
-
-        if (!originalImageUpload.success) {
-          throw new Error('Failed to upload original image')
-        }
-
-        const originalImageUrls = cloudflareImages.getVariantUrls(originalImageUpload.result.id)
+        // Original image already uploaded, proceed with staging generation
 
         // Generate virtual staging using AI
         const stagingResult = await virtualStagingService.generateStaging({
@@ -152,11 +184,11 @@ export async function POST(request: NextRequest) {
           roomType,
           customInstructions,
           userId: user.id,
-          generationId: generation.id,
+          generationId: transformation.id,
           options: {
             numberOfImages: 1,
             progressCallback: (progress) => {
-              console.log(`Generation ${generation.id} progress:`, progress)
+              console.log(`Transformation ${transformation.id} progress:`, progress)
             }
           }
         })
@@ -172,12 +204,12 @@ export async function POST(request: NextRequest) {
           cloudflareImages.generateUniqueFilename(`staged_${image.name}`, user.id),
           {
             metadata: {
-              userId: user.id,
-              generationId: generation.id,
-              type: 'staged',
-              style,
-              roomType: roomType || '',
-              aiCost: stagingResult.estimatedCostCLP.toString(),
+            userId: user.id,
+            transformationId: transformation.id,
+            type: 'result',
+            style,
+            roomType: roomType || '',
+            aiCost: stagingResult.estimatedCostCLP.toString(),
             }
           }
         )
@@ -188,14 +220,12 @@ export async function POST(request: NextRequest) {
 
         const stagedImageUrls = cloudflareImages.getVariantUrls(stagedImageUpload.result.id)
 
-        // Update generation record with success
+        // Update transformation record with success
         await supabase
-          .from('staging_generations')
+          .from('transformations')
           .update({
-            original_image_url: originalImageUrls.public,
-            original_cloudflare_id: originalImageUpload.result.id,
-            processed_image_url: stagedImageUrls.public, // Changed from staged_image_url
-            processed_cloudflare_id: stagedImageUpload.result.id,
+            result_image_url: stagedImageUrls.public,
+            result_cloudflare_id: stagedImageUpload.result.id,
             prompt_used: stagingResult.finalPrompt,
             status: 'completed',
             completed_at: new Date().toISOString(),
@@ -205,14 +235,13 @@ export async function POST(request: NextRequest) {
               processingTime: stagingResult.processingTime,
               costBreakdown: stagingResult.costBreakdown,
               warnings: stagingResult.warnings,
-            },
-            generation_params: {
               style,
               roomType: roomType || null,
               customInstructions: customInstructions || null,
-            }
+              originalFilename: image.name,
+            },
           })
-          .eq('id', generation.id)
+          .eq('id', transformation.id)
 
         // Deduct tokens from user
         await supabase
@@ -231,7 +260,7 @@ export async function POST(request: NextRequest) {
             type: 'consumption',
             amount: -tokensRequired,
             description: `Generación de staging - ${style}${roomType ? ` (${roomType})` : ''}`,
-            generation_id: generation.id,
+            transformation_id: transformation.id,
             created_at: new Date().toISOString(),
             metadata: {
               aiCost: stagingResult.estimatedCostCLP,
@@ -240,7 +269,7 @@ export async function POST(request: NextRequest) {
           })
 
         console.log('Virtual staging completed successfully:', {
-          generationId: generation.id,
+          transformationId: transformation.id,
           style,
           roomType,
           processingTime: stagingResult.processingTime,
@@ -250,9 +279,9 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         console.error('Error processing generation:', error)
         
-        // Update generation record with error
+        // Update transformation record with error
         await supabase
-          .from('staging_generations')
+          .from('transformations')
           .update({
             status: 'failed',
             completed_at: new Date().toISOString(),
@@ -261,15 +290,15 @@ export async function POST(request: NextRequest) {
               error: error instanceof Error ? error.message : 'Unknown error'
             }
           })
-          .eq('id', generation.id)
+          .eq('id', transformation.id)
       }
     })
 
     return NextResponse.json({
       success: true,
-      generationId: generation.id,
+      transformationId: transformation.id,
       status: 'processing',
-      message: 'Generación iniciada',
+      message: 'Transformación iniciada',
     })
   } catch (error) {
     console.error('Generation error:', error)
@@ -280,15 +309,15 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Get generation status
+// Get transformation status
 export async function GET(request: NextRequest) {
   const cookieStore = await cookies()
   const { searchParams } = new URL(request.url)
-  const generationId = searchParams.get('id')
+  const transformationId = searchParams.get('id')
 
-  if (!generationId) {
+  if (!transformationId) {
     return NextResponse.json(
-      { error: 'ID de generación requerido' },
+      { error: 'ID de transformación requerido' },
       { status: 400 }
     )
   }
@@ -323,31 +352,44 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get generation details
-    const { data: generation, error: generationError } = await supabase
-      .from('staging_generations')
-      .select('*')
-      .eq('id', generationId)
-      .eq('user_id', user.id) // Ensure user owns the generation
+    // Get transformation details
+    const { data: transformation, error: transformationError } = await supabase
+      .from('transformations')
+      .select(`
+        *,
+        base_image:images!transformations_base_image_id_fkey(
+          url,
+          cloudflare_id
+        ),
+        design_styles(
+          name,
+          code
+        )
+      `)
+      .eq('id', transformationId)
+      .eq('user_id', user.id) // Ensure user owns the transformation
       .single()
 
-    if (generationError || !generation) {
+    if (transformationError || !transformation) {
       return NextResponse.json(
-        { error: 'Generación no encontrada' },
+        { error: 'Transformación no encontrada' },
         { status: 404 }
       )
     }
 
     return NextResponse.json({
-      id: generation.id,
-      status: generation.status,
-      style: generation.style_id,
-      originalImageUrl: generation.original_image_url,
-      stagedImageUrl: generation.processed_image_url, // Changed from staged_image_url
-      tokensUsed: generation.tokens_consumed, // Changed from tokens_used
-      createdAt: generation.created_at,
-      updatedAt: generation.completed_at || generation.created_at,
-      errorMessage: generation.error_message,
+      id: transformation.id,
+      status: transformation.status,
+      style: transformation.design_styles?.code,
+      styleName: transformation.design_styles?.name,
+      originalImageUrl: transformation.base_image?.url,
+      resultImageUrl: transformation.result_image_url,
+      tokensConsumed: transformation.tokens_consumed,
+      createdAt: transformation.created_at,
+      completedAt: transformation.completed_at,
+      processingTimeMs: transformation.processing_time_ms,
+      errorMessage: transformation.error_message,
+      metadata: transformation.metadata,
     })
   } catch {
     return NextResponse.json(

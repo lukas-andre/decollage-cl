@@ -55,7 +55,7 @@ export async function POST(
 
     // Get project image
     const { data: projectImage, error: projectImageError } = await supabase
-      .from('project_images')
+      .from('images')
       .select(`
         *,
         projects!inner (
@@ -98,21 +98,20 @@ export async function POST(
 
     // Get style ID from database
     const { data: styleData } = await supabase
-      .from('staging_styles')
+      .from('design_styles')
       .select('id')
       .eq('code', style)
       .single()
 
-    // Create staging generation record
-    const { data: generation, error: generationError } = await supabase
-      .from('staging_generations')
+    // Create transformation record
+    const { data: transformation, error: transformationError } = await supabase
+      .from('transformations')
       .insert({
         user_id: user.id,
         project_id: projectId,
-        project_image_id: imageId,
+        base_image_id: imageId,
         style_id: styleData?.id,
-        original_image_url: projectImage.original_image_url,
-        user_prompt: customInstructions,
+        custom_instructions: customInstructions,
         tokens_consumed: tokensRequired,
         status: 'pending',
         created_at: new Date().toISOString(),
@@ -120,37 +119,30 @@ export async function POST(
       .select()
       .single()
 
-    if (generationError) {
-      console.error('Error creating generation:', generationError)
+    if (transformationError) {
+      console.error('Error creating transformation:', transformationError)
       return NextResponse.json(
-        { error: 'Error al crear la generación' },
+        { error: 'Error al crear la transformación' },
         { status: 500 }
       )
     }
 
-    // Update project image status and link to generation
-    await supabase
-      .from('project_images')
-      .update({
-        staging_generation_id: generation.id,
-        status: 'processing',
-      })
-      .eq('id', imageId)
+    // Note: In new schema, we don't need to update image status
+    // The transformation status tracks the processing state
 
     // Process in background to avoid timeout
     process.nextTick(async () => {
       try {
-        // Update generation status to processing
+        // Update transformation status to processing
         await supabase
-          .from('staging_generations')
+          .from('transformations')
           .update({
             status: 'processing',
-            started_at: new Date().toISOString(),
           })
-          .eq('id', generation.id)
+          .eq('id', transformation.id)
 
         // Download original image from Cloudflare
-        const imageResponse = await fetch(projectImage.original_image_url)
+        const imageResponse = await fetch(projectImage.url)
         const imageBlob = await imageResponse.blob()
         const imageFile = new File([imageBlob], 'original.jpg', { type: imageBlob.type })
 
@@ -161,11 +153,11 @@ export async function POST(
           roomType,
           customInstructions,
           userId: user.id,
-          generationId: generation.id,
+          generationId: transformation.id,
           options: {
             numberOfImages: 1,
             progressCallback: (progress) => {
-              console.log(`Generation ${generation.id} progress:`, progress)
+              console.log(`Transformation ${transformation.id} progress:`, progress)
             }
           }
         })
@@ -178,12 +170,12 @@ export async function POST(
         const stagedImageBlob = await fetch(stagingResult.stagedImageDataUrl!).then(r => r.blob())
         const stagedImageUpload = await cloudflareImages.uploadImage(
           stagedImageBlob,
-          cloudflareImages.generateUniqueFilename(`staged_${projectImage.image_name || 'image'}.jpg`, user.id),
+          cloudflareImages.generateUniqueFilename(`staged_${projectImage.name || 'image'}.jpg`, user.id),
           {
             metadata: {
               userId: user.id,
               projectId,
-              generationId: generation.id,
+              transformationId: transformation.id,
               type: 'staged',
               style,
               roomType: roomType || '',
@@ -198,13 +190,12 @@ export async function POST(
 
         const stagedImageUrls = cloudflareImages.getVariantUrls(stagedImageUpload.result.id)
 
-        // Update generation record with success
+        // Update transformation record with success
         await supabase
-          .from('staging_generations')
+          .from('transformations')
           .update({
-            original_cloudflare_id: projectImage.original_cloudflare_id,
-            processed_image_url: stagedImageUrls.public,
-            processed_cloudflare_id: stagedImageUpload.result.id,
+            result_image_url: stagedImageUrls.public,
+            result_cloudflare_id: stagedImageUpload.result.id,
             prompt_used: stagingResult.finalPrompt,
             status: 'completed',
             completed_at: new Date().toISOString(),
@@ -214,22 +205,13 @@ export async function POST(
               processingTime: stagingResult.processingTime,
               costBreakdown: stagingResult.costBreakdown,
               warnings: stagingResult.warnings,
+              originalImageUrl: projectImage.url,
+              originalCloudflareId: projectImage.cloudflare_id,
             },
-            generation_params: {
-              style,
-              roomType: roomType || null,
-              customInstructions: customInstructions || null,
-            }
           })
-          .eq('id', generation.id)
+          .eq('id', transformation.id)
 
-        // Update project image status
-        await supabase
-          .from('project_images')
-          .update({
-            status: 'completed',
-          })
-          .eq('id', imageId)
+        // Note: In new schema, image status is tracked via transformations
 
         // Deduct tokens from user
         await supabase
@@ -247,12 +229,15 @@ export async function POST(
             user_id: user.id,
             type: 'consumption',
             amount: -tokensRequired,
-            description: `Generación de staging - Proyecto: ${projectImage.image_name || 'Sin nombre'}`,
+            balance_before: profile.tokens_available,
+            balance_after: profile.tokens_available - tokensRequired,
+            transformation_id: transformation.id,
+            description: `Generación de staging - Proyecto: ${projectImage.name || 'Sin nombre'}`,
             created_at: new Date().toISOString(),
           })
 
         console.log('Project image staging completed successfully:', {
-          generationId: generation.id,
+          transformationId: transformation.id,
           projectId,
           imageId,
           style,
@@ -264,9 +249,9 @@ export async function POST(
       } catch (error) {
         console.error('Error processing project image generation:', error)
         
-        // Update generation record with error
+        // Update transformation record with error
         await supabase
-          .from('staging_generations')
+          .from('transformations')
           .update({
             status: 'failed',
             completed_at: new Date().toISOString(),
@@ -275,23 +260,17 @@ export async function POST(
               error: error instanceof Error ? error.message : 'Unknown error'
             }
           })
-          .eq('id', generation.id)
+          .eq('id', transformation.id)
 
-        // Update project image status
-        await supabase
-          .from('project_images')
-          .update({
-            status: 'failed',
-          })
-          .eq('id', imageId)
+        // Note: In new schema, transformation status tracks the processing state
       }
     })
 
     return NextResponse.json({
       success: true,
-      generationId: generation.id,
+      transformationId: transformation.id,
       status: 'processing',
-      message: 'Generación iniciada para imagen del proyecto',
+      message: 'Transformación iniciada para imagen del proyecto',
     })
   } catch (error) {
     console.error('Project image generation error:', error)

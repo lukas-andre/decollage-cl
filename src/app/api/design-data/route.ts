@@ -36,9 +36,9 @@ export async function GET() {
     }
 
     // Fetch all design data in parallel
-    const [stylesResult, roomTypesResult, colorSchemesResult] = await Promise.all([
+    const [stylesResult, roomTypesResult, colorPalettesResult, seasonalThemesResult] = await Promise.all([
       supabase
-        .from('staging_styles')
+        .from('design_styles')
         .select('*')
         .eq('is_active', true)
         .order('sort_order'),
@@ -50,7 +50,13 @@ export async function GET() {
         .order('sort_order'),
       
       supabase
-        .from('color_schemes')
+        .from('color_palettes')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order'),
+        
+      supabase
+        .from('seasonal_themes')
         .select('*')
         .eq('is_active', true)
         .order('sort_order'),
@@ -72,10 +78,18 @@ export async function GET() {
       )
     }
 
-    if (colorSchemesResult.error) {
-      console.error('Error fetching color schemes:', colorSchemesResult.error)
+    if (colorPalettesResult.error) {
+      console.error('Error fetching color palettes:', colorPalettesResult.error)
       return NextResponse.json(
-        { error: 'Error al obtener esquemas de color' },
+        { error: 'Error al obtener paletas de color' },
+        { status: 500 }
+      )
+    }
+
+    if (seasonalThemesResult.error) {
+      console.error('Error fetching seasonal themes:', seasonalThemesResult.error)
+      return NextResponse.json(
+        { error: 'Error al obtener temas estacionales' },
         { status: 500 }
       )
     }
@@ -83,7 +97,8 @@ export async function GET() {
     return NextResponse.json({
       styles: stylesResult.data || [],
       roomTypes: roomTypesResult.data || [],
-      colorSchemes: colorSchemesResult.data || [],
+      colorPalettes: colorPalettesResult.data || [],
+      seasonalThemes: seasonalThemesResult.data || [],
     })
   } catch (error) {
     console.error('Design data API error:', error)

@@ -47,20 +47,24 @@ interface Project {
   name: string
   description: string | null
   status: 'active' | 'completed' | 'archived'
-  total_images: number
-  total_tokens_used: number
+  total_transformations: number
   created_at: string
   updated_at: string
   is_public: boolean
   metadata?: {
     environment_type?: 'interior' | 'exterior' | 'commercial'
   }
-  featured_generation?: {
+  images?: {
     id: string
-    processed_image_url: string
-    staging_styles: {
+    url: string
+    thumbnail_url: string | null
+  }[]
+  featured_transformation?: {
+    id: string
+    result_image_url: string
+    design_styles: {
       name: string
-    }
+    } | null
   } | null
 }
 
@@ -569,8 +573,8 @@ export default function ProjectsPage() {
                       </div>
                       
                       <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                        <span>{project.total_images} imágenes</span>
-                        <span>{project.total_tokens_used} tokens usados</span>
+                        <span>{project.images?.length || 0} imágenes</span>
+                        <span>{project.total_transformations} transformaciones</span>
                         <span>
                           Actualizado {new Date(project.updated_at).toLocaleDateString('es-CL')}
                         </span>

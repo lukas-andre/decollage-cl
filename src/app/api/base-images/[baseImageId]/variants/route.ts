@@ -39,11 +39,12 @@ export async function GET(
       )
     }
 
-    // Verify base image ownership through project
+    // Verify base image ownership
     const { data: baseImage, error: baseImageError } = await supabase
-      .from('project_images')
-      .select('*, project:projects!inner(user_id)')
+      .from('images')
+      .select('*, project:projects(user_id)')
       .eq('id', baseImageId)
+      .eq('image_type', 'base')
       .single()
 
     if (baseImageError || !baseImage) {
@@ -53,46 +54,49 @@ export async function GET(
       )
     }
 
-    if (baseImage.project.user_id !== user.id) {
+    if (baseImage.user_id !== user.id) {
       return NextResponse.json(
-        { error: 'No autorizado para ver estas variantes' },
+        { error: 'No autorizado para ver estas transformaciones' },
         { status: 403 }
       )
     }
 
-    // Fetch all variants for this base image (all statuses)
-    const { data: variants, error: variantsError } = await supabase
-      .from('staging_generations')
+    // Fetch all transformations for this base image (all statuses)
+    const { data: transformations, error: transformationsError } = await supabase
+      .from('transformations')
       .select(`
         *,
-        staging_styles!staging_generations_style_id_fkey(id, name, code),
-        room_types!staging_generations_room_type_id_fkey(id, name, code),
-        color_schemes!staging_generations_color_scheme_id_fkey(id, name, code, hex_colors)
+        design_styles(id, name, code),
+        color_palettes(id, name, code, primary_colors),
+        room_types(id, name, code),
+        seasonal_themes(id, name, code)
       `)
-      .eq('project_image_id', baseImageId)
+      .eq('base_image_id', baseImageId)
       .order('created_at', { ascending: false })
 
-    if (variantsError) {
-      console.error('Error fetching variants:', variantsError)
+    if (transformationsError) {
+      console.error('Error fetching transformations:', transformationsError)
       return NextResponse.json(
-        { error: 'Error al obtener variantes' },
+        { error: 'Error al obtener transformaciones' },
         { status: 500 }
       )
     }
 
     // Map the response to match frontend expectations
-    const mappedVariants = (variants || []).map((v: any) => ({
-      ...v,
-      style: v.staging_styles || null,
-      room_type: v.room_types || null,
-      color_scheme: v.color_schemes || null,
-      staging_styles: undefined,
+    const mappedTransformations = (transformations || []).map((t: any) => ({
+      ...t,
+      style: t.design_styles || null,
+      color_palette: t.color_palettes || null,
+      room_type: t.room_types || null,
+      seasonal_theme: t.seasonal_themes || null,
+      design_styles: undefined,
+      color_palettes: undefined,
       room_types: undefined,
-      color_schemes: undefined
+      seasonal_themes: undefined
     }))
 
     return NextResponse.json({
-      variants: mappedVariants
+      transformations: mappedTransformations
     })
   } catch (error) {
     console.error('Variants API error:', error)

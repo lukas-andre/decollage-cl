@@ -40,21 +40,21 @@ export async function GET(
       )
     }
 
-    // Get project images with staging generations
+    // Get project images with transformations
     const { data: images, error } = await supabase
-      .from('project_images')
+      .from('images')
       .select(`
         *,
-        staging_generation:staging_generations!project_images_staging_generation_id_fkey (
+        transformations:transformations!transformations_base_image_id_fkey (
           id,
           status,
-          processed_image_url,
+          result_image_url,
           tokens_consumed,
           created_at,
           completed_at,
           metadata,
           style_id,
-          staging_styles (
+          design_styles (
             name,
             code
           )
@@ -152,7 +152,7 @@ export async function POST(
 
     // Get current max upload order
     const { data: maxOrderResult } = await supabase
-      .from('project_images')
+      .from('images')
       .select('upload_order')
       .eq('project_id', projectId)
       .order('upload_order', { ascending: false })
@@ -200,18 +200,22 @@ export async function POST(
 
         const imageUrls = cloudflareImages.getVariantUrls(uploadResult.result.id)
 
-        // Create project image record
+        // Create image record
         const { data: projectImage, error: insertError } = await supabase
-          .from('project_images')
+          .from('images')
           .insert({
+            user_id: user.id,
             project_id: projectId,
-            original_image_url: imageUrls.public,
-            original_cloudflare_id: uploadResult.result.id,
-            image_name: imageName || image.name,
+            url: imageUrls.public,
+            cloudflare_id: uploadResult.result.id,
+            thumbnail_url: imageUrls.thumbnail,
+            image_type: 'base',
+            source: 'upload',
+            name: imageName || image.name,
+            description: notes || null,
             tags,
-            notes,
             upload_order: uploadOrder,
-            status: 'uploaded',
+            is_primary: uploadOrder === 1,
           })
           .select()
           .single()

@@ -84,30 +84,33 @@ export async function POST(request: NextRequest) {
     // Get variant URLs
     const imageUrls = cloudflareImages.getVariantUrls(uploadResponse.result.id)
 
-    // Store image reference in database if it's for a generation
-    if (type === 'generation') {
-      const { error: dbError } = await supabase
-        .from('staging_generations')
-        .insert({
-          user_id: user.id,
-          original_image_url: imageUrls.original,
-          original_cloudflare_id: uploadResponse.result.id,
-          status: 'pending',
-          generation_params: {
-            dimensions,
-            originalFilename: file.name,
-          },
-        })
+    // Store image reference in database 
+    const { error: dbError } = await supabase
+      .from('images')
+      .insert({
+        user_id: user.id,
+        url: imageUrls.original,
+        cloudflare_id: uploadResponse.result.id,
+        thumbnail_url: imageUrls.thumbnail,
+        image_type: type === 'generation' ? 'base' : type,
+        source: 'upload',
+        name: file.name,
+        analysis_data: {
+          dimensions,
+          originalFilename: file.name,
+          uploadedAt: new Date().toISOString(),
+        },
+        is_primary: type === 'generation',
+      })
 
-      if (dbError) {
-        console.error('Database error:', dbError)
-        // Try to delete the uploaded image
-        await cloudflareImages.deleteImage(uploadResponse.result.id)
-        return NextResponse.json(
-          { error: 'Error al guardar la referencia de imagen' },
-          { status: 500 }
-        )
-      }
+    if (dbError) {
+      console.error('Database error:', dbError)
+      // Try to delete the uploaded image
+      await cloudflareImages.deleteImage(uploadResponse.result.id)
+      return NextResponse.json(
+        { error: 'Error al guardar la referencia de imagen' },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({

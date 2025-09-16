@@ -36,7 +36,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { userType = 'b2c', businessName } = body
+    const { 
+      full_name, 
+      home_type, 
+      style_personality, 
+      color_preferences, 
+      design_goals 
+    } = body
 
     // Check if profile already exists
     const { data: existingProfile } = await supabase
@@ -49,18 +55,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: 'Profile already exists' })
     }
 
-    // Create profile for new user
+    // Create profile for new user (B2C only)
     const { error: profileError } = await supabase
       .from('profiles')
       .insert({
         id: user.id,
         email: user.email!,
-        full_name: user.user_metadata?.full_name || null,
-        user_type: userType,
-        tokens_available: userType === 'b2c' ? 5 : 0, // 5 free tokens for B2C users
+        full_name: full_name || user.user_metadata?.full_name || null,
+        user_type: 'personal', // Default to personal for B2C
+        tokens_available: 5, // 5 free tokens for new users
         tokens_total_purchased: 0,
         tokens_total_used: 0,
         role: 'user',
+        home_type: home_type || null,
+        style_personality: style_personality || {},
+        color_preferences: color_preferences || {},
+        design_goals: design_goals || null,
+        onboarding_completed: false,
+        onboarding_step: 0,
+        is_public: false,
+        pinterest_connected: false,
+        last_active_at: new Date().toISOString(),
       })
 
     if (profileError) {
@@ -71,50 +86,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // If B2B user and business name provided, create business
-    if (userType === 'b2b' && businessName) {
-      // Create business
-      const { data: business, error: businessError } = await supabase
-        .from('businesses')
-        .insert({
-          name: businessName,
-          owner_id: user.id,
-          subscription_plan: 'trial',
-          monthly_staging_limit: 10,
-          monthly_staging_used: 0,
-        })
-        .select()
-        .single()
-
-      if (businessError) {
-        console.error('Error creating business:', businessError)
-        return NextResponse.json(
-          { error: 'Error al crear empresa' },
-          { status: 500 }
-        )
-      }
-
-      // Add user as business member
-      const { error: memberError } = await supabase
-        .from('business_members')
-        .insert({
-          business_id: business.id,
-          user_id: user.id,
-          role: 'owner',
-        })
-
-      if (memberError) {
-        console.error('Error creating business membership:', memberError)
-        return NextResponse.json(
-          { error: 'Error al crear membresía' },
-          { status: 500 }
-        )
-      }
-    }
-
     return NextResponse.json({
       success: true,
-      userType,
       message: 'Perfil creado exitosamente',
     })
   } catch (error) {
@@ -173,26 +146,15 @@ export async function GET() {
       )
     }
 
-    // Check if user is B2B (has business membership)
-    const { data: businessMember } = await supabase
-      .from('business_members')
-      .select(`
-        business_id,
-        role,
-        businesses (
-          id,
-          name,
-          subscription_plan
-        )
-      `)
-      .eq('user_id', user.id)
-      .single()
+    // Update last_active_at
+    await supabase
+      .from('profiles')
+      .update({ last_active_at: new Date().toISOString() })
+      .eq('id', user.id)
 
     return NextResponse.json({
       exists: true,
       profile,
-      isB2B: !!businessMember,
-      business: businessMember?.businesses || null,
     })
   } catch (error) {
     console.error('Profile check error:', error)

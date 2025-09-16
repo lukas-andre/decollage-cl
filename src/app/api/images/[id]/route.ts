@@ -3,10 +3,12 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { getCloudflareImages } from '@/lib/cloudflare-images'
 
-interface GenerationData {
+interface TransformationData {
   user_id: string;
-  original_cloudflare_id: string | null;
-  processed_cloudflare_id: string | null;
+  result_cloudflare_id: string | null;
+  base_image: {
+    cloudflare_id: string | null;
+  } | null;
 }
 
 // GET image details
@@ -110,20 +112,26 @@ export async function DELETE(
     }
 
     // Check if user owns the image (verify in database)
-    const { data: generation, error: generationError } = await supabase
-      .from('staging_generations')
-      .select('user_id, original_cloudflare_id, processed_cloudflare_id')
-      .or(`original_cloudflare_id.eq.${id},processed_cloudflare_id.eq.${id}`)
-      .single() as { data: GenerationData | null; error: unknown }
+    const { data: transformation, error: transformationError } = await supabase
+      .from('transformations')
+      .select(`
+        user_id,
+        result_cloudflare_id,
+        base_image:images!transformations_base_image_id_fkey(
+          cloudflare_id
+        )
+      `)
+      .or(`result_cloudflare_id.eq.${id}`)
+      .single() as { data: TransformationData | null; error: unknown }
 
-    if (generationError || !generation) {
+    if (transformationError || !transformation) {
       return NextResponse.json(
         { error: 'No tienes permisos para eliminar esta imagen' },
         { status: 403 }
       )
     }
 
-    if (generation.user_id !== user.id) {
+    if (transformation.user_id !== user.id) {
       return NextResponse.json(
         { error: 'No tienes permisos para eliminar esta imagen' },
         { status: 403 }
@@ -141,26 +149,28 @@ export async function DELETE(
     }
 
     // Update database record
-    if (generation.original_cloudflare_id === id) {
+    if (transformation.base_image?.cloudflare_id === id) {
+      // Update the base image record
       const { error: updateError } = await supabase
-        .from('staging_generations')
+        .from('images')
         .update({ 
-          original_cloudflare_id: null,
-          original_image_url: '' 
+          cloudflare_id: null,
+          url: '' 
         })
-        .or(`original_cloudflare_id.eq.${id}`)
+        .eq('cloudflare_id', id)
       
       if (updateError) {
         console.error('Database update error:', updateError)
       }
-    } else {
+    } else if (transformation.result_cloudflare_id === id) {
+      // Update the transformation record
       const { error: updateError } = await supabase
-        .from('staging_generations')
+        .from('transformations')
         .update({ 
-          processed_cloudflare_id: null,
-          processed_image_url: null 
+          result_cloudflare_id: null,
+          result_image_url: null 
         })
-        .or(`processed_cloudflare_id.eq.${id}`)
+        .eq('result_cloudflare_id', id)
       
       if (updateError) {
         console.error('Database update error:', updateError)

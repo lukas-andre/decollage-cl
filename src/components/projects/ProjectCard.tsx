@@ -49,22 +49,25 @@ interface Project {
   name: string
   description: string | null
   status: 'active' | 'completed' | 'archived'
-  total_images: number
-  total_tokens_used: number
+  total_transformations: number
   created_at: string
   updated_at: string
   is_public: boolean
-  project_images?: unknown[]
+  images?: {
+    id: string
+    url: string
+    thumbnail_url: string | null
+  }[]
   metadata?: {
     environment_type?: 'interior' | 'exterior' | 'commercial'
     last_style_used?: string
   }
-  featured_generation?: {
+  featured_transformation?: {
     id: string
-    processed_image_url: string
-    staging_styles: {
+    result_image_url: string
+    design_styles: {
       name: string
-    }
+    } | null
   } | null
 }
 
@@ -203,21 +206,23 @@ export function ProjectCard({ project, onEdit, onDelete, onArchive, onRegenerate
           </CardHeader>
 
           <CardContent className="pt-0">
-            {/* Featured Generation Preview */}
-            {project.featured_generation ? (
+            {/* Featured Transformation Preview */}
+            {project.featured_transformation ? (
               <div className="mb-4 relative aspect-video bg-gray-100 rounded-lg overflow-hidden group-hover:ring-2 group-hover:ring-primary/20 transition-all">
                 <Image
-                  src={project.featured_generation.processed_image_url}
-                  alt={`${project.name} - Featured Generation`}
+                  src={project.featured_transformation.result_image_url}
+                  alt={`${project.name} - Featured Transformation`}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
-                <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md">
-                  {project.featured_generation.staging_styles.name}
-                </div>
+                {project.featured_transformation.design_styles && (
+                  <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md">
+                    {project.featured_transformation.design_styles.name}
+                  </div>
+                )}
               </div>
-            ) : project.total_images > 0 ? (
+            ) : (project.images && project.images.length > 0) ? (
               <div className="mb-4 aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center group-hover:from-primary/5 group-hover:to-primary/10 transition-all">
                 <div className="text-center text-gray-500">
                   <RefreshCcw className="h-8 w-8 mx-auto mb-2" />
@@ -238,12 +243,12 @@ export function ProjectCard({ project, onEdit, onDelete, onArchive, onRegenerate
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">
                   <Images className="h-4 w-4" />
-                  <span>{project.total_images} imagen{project.total_images !== 1 ? 'es' : ''}</span>
+                  <span>{project.images?.length || 0} imagen{(project.images?.length || 0) !== 1 ? 'es' : ''}</span>
                 </div>
                 
                 <div className="flex items-center gap-1">
-                  <Coins className="h-4 w-4" />
-                  <span>{project.total_tokens_used} tokens</span>
+                  <Sparkles className="h-4 w-4" />
+                  <span>{project.total_transformations} transformaciones</span>
                 </div>
                 
                 {project.metadata?.last_style_used && (
@@ -265,7 +270,7 @@ export function ProjectCard({ project, onEdit, onDelete, onArchive, onRegenerate
               </div>
             </div>
 
-            {(project.is_public || project.total_images > 0) && (
+            {(project.is_public || (project.images && project.images.length > 0)) && (
               <div className="flex items-center gap-2 mt-2">
                 {project.is_public && (
                   <Badge variant="outline" className="text-xs">
@@ -273,7 +278,7 @@ export function ProjectCard({ project, onEdit, onDelete, onArchive, onRegenerate
                     Público
                   </Badge>
                 )}
-                {project.total_images > 0 && onRegenerate && (
+                {(project.images && project.images.length > 0) && onRegenerate && (
                   <Button
                     variant="outline"
                     size="sm"

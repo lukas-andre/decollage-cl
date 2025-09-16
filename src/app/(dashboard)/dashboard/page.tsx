@@ -28,7 +28,7 @@ interface Stats {
   tokensAvailable?: number
   tokensUsed?: number
   totalProjects?: number
-  totalGenerations?: number
+  totalTransformations?: number
   
   // B2B Stats
   stagingLimit?: number
@@ -166,8 +166,8 @@ export default function DashboardPage() {
           .eq('user_id', user.id)
           .neq('status', 'archived')
 
-        const { data: generations, count: generationCount } = await supabase
-          .from('staging_generations')
+        const { data: transformations, count: transformationCount } = await supabase
+          .from('transformations')
           .select('processing_time_ms', { count: 'exact' })
           .eq('user_id', user.id)
           .eq('status', 'completed')
@@ -177,13 +177,13 @@ export default function DashboardPage() {
           tokensAvailable: profile.tokens_available || 0,
           tokensUsed: profile.tokens_total_used || 0,
           totalProjects: projectCount || 0,
-          totalGenerations: generationCount || 0,
+          totalTransformations: transformationCount || 0,
           userType: 'b2c'
         }
         
         // Calculate average time for B2C
-        if (generations?.length) {
-          statsData.averageTime = Math.round(generations.reduce((acc, g) => acc + (g.processing_time_ms || 0), 0) / generations.length / 1000)
+        if (transformations?.length) {
+          statsData.averageTime = Math.round(transformations.reduce((acc, t) => acc + (t.processing_time_ms || 0), 0) / transformations.length / 1000)
         }
       }
 
@@ -231,18 +231,18 @@ export default function DashboardPage() {
             })
         }
       } else {
-        // B2C - Fetch actual data from staging_generations
+        // B2C - Fetch actual data from transformations
         const { data: recent } = await supabase
-          .from('staging_generations')
+          .from('transformations')
           .select(`
             id,
-            processed_image_url,
+            result_image_url,
             created_at,
             tokens_consumed,
             project_id,
             style_id,
             projects (id, name),
-            staging_styles (id, name)
+            design_styles (id, name)
           `)
           .eq('user_id', user.id)
           .eq('status', 'completed')
@@ -250,12 +250,12 @@ export default function DashboardPage() {
           .limit(6)
           
         if (recent && recent.length > 0) {
-          recentData = recent.map(g => ({
-            id: g.id,
-            projectName: (g.projects as any)?.name || 'Sin proyecto',
-            styleName: (g.staging_styles as any)?.name || 'Personalizado',
-            resultImageUrl: g.processed_image_url || '',
-            createdAt: g.created_at
+          recentData = recent.map(t => ({
+            id: t.id,
+            projectName: (t.projects as any)?.name || 'Sin proyecto',
+            styleName: (t.design_styles as any)?.name || 'Personalizado',
+            resultImageUrl: t.result_image_url || '',
+            createdAt: t.created_at
           }))
         }
       }
@@ -442,7 +442,7 @@ export default function DashboardPage() {
                 <>
                   <div className="text-2xl font-bold text-gray-900">{stats.totalProjects || 0}</div>
                   <p className="text-xs text-gray-500 mt-1">
-                    {(stats.totalProjects || 0) === 0 ? 'Sin proyectos aún' : `${stats.totalGenerations || 0} generaciones totales`}
+                    {(stats.totalProjects || 0) === 0 ? 'Sin proyectos aún' : `${stats.totalTransformations || 0} transformaciones totales`}
                   </p>
                   <Link href="/dashboard/projects" className="text-xs text-blue-600 hover:text-blue-700 mt-2 inline-block">
                     Ver proyectos →

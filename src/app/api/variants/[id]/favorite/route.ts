@@ -42,7 +42,7 @@ export async function PATCH(
 
     // Get current favorite status
     const { data: currentVariant, error: fetchError } = await supabase
-      .from('staging_generations')
+      .from('transformations')
       .select('is_favorite, user_id')
       .eq('id', id)
       .single()
@@ -65,10 +65,9 @@ export async function PATCH(
 
     // Toggle favorite status
     const { data: updatedVariant, error: updateError } = await supabase
-      .from('staging_generations')
+      .from('transformations')
       .update({ 
-        is_favorite: !currentVariant.is_favorite,
-        updated_at: new Date().toISOString()
+        is_favorite: !currentVariant.is_favorite
       })
       .eq('id', id)
       .select('is_favorite')

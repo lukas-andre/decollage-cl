@@ -3,12 +3,14 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import type { Database } from '@/types/database'
 
-interface GenerationData {
+interface TransformationData {
   id: string;
-  original_cloudflare_id: string | null;
-  processed_cloudflare_id: string | null;
-  original_image_url: string | null;
-  staged_image_url: string | null;
+  result_cloudflare_id: string | null;
+  result_image_url: string | null;
+  base_image: {
+    cloudflare_id: string | null;
+    url: string;
+  } | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -145,17 +147,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user owns these images
-    const { data: generations, error } = await supabase
-      .from('staging_generations')
-      .select('id, original_cloudflare_id, processed_cloudflare_id, original_image_url, staged_image_url')
+    const { data: transformations, error } = await supabase
+      .from('transformations')
+      .select(`
+        id,
+        result_cloudflare_id,
+        result_image_url,
+        base_image:images!transformations_base_image_id_fkey(
+          cloudflare_id,
+          url
+        )
+      `)
       .eq('user_id', user.id)
       .or(
         imageIds
-          .map(id => `original_cloudflare_id.eq.${id},processed_cloudflare_id.eq.${id}`)
+          .map(id => `result_cloudflare_id.eq.${id}`)
           .join(',')
-      ) as { data: GenerationData[] | null; error: unknown }
+      ) as { data: TransformationData[] | null; error: unknown }
 
-    if (error || !generations || generations.length === 0) {
+    if (error || !transformations || transformations.length === 0) {
       return NextResponse.json(
         { error: 'No tienes permisos para descargar estas imágenes' },
         { status: 403 }
@@ -163,20 +173,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare download URLs
-    const downloadUrls = generations.flatMap(gen => {
+    const downloadUrls = transformations.flatMap(transformation => {
       const urls = []
-      if (gen.original_cloudflare_id && imageIds.includes(gen.original_cloudflare_id)) {
+      if (transformation.base_image?.cloudflare_id && imageIds.includes(transformation.base_image.cloudflare_id)) {
         urls.push({
-          id: gen.original_cloudflare_id,
-          url: gen.original_image_url,
+          id: transformation.base_image.cloudflare_id,
+          url: transformation.base_image.url,
           type: 'original',
         })
       }
-      if (gen.processed_cloudflare_id && imageIds.includes(gen.processed_cloudflare_id)) {
+      if (transformation.result_cloudflare_id && imageIds.includes(transformation.result_cloudflare_id)) {
         urls.push({
-          id: gen.processed_cloudflare_id,
-          url: gen.staged_image_url,
-          type: 'staged',
+          id: transformation.result_cloudflare_id,
+          url: transformation.result_image_url,
+          type: 'transformed',
         })
       }
       return urls

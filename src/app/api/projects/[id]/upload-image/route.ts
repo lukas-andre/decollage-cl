@@ -130,21 +130,24 @@ export async function POST(
 
     // Get current image count for ordering
     const { count } = await supabase
-      .from('project_images')
+      .from('images')
       .select('*', { count: 'exact', head: true })
       .eq('project_id', projectId)
 
-    // Create project_images record
+    // Create images record
     const { data: projectImage, error: dbError } = await supabase
-      .from('project_images')
+      .from('images')
       .insert({
+        user_id: user.id,
         project_id: projectId,
-        original_image_url: imageUrls.original,
-        original_cloudflare_id: uploadResponse.result.id,
-        image_name: name || file.name,
+        url: imageUrls.original,
+        cloudflare_id: uploadResponse.result.id,
+        thumbnail_url: imageUrls.thumbnail,
+        image_type: 'room',
+        source: 'upload',
         name: name || file.name.split('.')[0], // Use filename without extension as default name
         upload_order: (count || 0) + 1,
-        status: 'uploaded'
+        is_primary: (count || 0) === 0 // First image is primary
       })
       .select()
       .single()
@@ -160,11 +163,10 @@ export async function POST(
       )
     }
 
-    // Update project total_images count
+    // Update project updated_at timestamp
     await supabase
       .from('projects')
       .update({ 
-        total_images: (count || 0) + 1,
         updated_at: new Date().toISOString()
       })
       .eq('id', projectId)
@@ -173,10 +175,9 @@ export async function POST(
       success: true,
       projectImage: {
         ...projectImage,
-        // Include URLs for immediate display
-        original_image_url: imageUrls.original,
+        // Include URLs for immediate display (these are already in the record)
+        url: imageUrls.original,
         thumbnail_url: imageUrls.thumbnail,
-        gallery_url: imageUrls.gallery,
       },
       urls: imageUrls,
       dimensions

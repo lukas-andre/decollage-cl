@@ -39,26 +39,27 @@ export async function GET(
       )
     }
 
-    // Get project with base images and variant counts
+    // Get project with base images and transformation counts
     const { data: project, error } = await supabase
       .from('projects')
       .select(`
         *,
-        base_images:project_images (
+        base_images:images (
           id,
-          image_name,
           name,
-          original_image_url,
+          url,
+          thumbnail_url,
           upload_order,
           created_at,
-          status,
-          variants:staging_generations!staging_generations_project_image_id_fkey(count)
+          image_type,
+          transformations:transformations!transformations_base_image_id_fkey(count)
         )
       `)
       .eq('id', id)
       .eq('user_id', user.id)
+      .eq('images.image_type', 'base')
       .order('upload_order', { 
-        referencedTable: 'project_images',
+        referencedTable: 'images',
         ascending: true 
       })
       .single()
@@ -77,11 +78,11 @@ export async function GET(
       )
     }
 
-    // Process base images to include variant count
-    const processedBaseImages = project?.base_images?.map((img: { variants?: Array<{ count: number }>; [key: string]: unknown }) => ({
+    // Process base images to include transformation count
+    const processedBaseImages = project?.base_images?.map((img: { transformations?: Array<{ count: number }>; [key: string]: unknown }) => ({
       ...img,
-      variant_count: img.variants?.[0]?.count || 0,
-      variants: undefined
+      transformation_count: img.transformations?.[0]?.count || 0,
+      transformations: undefined
     })) || []
 
     return NextResponse.json({ 

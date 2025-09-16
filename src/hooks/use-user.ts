@@ -5,12 +5,28 @@ import { User } from '@supabase/supabase-js'
 export interface Profile {
   id: string
   email: string
+  username: string | null
   full_name: string | null
   avatar_url: string | null
-  role: 'user' | 'admin'
+  phone: string | null
   tokens_available: number
+  tokens_total_purchased: number
+  tokens_total_used: number
+  style_personality: Record<string, any>
+  color_preferences: Record<string, any>
+  design_goals: string[] | null
+  home_type: string | null
+  is_public: boolean
+  instagram_handle: string | null
+  pinterest_connected: boolean
+  pinterest_user_id: string | null
+  onboarding_completed: boolean
+  onboarding_step: number
+  last_active_at: string | null
   created_at: string
   updated_at: string
+  role: 'user' | 'admin' | 'moderator'
+  user_type: 'personal' | 'professional' | 'other'
 }
 
 export function useUser() {
