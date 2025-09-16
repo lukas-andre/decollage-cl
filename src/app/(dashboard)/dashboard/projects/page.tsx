@@ -375,7 +375,8 @@ export default function MisEspaciosPage() {
           {filteredProjects.map((project) => (
             <Card
               key={project.id}
-              className="group bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-0.5 overflow-hidden"
+              className="group bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-0.5 overflow-hidden cursor-pointer"
+              onClick={() => window.location.href = `/dashboard/projects/${project.id}`}
             >
               <div className="relative h-40 bg-gradient-to-br from-[#A3B1A1]/5 to-[#C4886F]/5">
                 {project.featured_transformation?.result_image_url ? (
@@ -397,6 +398,7 @@ export default function MisEspaciosPage() {
                         variant="ghost"
                         size="sm"
                         className="h-7 w-7 p-0 bg-white/90 hover:bg-white transition-colors duration-300"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <MoreVertical className="h-3 w-3" />
                       </Button>
@@ -470,15 +472,10 @@ export default function MisEspaciosPage() {
                       </span>
                     </div>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-[#A3B1A1] hover:text-[#A3B1A1]/80 p-0 h-auto text-xs"
-                      onClick={() => window.location.href = `/dashboard/projects/${project.id}`}
-                    >
-                      Abrir
+                    <div className="text-[#A3B1A1] text-xs flex items-center">
+                      Clic para abrir
                       <ArrowRight className="ml-1 h-2.5 w-2.5 group-hover:translate-x-0.5 transition-transform" />
-                    </Button>
+                    </div>
                   </div>
 
                   <div className="pt-3 border-t border-[#A3B1A1]/10">
@@ -502,7 +499,11 @@ export default function MisEspaciosPage() {
       ) : (
         <div className="space-y-4">
           {filteredProjects.map((project) => (
-            <Card key={project.id} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card
+              key={project.id}
+              className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+              onClick={() => window.location.href = `/dashboard/projects/${project.id}`}
+            >
               <CardContent className="p-5">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-[#A3B1A1]/10 to-[#C4886F]/5 flex items-center justify-center flex-shrink-0">
@@ -525,19 +526,18 @@ export default function MisEspaciosPage() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-[#A3B1A1] hover:text-[#A3B1A1]/80 text-xs h-7"
-                          onClick={() => window.location.href = `/dashboard/projects/${project.id}`}
-                        >
-                          Abrir
+                        <div className="text-[#A3B1A1] text-xs flex items-center">
+                          Clic para abrir
                           <ArrowRight className="ml-1 h-2.5 w-2.5" />
-                        </Button>
+                        </div>
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>

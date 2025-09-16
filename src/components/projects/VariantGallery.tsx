@@ -11,18 +11,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { 
+import {
   Filter,
   Heart,
   Calendar,
   Palette,
   Home,
   Download,
-  X
+  X,
+  RefreshCw
 } from 'lucide-react'
 import { VariantCard } from './VariantCard'
 import { Lightbox } from '@/components/gallery/Lightbox'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 interface Variant {
   id: string
@@ -54,12 +56,13 @@ interface VariantGalleryProps {
   loading?: boolean
   onToggleFavorite?: (variantId: string) => void
   originalImage?: string // Base image URL for comparison
+  onRefresh?: () => void
 }
 
 type FilterType = 'all' | 'favorites' | 'style' | 'room_type' | 'date'
 type SortType = 'newest' | 'oldest' | 'tokens_asc' | 'tokens_desc'
 
-export function VariantGallery({ variants, loading = false, onToggleFavorite, originalImage }: VariantGalleryProps) {
+export function VariantGallery({ variants, loading = false, onToggleFavorite, originalImage, onRefresh }: VariantGalleryProps) {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all')
   const [styleFilter, setStyleFilter] = useState<string>('all')
   const [roomTypeFilter, setRoomTypeFilter] = useState<string>('all')
@@ -198,18 +201,32 @@ export function VariantGallery({ variants, loading = false, onToggleFavorite, or
           <h2 className="font-semibold">
             Diseños Generados ({filteredAndSortedVariants.length})
           </h2>
-          
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearFilters}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Limpiar filtros
-            </Button>
-          )}
+
+          <div className="flex items-center gap-2">
+            {onRefresh && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRefresh}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+                Actualizar
+              </Button>
+            )}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Limpiar filtros
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Filter Controls */}

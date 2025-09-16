@@ -63,7 +63,7 @@ export async function POST(
       .from('images')
       .select('*, project:projects(user_id)')
       .eq('id', baseImageId)
-      .eq('image_type', 'base')
+      .eq('image_type', 'room')
       .single()
 
     if (baseImageError || !baseImage) {
@@ -108,7 +108,7 @@ export async function POST(
       )
     }
 
-    const tokenCost = 10 // Standard token cost for transformations
+    const tokenCost = 1 // Standard token cost for transformations
 
     if (profile.tokens_available < tokenCost) {
       return NextResponse.json(
@@ -254,30 +254,59 @@ export async function POST(
         .eq('id', baseImage.project_id)
     }
 
-    // Process transformation in background
-    processTransformation(
-      transformation.id,
-      baseImage.url,
-      style.code,
-      roomType?.code,
-      customInstructions,
-      user.id,
-      provider,
-      dimensions,
-      colorPalette?.name
-    ).catch(error => {
-      console.error('Background transformation error:', error)
-    })
+    // Process transformation synchronously
+    try {
+      const result = await processTransformation(
+        transformation.id,
+        baseImage.url,
+        style.code,
+        roomType?.code,
+        customInstructions,
+        user.id,
+        provider,
+        dimensions,
+        colorPalette?.name
+      )
 
-    return NextResponse.json({
-      success: true,
-      transformation: {
-        ...transformation,
-        style,
-        room_type: roomType,
-        color_palette: colorPalette
-      }
-    })
+      // Fetch the updated transformation
+      const { data: completedTransformation } = await supabase
+        .from('transformations')
+        .select(`
+          *,
+          design_styles!style_id(id, name, code),
+          color_palettes!palette_id(id, name, code, primary_colors),
+          seasonal_themes!season_id(id, name, code)
+        `)
+        .eq('id', transformation.id)
+        .single()
+
+      return NextResponse.json({
+        success: true,
+        transformation: {
+          ...completedTransformation,
+          style: completedTransformation?.design_styles || style,
+          room_type: roomType,
+          color_palette: completedTransformation?.color_palettes || colorPalette,
+          design_styles: undefined,
+          color_palettes: undefined,
+          seasonal_themes: undefined
+        }
+      })
+    } catch (error) {
+      console.error('Transformation processing error:', error)
+      // Return the initial transformation with failed status
+      return NextResponse.json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al procesar la transformación',
+        transformation: {
+          ...transformation,
+          status: 'failed',
+          style,
+          room_type: roomType,
+          color_palette: colorPalette
+        }
+      }, { status: 500 })
+    }
   } catch (error) {
     console.error('Generate variant error:', error)
     return NextResponse.json(
@@ -287,7 +316,7 @@ export async function POST(
   }
 }
 
-// Background processing function
+// Processing function (now synchronous)
 async function processTransformation(
   transformationId: string,
   originalImageUrl: string,
@@ -302,11 +331,17 @@ async function processTransformation(
   const startTime = Date.now()
   const cloudflareImages = getCloudflareImages()
   
-  // Simple Supabase client - RLS disabled temporarily
+  // Service role Supabase client for background operations
   const { createClient } = await import('@supabase/supabase-js')
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
   )
 
   try {
@@ -387,7 +422,7 @@ async function processTransformation(
     // Get variant URLs
     const imageUrls = cloudflareImages.getVariantUrls(uploadResponse.result.id)
     
-    // Update transformation record - RLS disabled temporarily
+    // Update transformation record with service role privileges
     const { error: updateError } = await supabase
       .from('transformations')
       .update({
@@ -415,10 +450,17 @@ async function processTransformation(
       imageUrl: imageUrls.original,
       processingTime: Date.now() - startTime
     })
-    
+
+    return {
+      success: true,
+      cloudflareId: uploadResponse.result.id,
+      imageUrl: imageUrls.original,
+      processingTime: Date.now() - startTime
+    }
+
   } catch (error) {
     console.error(`Transformation ${transformationId} failed:`, error)
-    
+
     // Update transformation record with failure
     await supabase
       .from('transformations')
@@ -429,5 +471,7 @@ async function processTransformation(
         processing_time_ms: Date.now() - startTime
       })
       .eq('id', transformationId)
+
+    throw error
   }
 }

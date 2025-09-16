@@ -44,7 +44,7 @@ export async function GET(
       .from('images')
       .select('*, project:projects(user_id)')
       .eq('id', baseImageId)
-      .eq('image_type', 'base')
+      .eq('image_type', 'room')
       .single()
 
     if (baseImageError || !baseImage) {
@@ -66,10 +66,9 @@ export async function GET(
       .from('transformations')
       .select(`
         *,
-        design_styles(id, name, code),
-        color_palettes(id, name, code, primary_colors),
-        room_types(id, name, code),
-        seasonal_themes(id, name, code)
+        design_styles!style_id(id, name, code),
+        color_palettes!palette_id(id, name, code, primary_colors),
+        seasonal_themes!season_id(id, name, code)
       `)
       .eq('base_image_id', baseImageId)
       .order('created_at', { ascending: false })
@@ -87,11 +86,9 @@ export async function GET(
       ...t,
       style: t.design_styles || null,
       color_palette: t.color_palettes || null,
-      room_type: t.room_types || null,
       seasonal_theme: t.seasonal_themes || null,
       design_styles: undefined,
       color_palettes: undefined,
-      room_types: undefined,
       seasonal_themes: undefined
     }))
 

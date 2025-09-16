@@ -28,8 +28,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { 
-  ArrowLeft, 
+import {
+  ArrowLeft,
   Plus,
   Sparkles,
   Image as ImageIcon,
@@ -47,7 +47,8 @@ import {
   X,
   Upload,
   Info,
-  Ruler
+  Ruler,
+  RefreshCw
 } from 'lucide-react'
 import { ImageViewerModal } from '@/components/projects/ImageViewerModal'
 import Link from 'next/link'
@@ -254,8 +255,8 @@ export default function ProjectWorkspacePage({
         throw new Error(data.error || 'Error al cargar variantes')
       }
 
-      setVariants(data.variants || [])
-      return data.variants || []
+      setVariants(data.transformations || [])
+      return data.transformations || []
     } catch (error) {
       console.error('Error fetching variants:', error)
       toast.error('Error al cargar variantes')
@@ -323,21 +324,29 @@ export default function ProjectWorkspacePage({
 
       setUploadProgress(100)
       setUploadStatus('complete')
-      
+
       toast.success('Imagen subida correctamente')
-      
-      // Refresh project to get new base image
-      await fetchProject()
-      
-      // Select the newly uploaded image
-      if (data.projectImage) {
-        // Wait for project to be updated, then select the new image
-        setTimeout(() => {
-          const newImage = project.images.find(img => img.id === data.projectImage.id)
-          if (newImage) {
-            setSelectedBaseImage(newImage)
-          }
-        }, 100)
+
+      // Update project state directly instead of refetching
+      if (data.projectImage && project) {
+        const newImage = {
+          id: data.projectImage.id,
+          name: data.projectImage.name,
+          url: data.projectImage.url,
+          upload_order: data.projectImage.upload_order,
+          created_at: data.projectImage.created_at,
+          transformations: []
+        }
+
+        // Add the new image to the project's images array
+        const updatedProject = {
+          ...project,
+          images: [...(project.images || []), newImage],
+          updated_at: new Date().toISOString()
+        }
+
+        setProject(updatedProject)
+        setSelectedBaseImage(newImage)
       }
 
       // Reset upload state after 2 seconds
@@ -498,41 +507,13 @@ export default function ProjectWorkspacePage({
       const tokenCost = designData?.styles.find(s => s.id === selectedStyle)?.token_cost || 1
       deductTokens(tokenCost)
       
-      toast.success('Generando diseño... Esto tomará unos 15-30 segundos')
-      
+      toast.success('Diseño generado y procesándose en segundo plano')
+
       // Refresh variants immediately to show the new processing one
       await fetchVariants(selectedBaseImage.id)
-      
-      // Simple polling - check every 3 seconds for up to 40 seconds
-      let pollCount = 0
-      const maxPolls = 13 // 13 * 3 = 39 seconds
-      
-      const pollInterval = setInterval(async () => {
-        pollCount++
-        const updatedVariants = await fetchVariants(selectedBaseImage.id)
-        
-        // Check if the generation is complete
-        const newGeneration = updatedVariants?.find((v: { id: string; status: string }) => v.id === data.generation.id)
-        
-        if (newGeneration) {
-          if (newGeneration.status === 'completed') {
-            clearInterval(pollInterval)
-            setGenerating(false)
-            toast.success('¡Diseño generado exitosamente!')
-          } else if (newGeneration.status === 'failed') {
-            clearInterval(pollInterval)
-            setGenerating(false)
-            toast.error('Error al generar el diseño. Por favor intenta nuevamente.')
-          } else if (pollCount >= maxPolls) {
-            // Timeout after ~40 seconds
-            clearInterval(pollInterval)
-            setGenerating(false)
-            toast.info('La generación está tomando más tiempo. Actualizando...')
-            // Do one final fetch
-            await fetchVariants(selectedBaseImage.id)
-          }
-        }
-      }, 3000)
+
+      // Instead of polling, just set generating to false and let the user manually refresh if needed
+      setGenerating(false)
     } catch (error) {
       console.error('Error generating variant:', error)
       toast.error(error instanceof Error ? error.message : 'Error al generar variante')
@@ -677,13 +658,18 @@ export default function ProjectWorkspacePage({
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Column - Image Management & Controls */}
-        <div className="w-[400px] border-r flex flex-col">
+        <div className="w-[400px] border-r flex flex-col h-full overflow-hidden">
           {/* Base Images Gallery */}
           <div className="p-4 border-b">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm flex items-center gap-2">
                 <Grid3x3 className="h-4 w-4" />
                 Imágenes Base
+                {project?.images && project.images.length > 4 && (
+                  <span className="text-xs text-muted-foreground">
+                    ({project.images.length} total)
+                  </span>
+                )}
               </h2>
               <label htmlFor="upload-input">
                 <Button size="sm" variant="outline" asChild>
@@ -705,8 +691,9 @@ export default function ProjectWorkspacePage({
               </label>
             </div>
 
-            <ScrollArea className="h-32">
-              <div className="flex gap-2">
+            <div className="relative">
+              <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
+                <div className="flex gap-2 pb-2 min-h-[88px]">
                 {(!project?.images || project.images.length === 0) && !uploading ? (
                   <div className="text-sm text-muted-foreground py-4 text-center w-full">
                     No hay imágenes. Sube una para comenzar.
@@ -718,9 +705,9 @@ export default function ProjectWorkspacePage({
                         key={image.id}
                         onClick={() => setSelectedBaseImage(image)}
                         className={cn(
-                          "relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all",
-                          selectedBaseImage?.id === image.id 
-                            ? "border-primary ring-2 ring-primary/20" 
+                          "relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all hover:scale-105",
+                          selectedBaseImage?.id === image.id
+                            ? "border-primary ring-2 ring-primary/20 scale-105"
                             : "border-transparent hover:border-gray-300"
                         )}
                       >
@@ -737,14 +724,15 @@ export default function ProjectWorkspacePage({
                         )}
                       </button>
                     ))}
-                    
+
                     {/* Show upload skeleton when uploading */}
                     {uploading && <ImageUploadSkeleton />}
                   </>
                 )}
+                </div>
               </div>
-            </ScrollArea>
-            
+            </div>
+
             {/* Upload Progress */}
             {uploading && (
               <div className="mt-3">
@@ -782,10 +770,13 @@ export default function ProjectWorkspacePage({
               </div>
 
               {/* Generation Panel */}
-              <div className="p-4 flex-1 flex flex-col">
-                <h3 className="font-semibold text-sm mb-3">Generar Nuevo Diseño</h3>
-                
-                <div className="space-y-3">
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="p-4 pb-0">
+                  <h3 className="font-semibold text-sm mb-3">Generar Nuevo Diseño</h3>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-4 min-h-0">
+                  <div className="space-y-3 pb-4">
                   <div>
                     <label className="text-xs font-medium mb-1 block">
                       Estilo de Diseño *
@@ -795,7 +786,7 @@ export default function ProjectWorkspacePage({
                         <SelectValue placeholder="Selecciona un estilo" />
                       </SelectTrigger>
                       <SelectContent>
-                        {designData?.styles.map((style) => (
+                        {designData?.styles?.map((style) => (
                           <SelectItem key={style.id} value={style.id}>
                             {style.name} ({style.token_cost} tokens)
                           </SelectItem>
@@ -883,7 +874,7 @@ export default function ProjectWorkspacePage({
                             <SelectValue placeholder="Opcional - Sin especificar" />
                           </SelectTrigger>
                           <SelectContent>
-                            {designData?.roomTypes.map((room) => (
+                            {designData?.roomTypes?.map((room) => (
                               <SelectItem key={room.id} value={room.id}>
                                 {room.name}
                               </SelectItem>
@@ -909,12 +900,12 @@ export default function ProjectWorkspacePage({
                             <SelectValue placeholder="Opcional - Sin especificar" />
                           </SelectTrigger>
                           <SelectContent>
-                            {designData?.colorSchemes.map((scheme) => (
+                            {designData?.colorSchemes?.map((scheme) => (
                               <SelectItem key={scheme.id} value={scheme.id}>
                                 <div className="flex items-center gap-2">
                                   {scheme.name}
                                   <div className="flex gap-1">
-                                    {scheme.hex_colors.slice(0, 3).map((color, i) => (
+                                    {scheme.hex_colors?.slice(0, 3).map((color, i) => (
                                       <div
                                         key={i}
                                         className="w-3 h-3 rounded-full border"
@@ -938,45 +929,49 @@ export default function ProjectWorkspacePage({
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
+                  </div>
                 </div>
 
-                <Button 
-                  className="mt-4"
-                  onClick={handleGenerateVariant}
-                  disabled={!selectedStyle || generating || !hasTokens}
-                  variant={!hasTokens ? "destructive" : "default"}
-                >
-                  {generating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generando...
-                    </>
-                  ) : !hasTokens ? (
-                    <>
-                      <AlertCircle className="mr-2 h-4 w-4" />
-                      Sin tokens
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Generar Diseño ({designData?.styles.find(s => s.id === selectedStyle)?.token_cost || 1} tokens)
-                    </>
+                {/* Generation Button - Always visible at bottom */}
+                <div className="p-4 border-t flex-shrink-0">
+                  <Button
+                    className="w-full"
+                    onClick={handleGenerateVariant}
+                    disabled={!selectedStyle || generating || !hasTokens}
+                    variant={!hasTokens ? "destructive" : "default"}
+                  >
+                    {generating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generando...
+                      </>
+                    ) : !hasTokens ? (
+                      <>
+                        <AlertCircle className="mr-2 h-4 w-4" />
+                        Sin tokens
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Generar Diseño ({designData?.styles.find(s => s.id === selectedStyle)?.token_cost || 1} tokens)
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Token consumption preview */}
+                  {selectedStyle && hasTokens && (
+                    <div className="mt-2 text-xs text-muted-foreground text-center">
+                      Esto consumirá {designData?.styles.find(s => s.id === selectedStyle)?.token_cost || 1} tokens.
+                      Te quedarán {tokenBalance - (designData?.styles.find(s => s.id === selectedStyle)?.token_cost || 1)} tokens.
+                    </div>
                   )}
-                </Button>
-                
-                {/* Token consumption preview */}
-                {selectedStyle && hasTokens && (
-                  <div className="mt-2 text-xs text-muted-foreground text-center">
-                    Esto consumirá {designData?.styles.find(s => s.id === selectedStyle)?.token_cost || 1} tokens. 
-                    Te quedarán {tokenBalance - (designData?.styles.find(s => s.id === selectedStyle)?.token_cost || 1)} tokens.
-                  </div>
-                )}
-                
-                {isLow && hasTokens && (
-                  <div className="mt-2 text-xs text-yellow-600 text-center">
-                    ⚠️ Tienes pocos tokens disponibles
-                  </div>
-                )}
+
+                  {isLow && hasTokens && (
+                    <div className="mt-2 text-xs text-yellow-600 text-center">
+                      ⚠️ Tienes pocos tokens disponibles
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           )}
@@ -1000,6 +995,7 @@ export default function ProjectWorkspacePage({
               loading={loadingVariants}
               onToggleFavorite={handleToggleFavorite}
               originalImage={selectedBaseImage.url}
+              onRefresh={() => selectedBaseImage && fetchVariants(selectedBaseImage.id)}
             />
           )}
         </div>

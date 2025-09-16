@@ -39,12 +39,12 @@ export async function GET(
       )
     }
 
-    // Get project with base images and transformation counts
+    // Get project with images and transformation counts
     const { data: project, error } = await supabase
       .from('projects')
       .select(`
         *,
-        base_images:images (
+        images:images!images_project_id_fkey (
           id,
           name,
           url,
@@ -52,15 +52,19 @@ export async function GET(
           upload_order,
           created_at,
           image_type,
+          cloudflare_id,
+          description,
+          tags,
+          room_type,
           transformations:transformations!transformations_base_image_id_fkey(count)
         )
       `)
       .eq('id', id)
       .eq('user_id', user.id)
-      .eq('images.image_type', 'base')
-      .order('upload_order', { 
+      .eq('images.image_type', 'room')
+      .order('upload_order', {
         referencedTable: 'images',
-        ascending: true 
+        ascending: true
       })
       .single()
 
@@ -78,17 +82,17 @@ export async function GET(
       )
     }
 
-    // Process base images to include transformation count
-    const processedBaseImages = project?.base_images?.map((img: { transformations?: Array<{ count: number }>; [key: string]: unknown }) => ({
+    // Process images to include transformation count
+    const processedImages = project?.images?.map((img: { transformations?: Array<{ count: number }>; [key: string]: unknown }) => ({
       ...img,
       transformation_count: img.transformations?.[0]?.count || 0,
       transformations: undefined
     })) || []
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       project: {
         ...project,
-        base_images: processedBaseImages
+        images: processedImages
       }
     })
   } catch (error) {
