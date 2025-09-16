@@ -62,22 +62,22 @@ const sidebarItems: SidebarItem[] = [
   },
   {
     title: 'Galería',
-    href: '/gallery',
+    href: '/dashboard/gallery',
     icon: <ImageIcon className="h-4 w-4" />,
     children: [
-      { title: 'Explorar', href: '/gallery' },
-      { title: 'Tendencias', href: '/gallery/trending' },
-      // { title: 'Hogares chilenos', href: '/dashboard/gallery/chilean' }
+      { title: 'Explorar', href: '/dashboard/gallery' },
+      { title: 'Tendencias', href: '/dashboard/gallery/trending' },
+      { title: 'Hogares chilenos', href: '/dashboard/gallery/chilean' }
     ]
   },
   {
     title: 'Tokens',
-    href: '/tokens',
+    href: '/dashboard/tokens',
     icon: <Sparkles className="h-4 w-4" />,
     children: [
-      { title: 'Mi balance', href: '/tokens' },
-      { title: 'Paquetes', href: '/tokens/packages' },
-      { title: 'Historial', href: '/tokens/history' }
+      { title: 'Mi balance', href: '/dashboard/tokens' },
+      { title: 'Paquetes', href: '/dashboard/tokens/packages' },
+      { title: 'Historial', href: '/dashboard/tokens/history' }
     ]
   }
 ]

@@ -707,13 +707,13 @@ export default function ProjectWorkspacePage({
 
             <ScrollArea className="h-32">
               <div className="flex gap-2">
-                {project.images.length === 0 && !uploading ? (
+                {(!project?.images || project.images.length === 0) && !uploading ? (
                   <div className="text-sm text-muted-foreground py-4 text-center w-full">
                     No hay imágenes. Sube una para comenzar.
                   </div>
                 ) : (
                   <>
-                    {project.images.map((image) => (
+                    {project?.images?.map((image) => (
                       <button
                         key={image.id}
                         onClick={() => setSelectedBaseImage(image)}
