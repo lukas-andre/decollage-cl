@@ -5,6 +5,7 @@
  */
 
 import type { ImageGenerationResult, AIProvider } from '../types'
+import { FurnitureMode } from '../types'
 
 interface GeminiConfig {
   apiKey: string
@@ -277,16 +278,30 @@ export class GeminiProvider {
     const style = options?.style || 'Modern'
     const roomType = options?.roomType || 'auto-detect'
     const colorScheme = options?.colorScheme || 'neutral tones'
-    
-    return `Create a picture of this empty room transformed into a professionally staged ${roomType} space.
+    const furnitureMode = options?.furnitureMode || 'replace_all'
 
-CRITICAL RULES - YOU MUST FOLLOW:
+    // Build furniture-specific instructions
+    const furnitureInstructions = this.getFurnitureInstructions(furnitureMode)
+
+    const prompt = `Create a picture of this room transformed into a professionally staged ${roomType} space.
+
+CRITICAL ARCHITECTURAL PRESERVATION RULES - ABSOLUTELY MANDATORY:
 1. DO NOT MODIFY WINDOWS - Keep all windows EXACTLY as they are (same size, position, frame, glass, view)
 2. DO NOT CHANGE WINDOW TREATMENTS - No curtains, blinds, or coverings unless already present
 3. PRESERVE ALL ARCHITECTURAL FEATURES - Maintain exact room shape, walls, ceiling, doors, moldings
-4. NATURAL FURNITURE PLACEMENT - Only add furniture that fits naturally in visible space
-5. PARTIAL ROOM VIEWS - If room is partially visible, only furnish the visible area naturally
-6. DO NOT FORCE FURNITURE - Don't squeeze furniture where it doesn't fit naturally
+4. NO STRUCTURAL CHANGES - Do not move walls, change room layout, or alter the architectural structure
+5. PRESERVE FLOOR PLAN - Keep the same room dimensions and spatial relationships
+6. MAINTAIN CEILING HEIGHT - Do not change ceiling structure or height
+7. KEEP EXISTING DOORS - Preserve all door locations, sizes, and styles
+8. PRESERVE BUILT-INS - Keep any built-in features exactly as shown
+
+FURNITURE PLACEMENT RULES:
+- Only add/modify furniture within the existing architectural space
+- Natural furniture placement - Only add furniture that fits naturally in visible space
+- Partial room views - If room is partially visible, only furnish the visible area naturally
+- Do not force furniture - Don't squeeze furniture where it doesn't fit naturally
+
+${furnitureInstructions}
 
 STYLE SPECIFICATIONS:
 - Design Style: ${style} interior design aesthetic
@@ -294,7 +309,6 @@ STYLE SPECIFICATIONS:
 - Custom Requirements: ${basePrompt || 'None'}
 
 STAGING GUIDELINES:
-- Add ${style.toLowerCase()} furniture appropriate for a ${roomType}
 - Use realistic proportions and spacing between furniture
 - Ensure natural traffic flow and accessibility
 - Place furniture only where it would naturally fit
@@ -303,12 +317,86 @@ STAGING GUIDELINES:
 - Keep original lighting conditions and natural light from windows
 - Professional real estate photography quality
 
-REMEMBER: 
+REMEMBER - CRITICAL:
+- ABSOLUTELY NO ARCHITECTURAL OR STRUCTURAL CHANGES
 - Windows must remain UNTOUCHED - same exact appearance as original
-- Only add furniture that fits naturally in the space shown
+- Only add/modify furniture and decorative elements within existing space
+- The room's shape, size, and structure must remain identical
 - Less is more - better to have fewer pieces placed naturally than forcing everything
 
 Generate a single, professionally staged image that looks natural and realistic.`
+
+    // Add comprehensive logging
+    console.log('🎨 GEMINI PROMPT GENERATION - Complete Details:')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('📋 Frontend Options Received:')
+    console.log(`   • Style: ${style}`)
+    console.log(`   • Room Type: ${roomType}`)
+    console.log(`   • Color Scheme: ${colorScheme}`)
+    console.log(`   • Furniture Mode: ${furnitureMode}`)
+    console.log(`   • Custom Prompt: ${basePrompt || 'None'}`)
+    console.log(`   • All Options:`, options)
+    console.log('')
+    console.log('🪑 Furniture Preservation Mode Applied:')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log(furnitureInstructions)
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('')
+    console.log('📝 COMPLETE PROMPT BEING SENT TO GEMINI:')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log(prompt)
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+
+    return prompt
+  }
+
+  /**
+   * Get furniture-specific instructions based on preservation mode
+   */
+  private getFurnitureInstructions(furnitureMode: string): string {
+    switch (furnitureMode) {
+      case FurnitureMode.KEEP_ALL:
+        return `FURNITURE PRESERVATION MODE - KEEP ALL:
+- PRESERVE ALL EXISTING FURNITURE exactly as shown (same position, same pieces)
+- DO NOT move, remove, or replace any furniture items
+- ONLY change decorative elements: wall colors, artwork, plants, accessories
+- Keep the same style and arrangement of all furniture
+- Focus changes on: paint colors, wall decorations, lighting accessories, small decorative items
+- DO NOT add new furniture pieces
+- Maintain the exact same furniture layout and placement`
+
+      case FurnitureMode.KEEP_REPOSITION:
+        return `FURNITURE PRESERVATION MODE - KEEP & REPOSITION:
+- PRESERVE ALL EXISTING FURNITURE (same pieces, same style)
+- You MAY rearrange furniture for better flow and positioning
+- DO NOT remove or replace any furniture items
+- ONLY change decorative elements and furniture arrangement
+- Focus on: optimizing furniture placement, wall colors, accessories
+- Keep the same number and type of furniture pieces
+- Improve layout while maintaining all existing furniture`
+
+      case FurnitureMode.KEEP_ADD_MORE:
+        return `FURNITURE PRESERVATION MODE - KEEP & ADD:
+- PRESERVE ALL EXISTING FURNITURE exactly as positioned
+- You MAY add complementary furniture pieces that enhance the space
+- DO NOT remove or replace any existing furniture
+- ADD furniture that complements and works with existing pieces
+- Focus on: keeping existing setup + adding matching/complementary items
+- Ensure new additions create harmony with existing furniture
+- Only add pieces that naturally fit with the current style`
+
+      case FurnitureMode.REPLACE_ALL:
+      default:
+        return `FURNITURE TRANSFORMATION MODE - COMPLETE REDESIGN:
+- You have full creative freedom to replace all furniture
+- Design a completely new furniture layout and selection
+- Focus on creating the best possible staging for this space
+- Choose furniture that maximizes the room's potential
+- Create an optimal furniture arrangement for the style requested
+- IMPORTANT: ONLY change furniture and decorative elements - NO architectural changes
+- DO NOT modify walls, windows, doors, ceiling, or room structure
+- Work within the existing architectural framework to create the best design`
+    }
   }
 
   /**

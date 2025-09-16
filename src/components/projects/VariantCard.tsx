@@ -13,6 +13,21 @@ import {
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
+// Helper function to get user-friendly furniture mode labels
+function getFurnitureModeLabel(mode: string): { label: string; icon: string } {
+  switch (mode) {
+    case 'keep_all':
+      return { label: 'Conservar Todo', icon: '🪑' }
+    case 'keep_reposition':
+      return { label: 'Conservar + Reposicionar', icon: '🔄' }
+    case 'keep_add_more':
+      return { label: 'Conservar + Agregar', icon: '➕' }
+    case 'replace_all':
+    default:
+      return { label: 'Reemplazar Todo', icon: '🔃' }
+  }
+}
+
 interface VariantCardProps {
   variant: {
     id: string
@@ -25,6 +40,8 @@ interface VariantCardProps {
       id: string
       name: string
       code: string
+      category?: string
+      macrocategory?: string
     } | null
     room_type?: {
       id: string
@@ -36,6 +53,13 @@ interface VariantCardProps {
       name: string
       code: string
       hex_colors: string[]
+    } | null
+    metadata?: {
+      style_name?: string
+      style_category?: string
+      style_macrocategory?: string
+      furniture_mode?: string
+      [key: string]: any
     } | null
   }
   onView: () => void
@@ -144,11 +168,23 @@ export function VariantCard({
           <>
             <div className="space-y-1 text-xs">
               <p className="font-medium truncate">{variant.style?.name}</p>
+
+              {/* Macrocategory and Category */}
+              {(variant.style?.macrocategory || variant.metadata?.style_macrocategory) && (
+                <p className="text-muted-foreground truncate text-[10px]">
+                  {variant.style?.macrocategory || variant.metadata?.style_macrocategory}
+                  {(variant.style?.category || variant.metadata?.style_category) &&
+                    ` > ${variant.style?.category || variant.metadata?.style_category}`
+                  }
+                </p>
+              )}
+
               {variant.room_type && (
                 <p className="text-muted-foreground truncate">
                   {variant.room_type.name}
                 </p>
               )}
+
               {variant.color_palette && (
                 <div className="flex items-center gap-1">
                   <span className="text-muted-foreground truncate flex-1">
@@ -163,6 +199,21 @@ export function VariantCard({
                       />
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Furniture Mode Badge */}
+              {variant.metadata?.furniture_mode && (
+                <div className="flex items-center gap-1 mt-1">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] px-1.5 py-0.5 h-auto bg-primary/5 border-primary/20"
+                  >
+                    <span className="mr-1">
+                      {getFurnitureModeLabel(variant.metadata.furniture_mode).icon}
+                    </span>
+                    {getFurnitureModeLabel(variant.metadata.furniture_mode).label}
+                  </Badge>
                 </div>
               )}
             </div>

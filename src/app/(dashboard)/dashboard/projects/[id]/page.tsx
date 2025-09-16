@@ -48,7 +48,8 @@ import {
   Upload,
   Info,
   Ruler,
-  RefreshCw
+  RefreshCw,
+  Armchair
 } from 'lucide-react'
 import { ImageViewerModal } from '@/components/projects/ImageViewerModal'
 import Link from 'next/link'
@@ -169,6 +170,7 @@ export default function ProjectWorkspacePage({
   const [selectedStyle, setSelectedStyle] = useState('')
   const [selectedRoomType, setSelectedRoomType] = useState('')
   const [selectedColorScheme, setSelectedColorScheme] = useState('')
+  const [selectedFurnitureMode, setSelectedFurnitureMode] = useState('replace_all')
   const [customPrompt, setCustomPrompt] = useState('')
   const [roomWidth, setRoomWidth] = useState('')
   const [roomHeight, setRoomHeight] = useState('')
@@ -192,6 +194,7 @@ export default function ProjectWorkspacePage({
       setSelectedStyle('')
       setSelectedRoomType('')
       setSelectedColorScheme('')
+      setSelectedFurnitureMode('replace_all')
     }
   }, [selectedBaseImage])
 
@@ -520,6 +523,7 @@ export default function ProjectWorkspacePage({
           style_id: selectedStyle,
           room_type_id: selectedRoomType || null,
           color_scheme_id: selectedColorScheme || null,
+          furniture_mode: selectedFurnitureMode,
           custom_prompt: customPrompt || null,
           dimensions: {
             width: roomWidth ? parseFloat(roomWidth) : null,
@@ -857,6 +861,48 @@ export default function ProjectWorkspacePage({
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Furniture Preservation Mode */}
+                  <div>
+                    <label className="text-xs font-medium mb-1 block flex items-center gap-1">
+                      <Armchair className="h-3 w-3" />
+                      Manejo de Mobiliario
+                    </label>
+                    <Select value={selectedFurnitureMode} onValueChange={setSelectedFurnitureMode}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="keep_all">
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">Conservar Todo (Misma Posición)</span>
+                            <span className="text-xs text-muted-foreground">Preserva mobiliario exactamente como está</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="keep_reposition">
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">Conservar (Permitir Reposición)</span>
+                            <span className="text-xs text-muted-foreground">Mismo mobiliario, pero puede reorganizarse</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="keep_add_more">
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">Conservar + Agregar Más</span>
+                            <span className="text-xs text-muted-foreground">Preserva existente y añade piezas complementarias</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="replace_all">
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">Reemplazar Todo</span>
+                            <span className="text-xs text-muted-foreground">Transformación completa del mobiliario</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Controla cómo se maneja el mobiliario existente
+                    </p>
                   </div>
 
                   {/* Custom Prompt Field */}

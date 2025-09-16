@@ -32,6 +32,7 @@ export interface VirtualStagingRequest {
     provider?: 'runware' | 'gemini' | 'openrouter';
     dimensions?: { width?: number; height?: number };
     colorScheme?: string;
+    furnitureMode?: string;
     progressCallback?: (progress: { step: string; percentage?: number }) => void;
   };
   
@@ -170,6 +171,7 @@ export class VirtualStagingService {
           style: request.style, // Pass style for Gemini's prompt building
           roomType: request.roomType, // Pass room type for better context
           colorScheme: request.options?.colorScheme, // Pass color scheme if available
+          furnitureMode: request.options?.furnitureMode, // Pass furniture preservation mode
         },
       });
 

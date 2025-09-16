@@ -42,10 +42,11 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { 
-      style_id, 
-      room_type_id, 
+    const {
+      style_id,
+      room_type_id,
       color_scheme_id,
+      furniture_mode = 'replace_all',
       custom_prompt,
       dimensions,
       provider = 'gemini' // Default to Gemini for state-of-the-art image generation
@@ -94,10 +95,10 @@ export async function POST(
       )
     }
 
-    // Get style details
+    // Get style details including macrocategory
     const { data: style, error: styleError } = await supabase
       .from('design_styles')
-      .select('base_prompt, name, code')
+      .select('base_prompt, name, code, category, macrocategory')
       .eq('id', style_id)
       .single()
 
@@ -180,11 +181,14 @@ export async function POST(
         share_count: 0,
         metadata: {
           style_name: style.name,
+          style_category: style.category,
+          style_macrocategory: style.macrocategory,
           room_type_name: roomType?.name,
           color_palette_name: colorPalette?.name,
           color_palette: colorPalette?.primary_colors,
           dimensions: dimensions || null,
-          provider: provider
+          provider: provider,
+          furniture_mode: furniture_mode
         }
       })
       .select()
@@ -265,7 +269,8 @@ export async function POST(
         user.id,
         provider,
         dimensions,
-        colorPalette?.name
+        colorPalette?.name,
+        furniture_mode
       )
 
       // Fetch the updated transformation
@@ -273,7 +278,7 @@ export async function POST(
         .from('transformations')
         .select(`
           *,
-          design_styles!style_id(id, name, code),
+          design_styles!style_id(id, name, code, category, macrocategory),
           color_palettes!palette_id(id, name, code, primary_colors),
           seasonal_themes!season_id(id, name, code)
         `)
@@ -326,7 +331,8 @@ async function processTransformation(
   userId: string,
   provider: string = 'gemini',
   dimensions?: { width?: number, height?: number },
-  colorScheme?: string
+  colorScheme?: string,
+  furnitureMode: string = 'replace_all'
 ) {
   const startTime = Date.now()
   const cloudflareImages = getCloudflareImages()
@@ -368,6 +374,7 @@ async function processTransformation(
         provider: provider as 'runware' | 'gemini' | 'openrouter',
         dimensions: dimensions,
         colorScheme: colorScheme, // Pass color scheme for better styling
+        furnitureMode: furnitureMode, // Pass furniture mode for preservation logic
         progressCallback: (progress) => {
           console.log(`Transformation ${transformationId}: ${progress.step}`)
         }

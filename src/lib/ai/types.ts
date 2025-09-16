@@ -4,6 +4,13 @@
 
 export type AIProvider = 'runware' | 'gemini'
 
+export enum FurnitureMode {
+  KEEP_ALL = 'keep_all',
+  KEEP_REPOSITION = 'keep_reposition',
+  KEEP_ADD_MORE = 'keep_add_more',
+  REPLACE_ALL = 'replace_all'
+}
+
 export interface ImageGenerationResult {
   success: boolean
   imageUrl?: string
@@ -72,6 +79,7 @@ export interface StagingRequest {
     style?: string
     roomType?: string
     colorScheme?: string
+    furnitureMode?: FurnitureMode | string
   }
 }
 
@@ -94,6 +102,7 @@ export interface BatchGenerationRequest {
     style?: string
     roomType?: string
     colorScheme?: string
+    furnitureMode?: FurnitureMode | string
   }
 }
 
