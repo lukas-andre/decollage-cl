@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils'
 
 interface Variant {
   id: string
-  processed_image_url: string | null
+  result_image_url: string | null
   is_favorite: boolean
   created_at: string
   tokens_consumed: number
@@ -37,13 +37,13 @@ interface Variant {
     id: string
     name: string
     code: string
-  }
-  room_type: {
+  } | null
+  room_type?: {
     id: string
     name: string
     code: string
   } | null
-  color_scheme: {
+  color_palette?: {
     id: string
     name: string
     code: string
@@ -89,7 +89,7 @@ export function VariantGallery({ variants, loading = false, onToggleFavorite, or
   const filteredAndSortedVariants = useMemo(() => {
     let filtered = variants.filter(variant => {
       // Only show completed variants
-      if (variant.status !== 'completed' || !variant.processed_image_url) return false
+      if (variant.status !== 'completed' || !variant.result_image_url) return false
       
       // Apply filters
       switch (activeFilter) {
@@ -325,8 +325,8 @@ export function VariantGallery({ variants, loading = false, onToggleFavorite, or
                   }
                 }}
                 onDownload={() => {
-                  if (variant.processed_image_url) {
-                    handleDownloadImage(variant.processed_image_url, variant.style?.name)
+                  if (variant.result_image_url) {
+                    handleDownloadImage(variant.result_image_url, variant.style?.name)
                   }
                 }}
                 onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(variant.id) : undefined}

@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils'
 interface VariantCardProps {
   variant: {
     id: string
-    processed_image_url: string | null
+    result_image_url: string | null
     is_favorite: boolean
     created_at: string
     tokens_consumed: number
@@ -31,7 +31,7 @@ interface VariantCardProps {
       name: string
       code: string
     } | null
-    color_scheme: {
+    color_palette?: {
       id: string
       name: string
       code: string
@@ -77,10 +77,10 @@ export function VariantCard({
             <span className="text-sm font-medium">Error al generar</span>
             <span className="text-xs text-muted-foreground mt-1">Intenta nuevamente</span>
           </div>
-        ) : variant.processed_image_url ? (
+        ) : variant.result_image_url ? (
           <>
             <Image
-              src={variant.processed_image_url}
+              src={variant.result_image_url}
               alt={`Diseño ${variant.style?.name}`}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -149,13 +149,13 @@ export function VariantCard({
                   {variant.room_type.name}
                 </p>
               )}
-              {variant.color_scheme && (
+              {variant.color_palette && (
                 <div className="flex items-center gap-1">
                   <span className="text-muted-foreground truncate flex-1">
-                    {variant.color_scheme.name}
+                    {variant.color_palette.name}
                   </span>
                   <div className="flex gap-0.5 flex-shrink-0">
-                    {variant.color_scheme.hex_colors.slice(0, 3).map((color, i) => (
+                    {variant.color_palette.hex_colors.slice(0, 3).map((color, i) => (
                       <div
                         key={i}
                         className="w-2 h-2 rounded-full border border-border"

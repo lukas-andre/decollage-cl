@@ -41,27 +41,28 @@ export function BeforeAfterSlider({
   }
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      className={cn("relative w-full h-full overflow-hidden cursor-col-resize select-none", className)}
+      className={cn("relative w-full h-full overflow-hidden cursor-col-resize select-none bg-black", className)}
       onMouseMove={handleMouseMove}
       onTouchMove={handleTouchMove}
       onMouseLeave={() => setSliderPosition(50)} // Reset to center on mouse leave
     >
       {/* Before Image (background) */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 flex items-center justify-center">
         <Image
           src={beforeImage}
           alt={beforeAlt}
           fill
           className="object-contain"
           priority
+          sizes="(max-width: 1200px) 100vw, 80vw"
         />
       </div>
 
       {/* After Image (clipped) */}
-      <div 
-        className="absolute inset-0"
+      <div
+        className="absolute inset-0 flex items-center justify-center"
         style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
       >
         <Image
@@ -70,6 +71,7 @@ export function BeforeAfterSlider({
           fill
           className="object-contain"
           priority
+          sizes="(max-width: 1200px) 100vw, 80vw"
         />
       </div>
 

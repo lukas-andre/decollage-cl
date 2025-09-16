@@ -26,12 +26,12 @@ interface LightboxProps {
   onClose: () => void
   images: Array<{
     id: string
-    processed_image_url: string | null
+    result_image_url: string | null
     original_image_url?: string
     is_favorite: boolean
     style?: { name: string }
     room_type?: { name: string } | null
-    color_scheme?: { name: string; hex_colors: string[] } | null
+    color_palette?: { name: string; hex_colors: string[] } | null
     tokens_consumed: number
     created_at: string
   }>
@@ -108,10 +108,10 @@ export function Lightbox({
   }, [handleKeyDown])
 
   const handleDownload = async () => {
-    if (!currentImage?.processed_image_url) return
+    if (!currentImage?.result_image_url) return
     
     try {
-      const response = await fetch(currentImage.processed_image_url)
+      const response = await fetch(currentImage.result_image_url)
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -130,7 +130,7 @@ export function Lightbox({
     }
   }
 
-  if (!currentImage?.processed_image_url) return null
+  if (!currentImage?.result_image_url) return null
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -186,7 +186,7 @@ export function Lightbox({
               <div className="w-[80vw] h-[70vh] relative">
                 <BeforeAfterSlider
                   beforeImage={originalImage}
-                  afterImage={currentImage.processed_image_url}
+                  afterImage={currentImage.result_image_url}
                   beforeAlt="Original"
                   afterAlt={currentImage.style?.name || "Diseño generado"}
                   className="w-full h-full"
@@ -221,7 +221,7 @@ export function Lightbox({
                 }}
               >
                 <Image
-                  src={currentImage.processed_image_url}
+                  src={currentImage.result_image_url}
                   alt="Diseño generado"
                   width={800}
                   height={600}

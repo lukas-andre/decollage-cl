@@ -87,7 +87,7 @@ interface Project {
 
 interface Variant {
   id: string
-  processed_image_url: string | null
+  result_image_url: string | null
   is_favorite: boolean
   created_at: string
   tokens_consumed: number
@@ -96,18 +96,25 @@ interface Variant {
     id: string
     name: string
     code: string
-  }
-  room_type: {
+  } | null
+  room_type?: {
     id: string
     name: string
     code: string
   } | null
-  color_scheme: {
+  color_palette?: {
     id: string
     name: string
     code: string
     hex_colors: string[]
   } | null
+  metadata?: {
+    cloudflare_variants?: {
+      gallery?: string
+      preview?: string
+      thumbnail?: string
+    }
+  }
 }
 
 interface DesignData {
@@ -506,13 +513,23 @@ export default function ProjectWorkspacePage({
       // Deduct tokens optimistically
       const tokenCost = designData?.styles.find(s => s.id === selectedStyle)?.token_cost || 1
       deductTokens(tokenCost)
-      
-      toast.success('Diseño generado y procesándose en segundo plano')
 
-      // Refresh variants immediately to show the new processing one
-      await fetchVariants(selectedBaseImage.id)
+      // If the transformation is already completed (as shown in your response), add it immediately
+      if (data.transformation) {
+        // Add the new transformation to the list
+        setVariants(prev => [data.transformation, ...prev])
 
-      // Instead of polling, just set generating to false and let the user manually refresh if needed
+        if (data.transformation.status === 'completed') {
+          toast.success('¡Diseño generado exitosamente!')
+        } else {
+          toast.success('Diseño en proceso de generación...')
+        }
+      } else {
+        toast.success('Diseño enviado a generar')
+        // Refresh variants to get the latest
+        await fetchVariants(selectedBaseImage.id)
+      }
+
       setGenerating(false)
     } catch (error) {
       console.error('Error generating variant:', error)
@@ -1007,10 +1024,10 @@ export default function ProjectWorkspacePage({
           isOpen={viewerModal.isOpen}
           onClose={() => setViewerModal({ isOpen: false })}
           originalImage={selectedBaseImage.url}
-          processedImage={viewerModal.variant.processed_image_url!}
+          processedImage={viewerModal.variant.result_image_url!}
           styleName={viewerModal.variant.style?.name}
           roomType={viewerModal.variant.room_type?.name}
-          colorScheme={viewerModal.variant.color_scheme?.name}
+          colorScheme={viewerModal.variant.color_palette?.name}
         />
       )}
 

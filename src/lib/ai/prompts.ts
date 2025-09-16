@@ -71,49 +71,49 @@ export const STAGING_STYLES: Record<string, StagingStyle> = {
     id: 'contemporary',
     name: 'Contemporary',
     description: 'Modern clean lines with current trends',
-    prompt: 'Contemporary style interior. Clean lines, neutral colors, modern furniture. PRESERVE existing windows, doors, architecture. Glass and metal accents. Professional staging, photorealistic.',
+    prompt: 'Contemporary style DECORATION ONLY. Clean lines, neutral colors, modern furniture. MAINTAIN ALL existing walls, windows, doors, ceiling, floor structure. Only add furniture and decor. Professional staging, photorealistic.',
     keywords: ['modern', 'clean', 'neutral', 'minimal']
   },
   traditional: {
     id: 'traditional',
     name: 'Traditional',
     description: 'Classic timeless elegance',
-    prompt: 'Traditional elegant interior. Classic furniture, rich wood tones. PRESERVE existing windows, doors, architecture. Warm colors, refined textiles. Professional staging.',
+    prompt: 'Traditional DECORATION ONLY. Classic furniture, rich wood. MAINTAIN ALL existing walls, windows, doors, ceiling, floor. Only add furniture and decor. Professional staging.',
     keywords: ['classic', 'elegant', 'formal', 'timeless']
   },
   eclectic: {
     id: 'eclectic',
     name: 'Eclectic',
     description: 'Creative mix of styles and periods',
-    prompt: 'Eclectic mixed-style interior. Diverse furniture, bold colors. PRESERVE existing windows, doors, architecture. Unique art pieces. Professional staging.',
+    prompt: 'Eclectic DECORATION ONLY. Mixed styles, bold colors. MAINTAIN ALL existing walls, windows, doors, ceiling, floor. Only add furniture and decor. Professional staging.',
     keywords: ['mixed', 'creative', 'bold', 'unique']
   },
   modern: {
     id: 'modern',
     name: 'Modern',
     description: 'Sleek minimalist contemporary design',
-    prompt: 'Modern minimalist interior. Sleek furniture, monochrome palette. PRESERVE existing windows, doors, architecture. Open floor plan. Professional staging, photorealistic.',
+    prompt: 'Modern DECORATION ONLY. Sleek furniture, monochrome palette. MAINTAIN ALL existing walls, windows, doors, ceiling, floor. Only add furniture and decor. Professional staging.',
     keywords: ['minimalist', 'sleek', 'geometric', 'functional']
   },
   scandinavian: {
     id: 'scandinavian',
     name: 'Scandinavian',
     description: 'Nordic comfort and simplicity',
-    prompt: 'Scandinavian cozy interior. Light wood furniture, white walls. PRESERVE existing windows, doors, architecture. Natural light, hygge atmosphere. Professional staging.',
+    prompt: 'Scandinavian DECORATION ONLY. Light wood, cozy textiles. MAINTAIN ALL existing walls, windows, doors, ceiling, floor. Only add furniture and decor. Professional staging.',
     keywords: ['nordic', 'cozy', 'light', 'hygge']
   },
   industrial: {
     id: 'industrial',
     name: 'Industrial',
     description: 'Urban loft with raw materials',
-    prompt: 'Industrial loft interior. Exposed brick, metal fixtures. PRESERVE existing windows, doors, architecture. Raw materials, urban style. Professional staging.',
+    prompt: 'Industrial DECORATION ONLY. Metal furniture, urban decor. MAINTAIN ALL existing walls, windows, doors, ceiling, floor. Only add furniture and accessories. Professional staging.',
     keywords: ['urban', 'raw', 'metal', 'brick']
   },
   classic: {
     id: 'classic',
     name: 'Classic',
     description: 'Refined traditional elegance',
-    prompt: 'Classic refined interior. Traditional furniture, quality materials. PRESERVE existing windows, doors, architecture. Neutral colors. Professional staging.',
+    prompt: 'Classic DECORATION ONLY. Traditional furniture, quality materials. MAINTAIN ALL existing walls, windows, doors, ceiling, floor. Only add furniture and decor. Professional staging.',
     keywords: ['refined', 'traditional', 'balanced', 'sophisticated']
   },
   minimalist: {
@@ -193,8 +193,8 @@ export function generateStagingPrompt(
   let prompt = components.join(' ')
   
   // Add architectural preservation if not already in prompt
-  if (!prompt.includes('PRESERVE')) {
-    prompt += ' PRESERVE existing windows, doors, architecture.'
+  if (!prompt.includes('MAINTAIN')) {
+    prompt += ' MAINTAIN ALL existing architecture. DECORATION ONLY.'
   }
   
   // Trim if over 500 chars
