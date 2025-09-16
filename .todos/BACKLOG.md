@@ -98,14 +98,14 @@ M5: Token Pricing & Package Strategy 🔴 CRITICAL
 
 M6: Project Management Improvements 🔴 URGENT
 
-- Fix "Create New Project" button functionality on projects dashboard
-- Add image deletion capability (soft delete) in project workspace
+- ✅ Fix "Create New Project" button functionality on projects dashboard
+- ✅ Add image deletion capability (soft delete) in project workspace
 
 M7: AI Prompt Improvements 🔴 CRITICAL
 
-- Refine prompts to preserve architecture - DECORATION ONLY by default
-- Add explicit instruction: "Maintain existing room structure and architecture"
-- Only modify structure when user explicitly requests it in custom prompt
+- ✅ Refine prompts to preserve architecture - DECORATION ONLY by default
+- ✅ Add explicit instruction: "Maintain existing room structure and architecture"
+- ✅ Only modify structure when user explicitly requests it in custom prompt
 - ✅ Organize design styles into categories (Modern, Classic, Regional, Luxury, etc.)
 
 M7.5: Furniture Preservation Controls 🔴 URGENT - EASY WIN 🚀
