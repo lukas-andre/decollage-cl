@@ -40,9 +40,9 @@ export function ForgotPasswordForm() {
 
   if (success) {
     return (
-      <Alert className="border-green-200 bg-green-50">
-        <AlertDescription className="text-green-800">
-          Te hemos enviado un correo con instrucciones para restablecer tu contraseña.
+      <Alert className="border-[#A3B1A1]/30 bg-[#A3B1A1]/10">
+        <AlertDescription className="text-[#A3B1A1] font-lato">
+          ¡Perfecto! Te hemos enviado un correo con instrucciones para restablecer tu contraseña.
           Por favor, revisa tu bandeja de entrada.
         </AlertDescription>
       </Alert>
@@ -50,24 +50,24 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+        <Alert variant="destructive" className="border-[#C4886F]/30 bg-[#C4886F]/10">
+          <AlertDescription className="text-[#C4886F] font-lato">{error}</AlertDescription>
         </Alert>
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="email">Correo Electrónico</Label>
+        <Label htmlFor="email" className="text-[#333333] font-lato font-medium">Correo Electrónico</Label>
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A3B1A1]" />
           <Input
             id="email"
             type="email"
-            placeholder="tu@email.com"
+            placeholder="maria@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="pl-10"
+            className="pl-10 border-[#A3B1A1]/20 focus:border-[#A3B1A1] focus:ring-[#A3B1A1]/20 rounded-none font-lato transition-all duration-300"
             required
             disabled={isLoading}
           />
@@ -76,13 +76,13 @@ export function ForgotPasswordForm() {
 
       <Button 
         type="submit" 
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+        className="w-full bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white font-lato rounded-none transition-all duration-500 transform hover:scale-[1.02] py-3" 
         disabled={isLoading}
       >
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Enviando...
+            Enviando instrucciones...
           </>
         ) : (
           'Enviar Instrucciones'

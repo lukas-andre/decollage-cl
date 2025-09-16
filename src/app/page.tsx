@@ -92,17 +92,21 @@ export default function HomePage() {
 
             {/* Aspirational CTA */}
             <div className="flex items-center gap-6">
-              <Button
-                variant="ghost"
-                className="hidden md:flex items-center gap-2 px-0 text-[#333333] hover:text-[#A3B1A1] font-lato font-light transition-all duration-300"
-              >
-                <User className="h-4 w-4" />
-                <span className="text-sm tracking-wide">Mi Cuenta</span>
-              </Button>
-              <Button className="bg-[#333333] hover:bg-[#A3B1A1] text-white px-6 py-2 font-lato font-light text-sm tracking-wide transition-all duration-500 hover:scale-105 rounded-none">
-                Comenzar Gratis
-                <ArrowRight className="ml-2 h-3 w-3" />
-              </Button>
+              <Link href="/login">
+                <Button
+                  variant="ghost"
+                  className="hidden md:flex items-center gap-2 px-0 text-[#333333] hover:text-[#A3B1A1] font-lato font-light transition-all duration-300"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="text-sm tracking-wide">Mi Cuenta</span>
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button className="bg-[#333333] hover:bg-[#A3B1A1] text-white px-6 py-2 font-lato font-light text-sm tracking-wide transition-all duration-500 hover:scale-105 rounded-none">
+                  Comenzar Gratis
+                  <ArrowRight className="ml-2 h-3 w-3" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -148,13 +152,15 @@ export default function HomePage() {
                 {heroSlides[currentSlide].subtitle}
               </p>
 
-              <Button
-                size="lg"
-                className="bg-white/95 hover:bg-white text-[#333333] px-12 py-6 text-lg font-lato rounded-none backdrop-blur-sm transition-all hover:scale-105"
-              >
-                Comienza Tu Transformación
-                <ArrowRight className="ml-3 h-5 w-5" />
-              </Button>
+              <Link href="/signup">
+                <Button
+                  size="lg"
+                  className="bg-white/95 hover:bg-white text-[#333333] px-12 py-6 text-lg font-lato rounded-none backdrop-blur-sm transition-all hover:scale-105"
+                >
+                  Comienza Tu Transformación
+                  <ArrowRight className="ml-3 h-5 w-5" />
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -252,13 +258,15 @@ export default function HomePage() {
                   ))}
                 </div>
 
-                <Button
-                  size="lg"
-                  className="mt-12 bg-[#333333] hover:bg-[#333333]/90 text-white px-8 font-lato rounded-none w-full"
-                >
-                  Descubre Tu Potencial
-                  <Heart className="ml-2 h-4 w-4" />
-                </Button>
+                <Link href="/signup">
+                  <Button
+                    size="lg"
+                    className="mt-12 bg-[#333333] hover:bg-[#333333]/90 text-white px-8 font-lato rounded-none w-full"
+                  >
+                    Descubre Tu Potencial
+                    <Heart className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -604,12 +612,14 @@ export default function HomePage() {
                 <Link href="#" className="text-[#333333]/60 hover:text-[#A3B1A1] text-sm font-lato transition-colors duration-300 tracking-wide">
                   Términos
                 </Link>
-                <Button
-                  size="sm"
-                  className="bg-[#A3B1A1] hover:bg-[#333333] text-white px-4 py-2 font-lato text-xs tracking-wide transition-all duration-500 rounded-none"
-                >
-                  Crear Mi Hogar Soñado
-                </Button>
+                <Link href="/signup">
+                  <Button
+                    size="sm"
+                    className="bg-[#A3B1A1] hover:bg-[#333333] text-white px-4 py-2 font-lato text-xs tracking-wide transition-all duration-500 rounded-none"
+                  >
+                    Crear Mi Hogar Soñado
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

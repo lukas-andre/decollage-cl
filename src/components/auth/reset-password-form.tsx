@@ -64,33 +64,33 @@ export function ResetPasswordForm() {
 
   if (success) {
     return (
-      <Alert className="border-green-200 bg-green-50">
-        <AlertDescription className="text-green-800">
-          ¡Contraseña actualizada exitosamente! Redirigiendo al panel de control...
+      <Alert className="border-[#A3B1A1]/30 bg-[#A3B1A1]/10">
+        <AlertDescription className="text-[#A3B1A1] font-lato">
+          ¡Perfecto! Contraseña actualizada exitosamente. Redirigiendo a tu cuenta...
         </AlertDescription>
       </Alert>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+        <Alert variant="destructive" className="border-[#C4886F]/30 bg-[#C4886F]/10">
+          <AlertDescription className="text-[#C4886F] font-lato">{error}</AlertDescription>
         </Alert>
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="password">Nueva Contraseña</Label>
+        <Label htmlFor="password" className="text-[#333333] font-lato font-medium">Nueva Contraseña</Label>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A3B1A1]" />
           <Input
             id="password"
             type={showPassword ? 'text' : 'password'}
             placeholder="Ingresa tu nueva contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="pl-10 pr-10"
+            className="pl-10 pr-10 border-[#A3B1A1]/20 focus:border-[#A3B1A1] focus:ring-[#A3B1A1]/20 rounded-none font-lato transition-all duration-300"
             required
             disabled={isLoading}
             minLength={6}
@@ -101,25 +101,25 @@ export function ResetPasswordForm() {
             className="absolute right-3 top-1/2 -translate-y-1/2"
           >
             {showPassword ? (
-              <EyeOff className="h-4 w-4 text-muted-foreground" />
+              <EyeOff className="h-4 w-4 text-[#A3B1A1]" />
             ) : (
-              <Eye className="h-4 w-4 text-muted-foreground" />
+              <Eye className="h-4 w-4 text-[#A3B1A1]" />
             )}
           </button>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirmar Nueva Contraseña</Label>
+        <Label htmlFor="confirmPassword" className="text-[#333333] font-lato font-medium">Confirmar Nueva Contraseña</Label>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A3B1A1]" />
           <Input
             id="confirmPassword"
             type={showConfirmPassword ? 'text' : 'password'}
             placeholder="Confirma tu nueva contraseña"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="pl-10 pr-10"
+            className="pl-10 pr-10 border-[#A3B1A1]/20 focus:border-[#A3B1A1] focus:ring-[#A3B1A1]/20 rounded-none font-lato transition-all duration-300"
             required
             disabled={isLoading}
             minLength={6}
@@ -130,22 +130,26 @@ export function ResetPasswordForm() {
             className="absolute right-3 top-1/2 -translate-y-1/2"
           >
             {showConfirmPassword ? (
-              <EyeOff className="h-4 w-4 text-muted-foreground" />
+              <EyeOff className="h-4 w-4 text-[#A3B1A1]" />
             ) : (
-              <Eye className="h-4 w-4 text-muted-foreground" />
+              <Eye className="h-4 w-4 text-[#A3B1A1]" />
             )}
           </button>
         </div>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button 
+        type="submit" 
+        className="w-full bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white font-lato rounded-none transition-all duration-500 transform hover:scale-[1.02] py-3" 
+        disabled={isLoading}
+      >
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Actualizando Contraseña...
+            Actualizando contraseña...
           </>
         ) : (
-          'Restablecer Contraseña'
+          'Establecer nueva contraseña'
         )}
       </Button>
     </form>
