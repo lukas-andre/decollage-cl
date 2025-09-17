@@ -59,14 +59,6 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
             {loading ? '...' : available}
           </span>
           
-          <span className={cn(
-            "text-xs font-medium",
-            !hasTokens && "text-red-600",
-            isLow && "text-yellow-600", 
-            hasTokens && !isLow && "text-primary/80"
-          )}>
-            tokens
-          </span>
         </div>
 
         {/* Status Badge */}
@@ -82,20 +74,6 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
         )}
       </div>
 
-      {/* Refresh Button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={refresh}
-        disabled={loading}
-        className={cn(
-          "h-8 w-8 p-0 transition-transform hover:scale-105",
-          loading && "animate-spin"
-        )}
-        title="Actualizar balance"
-      >
-        <RefreshCw className="h-4 w-4" />
-      </Button>
 
       {/* Error Display */}
       {error && (

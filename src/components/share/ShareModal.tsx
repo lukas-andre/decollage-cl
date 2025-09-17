@@ -9,9 +9,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Copy, ExternalLink, Share2, Lock, Globe, Users, Loader2 } from 'lucide-react'
+import { Copy, ExternalLink, Share2, Lock, Globe, Users, Loader2, X, Eye } from 'lucide-react'
 import { toast } from 'sonner'
+import Image from 'next/image'
+import { cn } from '@/lib/utils'
 import { ShareConfig, ShareResponse } from '@/types/sharing'
+import { SharePreview } from './SharePreview'
 
 interface ShareModalProps {
   projectId: string
@@ -19,6 +22,7 @@ interface ShareModalProps {
   selectedItems?: any[]
   onClose: () => void
   onShareCreated?: (shareData: ShareResponse) => void
+  onRemoveItem?: (itemId: string) => void
 }
 
 export function ShareModal({
@@ -26,7 +30,8 @@ export function ShareModal({
   projectName,
   selectedItems = [],
   onClose,
-  onShareCreated
+  onShareCreated,
+  onRemoveItem
 }: ShareModalProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [shareConfig, setShareConfig] = useState<ShareConfig>({
@@ -89,21 +94,164 @@ export function ShareModal({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="h-5 w-5" />
             Compartir {projectName}
           </DialogTitle>
-          <DialogDescription>
-            {selectedItems.length > 0
-              ? `Compartiendo ${selectedItems.length} elementos seleccionados`
-              : 'Comparte tu proyecto con otros o insértalo en tu sitio web'}
+          <DialogDescription className="space-y-2">
+            {selectedItems.length > 0 ? (
+              <div className="space-y-1">
+                <p>Compartiendo {selectedItems.length} diseño{selectedItems.length !== 1 ? 's' : ''} seleccionado{selectedItems.length !== 1 ? 's' : ''}</p>
+                <div className="flex flex-wrap gap-1">
+                  {selectedItems.slice(0, 3).map((item, i) => (
+                    <span key={i} className="text-xs bg-[#A3B1A1]/10 text-[#A3B1A1] px-2 py-1 rounded-full">
+                      {item.style?.name || `Diseño ${i + 1}`}
+                    </span>
+                  ))}
+                  {selectedItems.length > 3 && (
+                    <span className="text-xs text-muted-foreground">
+                      +{selectedItems.length - 3} más
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p>Comparte tu proyecto completo con otros o insértalo en tu sitio web</p>
+            )}
           </DialogDescription>
         </DialogHeader>
 
+        {/* Visual Selection Grid - Show selected images */}
+        {selectedItems.length > 0 && (
+          <div className="border-b pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-sm text-[#A3B1A1]">
+                Diseños seleccionados ({selectedItems.length})
+              </h4>
+              <span className="text-xs text-muted-foreground">
+                Haz clic en × para remover
+              </span>
+            </div>
+
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+              {selectedItems.map((item, index) => (
+                <div
+                  key={item.id}
+                  className="relative group cursor-pointer aspect-square rounded-lg overflow-hidden bg-muted border-2 border-[#A3B1A1]/20"
+                >
+                  {item.result_image_url && (
+                    <>
+                      <Image
+                        src={item.result_image_url}
+                        alt={item.style?.name || `Diseño ${index + 1}`}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 640px) 25vw, (max-width: 768px) 16vw, 12vw"
+                      />
+
+                      {/* Hover overlay with remove button */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                        <div className="flex gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              // View image functionality could be added here
+                            }}
+                            className="w-6 h-6 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors"
+                          >
+                            <Eye className="h-3 w-3 text-gray-700" />
+                          </button>
+
+                          {onRemoveItem && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onRemoveItem(item.id)
+                              }}
+                              className="w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Remove button - always visible on small screens */}
+                      {onRemoveItem && (
+                        <button
+                          onClick={() => onRemoveItem(item.id)}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </>
+                  )}
+
+                  {/* Style name label */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1 text-center">
+                    <span className="truncate block">
+                      {item.style?.name || `Diseño ${index + 1}`}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {!shareResponse ? (
-          <div className="space-y-6">
+          <div className="flex-1 overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+              {/* Configuration Panel */}
+              <div className="space-y-6 overflow-y-auto pr-2">
+            {/* Quick Selection - Only show when no items are selected */}
+            {selectedItems.length === 0 && (
+              <div className="rounded-lg bg-[#A3B1A1]/5 border border-[#A3B1A1]/10 p-4">
+                <h4 className="font-medium text-sm mb-3 text-[#A3B1A1]">Selección Rápida</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onClose()
+                      window.dispatchEvent(new CustomEvent('quick-select-best'))
+                    }}
+                    className="justify-start"
+                  >
+                    Seleccionar 5 Mejores Diseños
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onClose()
+                      window.dispatchEvent(new CustomEvent('quick-select-favorites'))
+                    }}
+                    className="justify-start"
+                  >
+                    Seleccionar Todos los Favoritos
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onClose()
+                      window.dispatchEvent(new CustomEvent('quick-select-by-style'))
+                    }}
+                    className="justify-start"
+                  >
+                    Seleccionar por Estilo
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  O vuelve al proyecto para hacer una selección manual
+                </p>
+              </div>
+            )}
+
             {/* Visibility Settings */}
             <div className="space-y-3">
               <Label>Visibilidad</Label>
@@ -182,66 +330,36 @@ export function ShareModal({
               </div>
             )}
 
-            {/* Advanced Options */}
-            <div className="space-y-3">
-              <Label>Opciones avanzadas</Label>
 
-              {/* Expiration */}
-              <div className="flex items-center justify-between">
-                <Label htmlFor="expires" className="text-sm text-muted-foreground">
-                  Establecer fecha de expiración
-                </Label>
-                <Input
-                  id="expires"
-                  type="datetime-local"
-                  className="w-auto"
-                  onChange={(e) => {
-                    const date = e.target.value ? new Date(e.target.value) : undefined
-                    setShareConfig(prev => ({ ...prev, expiresAt: date }))
-                  }}
-                />
+                <DialogFooter>
+                  <Button variant="outline" onClick={onClose}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleCreateShare} disabled={isCreating}>
+                    {isCreating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Creando...
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Crear enlace
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
               </div>
 
-              {/* View Limit */}
-              <div className="flex items-center justify-between">
-                <Label htmlFor="max-views" className="text-sm text-muted-foreground">
-                  Límite de visualizaciones
-                </Label>
-                <Input
-                  id="max-views"
-                  type="number"
-                  className="w-24"
-                  placeholder="∞"
-                  min="1"
-                  value={shareConfig.maxViews || ''}
-                  onChange={(e) =>
-                    setShareConfig(prev => ({
-                      ...prev,
-                      maxViews: e.target.value ? parseInt(e.target.value) : undefined
-                    }))
-                  }
+              {/* Preview Panel - Only show on larger screens */}
+              <div className="hidden lg:block border-l pl-6 overflow-y-auto">
+                <SharePreview
+                  config={shareConfig}
+                  selectedItems={selectedItems}
+                  projectName={projectName}
                 />
               </div>
             </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button onClick={handleCreateShare} disabled={isCreating}>
-                {isCreating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creando...
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Crear enlace
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
           </div>
         ) : (
           <div className="space-y-6">

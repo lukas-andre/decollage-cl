@@ -57,12 +57,25 @@ interface VariantGalleryProps {
   onToggleFavorite?: (variantId: string) => void
   originalImage?: string // Base image URL for comparison
   onRefresh?: () => void
+  // Selection functionality
+  selectedVariants?: Set<string>
+  onToggleSelection?: (variantId: string) => void
+  showSelection?: boolean
 }
 
 type FilterType = 'all' | 'favorites' | 'style' | 'room_type' | 'date'
 type SortType = 'newest' | 'oldest' | 'tokens_asc' | 'tokens_desc'
 
-export function VariantGallery({ variants, loading = false, onToggleFavorite, originalImage, onRefresh }: VariantGalleryProps) {
+export function VariantGallery({
+  variants,
+  loading = false,
+  onToggleFavorite,
+  originalImage,
+  onRefresh,
+  selectedVariants = new Set(),
+  onToggleSelection,
+  showSelection = false
+}: VariantGalleryProps) {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all')
   const [styleFilter, setStyleFilter] = useState<string>('all')
   const [roomTypeFilter, setRoomTypeFilter] = useState<string>('all')
@@ -203,18 +216,6 @@ export function VariantGallery({ variants, loading = false, onToggleFavorite, or
           </h2>
 
           <div className="flex items-center gap-2">
-            {onRefresh && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onRefresh}
-                disabled={loading}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-                Actualizar
-              </Button>
-            )}
             {hasActiveFilters && (
               <Button
                 variant="ghost"
@@ -331,6 +332,10 @@ export function VariantGallery({ variants, loading = false, onToggleFavorite, or
                 }}
                 onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(variant.id) : undefined}
                 isLoading={loading}
+                // Selection props
+                isSelected={selectedVariants.has(variant.id)}
+                onToggleSelection={onToggleSelection ? () => onToggleSelection(variant.id) : undefined}
+                showSelection={showSelection}
               />
             ))}
           </div>

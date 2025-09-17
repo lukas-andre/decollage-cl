@@ -3,12 +3,13 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Loader2, 
-  AlertCircle, 
-  Heart, 
-  Eye, 
-  Download 
+import {
+  Loader2,
+  AlertCircle,
+  Heart,
+  Eye,
+  Download,
+  Check
 } from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
@@ -66,6 +67,10 @@ interface VariantCardProps {
   onDownload: () => void
   onToggleFavorite?: () => void
   isLoading?: boolean
+  // Selection functionality
+  isSelected?: boolean
+  onToggleSelection?: () => void
+  showSelection?: boolean
 }
 
 export function VariantCard({
@@ -73,17 +78,29 @@ export function VariantCard({
   onView,
   onDownload,
   onToggleFavorite,
-  isLoading = false
+  isLoading = false,
+  isSelected = false,
+  onToggleSelection,
+  showSelection = false
 }: VariantCardProps) {
   return (
-    <Card 
+    <Card
       className={cn(
-        "overflow-hidden transition-all duration-200 group",
+        "overflow-hidden transition-all duration-500 group",
         variant.status === 'processing' && "ring-2 ring-primary ring-offset-2 animate-pulse",
         variant.status === 'completed' && "cursor-pointer hover:shadow-lg hover:scale-[1.02]",
-        isLoading && "opacity-50"
+        isLoading && "opacity-50",
+        isSelected && "ring-2 ring-[#A3B1A1] ring-offset-2 shadow-lg scale-[1.02]"
       )}
-      onClick={() => variant.status === 'completed' && onView()}
+      onClick={() => {
+        if (variant.status === 'completed') {
+          if (showSelection && onToggleSelection) {
+            onToggleSelection()
+          } else {
+            onView()
+          }
+        }
+      }}
     >
       <div className="relative aspect-[4/3] bg-muted">
         {variant.status === 'processing' || variant.status === 'pending' ? (
@@ -111,12 +128,44 @@ export function VariantCard({
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             />
             
+            {/* Selection Checkbox - Elegant top-left positioning */}
+            {showSelection && onToggleSelection && (
+              <div
+                className={cn(
+                  "absolute top-3 left-3 transition-all duration-500 ease-out",
+                  "opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100",
+                  isSelected && "opacity-100 scale-100"
+                )}
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleSelection()
+                  }}
+                  className={cn(
+                    "w-6 h-6 rounded-full border-2 transition-all duration-500 ease-out",
+                    "flex items-center justify-center",
+                    "hover:scale-110 hover:shadow-lg",
+                    isSelected
+                      ? "bg-[#A3B1A1] border-[#A3B1A1] text-white shadow-lg"
+                      : "bg-white/90 border-white/90 text-transparent hover:bg-white"
+                  )}
+                >
+                  <Check className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+
             {/* Hover Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div className={cn(
+              "absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20",
+              "transition-opacity duration-500 ease-out",
+              showSelection ? "opacity-0 group-hover:opacity-80" : "opacity-0 group-hover:opacity-100"
+            )}>
               <div className="absolute bottom-2 left-2 right-2 flex gap-1">
-                <Button 
-                  size="sm" 
-                  variant="secondary" 
+                <Button
+                  size="sm"
+                  variant="secondary"
                   className="h-7 px-2 flex-1 text-xs"
                   onClick={(e) => {
                     e.stopPropagation()
@@ -126,9 +175,9 @@ export function VariantCard({
                   <Eye className="h-3 w-3 mr-1" />
                   Ver
                 </Button>
-                <Button 
-                  size="sm" 
-                  variant="secondary" 
+                <Button
+                  size="sm"
+                  variant="secondary"
                   className="h-7 px-2 flex-1 text-xs"
                   onClick={(e) => {
                     e.stopPropagation()
@@ -139,12 +188,12 @@ export function VariantCard({
                   Descargar
                 </Button>
               </div>
-              
+
               {/* Favorite Button */}
               {onToggleFavorite && (
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
+                <Button
+                  size="sm"
+                  variant="ghost"
                   className="absolute top-2 right-2 h-7 w-7 p-0 hover:bg-white/20"
                   onClick={(e) => {
                     e.stopPropagation()
@@ -235,10 +284,6 @@ export function VariantCard({
                   )} />
                 </Button>
               </div>
-              
-              <Badge variant="secondary" className="text-xs">
-                {variant.tokens_consumed} token{variant.tokens_consumed !== 1 ? 's' : ''}
-              </Badge>
             </div>
           </>
         )}

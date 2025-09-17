@@ -60,7 +60,9 @@ import {
   Ruler,
   RefreshCw,
   Armchair,
-  Trash2
+  Trash2,
+  Zap,
+  Palette
 } from 'lucide-react'
 import { ImageViewerModal } from '@/components/projects/ImageViewerModal'
 import Link from 'next/link'
@@ -73,9 +75,8 @@ import { UploadProgress } from '@/components/projects/UploadProgress'
 import { ImageUploadSkeleton, ImagePreviewSkeleton } from '@/components/projects/ImageUploadSkeleton'
 import { NoTokensDialog } from '@/components/tokens/NoTokensDialog'
 import { VariantGallery } from '@/components/projects/VariantGallery'
-import { FavoritesWidget } from '@/components/project/FavoritesWidget'
 import { FavoriteButton } from '@/components/project/FavoriteButton'
-import { ShareModal } from '@/components/share/ShareModal'
+import { SelectionSummary } from '@/components/project/SelectionSummary'
 import { Share2 } from 'lucide-react'
 
 interface BaseImage {
@@ -181,9 +182,9 @@ export default function ProjectWorkspacePage({
   const [editingName, setEditingName] = useState(false)
   const [projectName, setProjectName] = useState('')
   const [uploading, setUploading] = useState(false)
-  const [shareModalOpen, setShareModalOpen] = useState(false)
-  const [selectedShareItems, setSelectedShareItems] = useState<any[]>([])
-  const [favoritesExpanded, setFavoritesExpanded] = useState(true)
+  // Selection state for sharing
+  const [selectedVariants, setSelectedVariants] = useState<Set<string>>(new Set())
+  const [showSelection, setShowSelection] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadStatus, setUploadStatus] = useState<'selecting' | 'validating' | 'compressing' | 'uploading' | 'processing' | 'complete' | 'error'>('selecting')
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -510,6 +511,43 @@ export default function ProjectWorkspacePage({
     }
   }, [editingName])
 
+  // Handle share events
+  useEffect(() => {
+    const handleShareWholeProject = () => {
+      // Clear selection storage and navigate to preview page
+      localStorage.removeItem(`share-selection-${id}`)
+      router.push(`/dashboard/projects/${id}/share`)
+    }
+
+    const handleQuickSelectBest = () => {
+      handleSelectBest()
+      toast.success('Mejores diseños seleccionados')
+    }
+
+    const handleQuickSelectFavorites = () => {
+      handleSelectAllFavorites()
+      toast.success('Favoritos seleccionados')
+    }
+
+    const handleQuickSelectByStyle = () => {
+      // For now, just select all favorites as it's the most common use case
+      handleSelectAllFavorites()
+      toast.success('Diseños seleccionados por estilo')
+    }
+
+    window.addEventListener('share-whole-project', handleShareWholeProject)
+    window.addEventListener('quick-select-best', handleQuickSelectBest)
+    window.addEventListener('quick-select-favorites', handleQuickSelectFavorites)
+    window.addEventListener('quick-select-by-style', handleQuickSelectByStyle)
+
+    return () => {
+      window.removeEventListener('share-whole-project', handleShareWholeProject)
+      window.removeEventListener('quick-select-best', handleQuickSelectBest)
+      window.removeEventListener('quick-select-favorites', handleQuickSelectFavorites)
+      window.removeEventListener('quick-select-by-style', handleQuickSelectByStyle)
+    }
+  }, [id, router, variants])
+
   const handleViewImage = (variant: Variant) => {
     setViewerModal({ isOpen: true, variant })
   }
@@ -546,22 +584,109 @@ export default function ProjectWorkspacePage({
       }
 
       // Optimistically update the variant in the list
-      setVariants(prev => prev.map(variant => 
-        variant.id === variantId 
+      setVariants(prev => prev.map(variant =>
+        variant.id === variantId
           ? { ...variant, is_favorite: !variant.is_favorite }
           : variant
       ))
 
       const variant = variants.find(v => v.id === variantId)
       toast.success(
-        variant?.is_favorite 
-          ? 'Removido de favoritos' 
+        variant?.is_favorite
+          ? 'Removido de favoritos'
           : 'Agregado a favoritos'
       )
     } catch (error) {
       console.error('Error toggling favorite:', error)
       toast.error('Error al actualizar favorito')
     }
+  }
+
+  // Selection management functions
+  const handleToggleSelection = (variantId: string) => {
+    setSelectedVariants(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(variantId)) {
+        newSet.delete(variantId)
+      } else {
+        newSet.add(variantId)
+      }
+      return newSet
+    })
+  }
+
+  const handleShareSelected = () => {
+    if (selectedVariants.size === 0) {
+      toast.error('Selecciona al menos un diseño para compartir')
+      return
+    }
+
+    const selectedItems = variants.filter(v => selectedVariants.has(v.id))
+    const selectedIds = selectedItems.map(item => item.id)
+    console.log('Saving to localStorage:', selectedIds)
+    // Save to localStorage for preview page
+    localStorage.setItem(`share-selection-${id}`, JSON.stringify(selectedIds))
+    console.log('Navigating to share page...')
+    // Navigate to preview page
+    router.push(`/dashboard/projects/${id}/share`)
+  }
+
+  const handleShareFavorites = () => {
+    const favoriteItems = variants.filter(v => v.is_favorite && v.status === 'completed')
+    if (favoriteItems.length === 0) {
+      toast.error('No tienes diseños marcados como favoritos')
+      return
+    }
+
+    const favoriteIds = favoriteItems.map(item => item.id)
+    console.log('Saving favorites to localStorage:', favoriteIds)
+    // Save to localStorage for preview page
+    localStorage.setItem(`share-selection-${id}`, JSON.stringify(favoriteIds))
+    console.log('Navigating to share page...')
+    // Navigate to preview page
+    router.push(`/dashboard/projects/${id}/share`)
+  }
+
+  const handleClearSelection = () => {
+    setSelectedVariants(new Set())
+    setShowSelection(false)
+  }
+
+
+  // Quick selection modes
+  const handleSelectBest = () => {
+    // Select variants with highest token consumption (most complex/premium)
+    const bestVariants = variants
+      .filter(v => v.status === 'completed')
+      .sort((a, b) => b.tokens_consumed - a.tokens_consumed)
+      .slice(0, 5) // Top 5 most complex
+      .map(v => v.id)
+
+    setSelectedVariants(new Set(bestVariants))
+    toast.success(`Seleccionados ${bestVariants.length} diseños premium`)
+  }
+
+  const handleSelectByStyle = (styleName: string) => {
+    const styleVariants = variants
+      .filter(v => v.status === 'completed' && v.style?.name === styleName)
+      .map(v => v.id)
+
+    setSelectedVariants(prev => {
+      const newSet = new Set(prev)
+      styleVariants.forEach(id => newSet.add(id))
+      return newSet
+    })
+
+    toast.success(`Agregados ${styleVariants.length} diseños de ${styleName}`)
+  }
+
+  const handleSelectAllFavorites = () => {
+    const favoriteVariants = variants
+      .filter(v => v.status === 'completed' && v.is_favorite)
+      .map(v => v.id)
+
+    setSelectedVariants(new Set(favoriteVariants))
+    toast.success(`Seleccionados ${favoriteVariants.length} favoritos`)
   }
 
   const handleGenerateVariant = async () => {
@@ -659,9 +784,9 @@ export default function ProjectWorkspacePage({
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="border-b px-6 py-4">
+      <div className="border-b px-8 py-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <Button variant="ghost" size="sm" asChild>
               <Link href="/dashboard/projects">
                 <ArrowLeft className="h-4 w-4" />
@@ -669,7 +794,7 @@ export default function ProjectWorkspacePage({
             </Button>
             
             {/* Project Name with Inline Editing */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               {editingName ? (
                 <div className="flex items-center gap-2">
                   <Input
@@ -683,13 +808,13 @@ export default function ProjectWorkspacePage({
                         setEditingName(false)
                       }
                     }}
-                    className="w-[200px]"
+                    className="w-[300px] text-xl font-light"
                   />
                   <Button size="sm" variant="ghost" onClick={handleProjectNameUpdate}>
                     <Check className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="ghost"
                     onClick={() => {
                       setProjectName(project.name)
@@ -700,13 +825,13 @@ export default function ProjectWorkspacePage({
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                  <h2 className="text-lg font-semibold">{project.name}</h2>
+                <div className="flex items-center gap-3 group">
+                  <h1 className="text-xl font-light text-[#333333]">{project.name}</h1>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => setEditingName(true)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   >
                     <Edit2 className="h-4 w-4" />
                   </Button>
@@ -748,31 +873,120 @@ export default function ProjectWorkspacePage({
               </DropdownMenuContent>
             </DropdownMenu>
             
-            {project.description && (
-              <p className="text-sm text-muted-foreground hidden lg:block">
-                {project.description}
-              </p>
-            )}
+            <div className="flex items-center gap-6 text-xs text-muted-foreground">
+              {project.description && (
+                <p className="text-sm text-[#A3B1A1] font-light hidden lg:block">
+                  {project.description}
+                </p>
+              )}
+              <div className="flex items-center gap-4 text-xs">
+                <span>{project.images?.length || 0} imagen{(project.images?.length || 0) !== 1 ? 'es' : ''}</span>
+                <span>•</span>
+                <span>{project.total_transformations} transformación{project.total_transformations !== 1 ? 'es' : ''}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Selection Mode Toggle */}
+            {showSelection && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowSelection(false)
+                  setSelectedVariants(new Set())
+                }}
+                className="text-muted-foreground hover:text-foreground transition-all duration-300"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancelar selección
+              </Button>
+            )}
+
+            {/* Quick Selection Options */}
+            {showSelection && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-[#A3B1A1] hover:text-[#A3B1A1]/80">
+                    <Zap className="h-4 w-4 mr-2" />
+                    Selección Rápida
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="text-xs">Modos de selección</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem onClick={handleSelectBest}>
+                    <Sparkles className="h-4 w-4 mr-2 text-yellow-600" />
+                    <div>
+                      <span className="font-medium">Seleccionar Mejores</span>
+                      <p className="text-xs text-muted-foreground">Top 5 diseños premium</p>
+                    </div>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem onClick={handleSelectAllFavorites}>
+                    <Heart className="h-4 w-4 mr-2 text-red-500" />
+                    <div>
+                      <span className="font-medium">Todos los Favoritos</span>
+                      <p className="text-xs text-muted-foreground">
+                        {variants.filter(v => v.is_favorite && v.status === 'completed').length} diseños
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+
+                  {/* Style-based selection */}
+                  {Array.from(new Set(variants.filter(v => v.status === 'completed' && v.style?.name).map(v => v.style!.name))).length > 1 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="text-xs">Por estilo</DropdownMenuLabel>
+                      {Array.from(new Set(variants.filter(v => v.status === 'completed' && v.style?.name).map(v => v.style!.name))).slice(0, 4).map(styleName => (
+                        <DropdownMenuItem
+                          key={styleName}
+                          onClick={() => handleSelectByStyle(styleName)}
+                        >
+                          <Palette className="h-4 w-4 mr-2 text-[#A3B1A1]" />
+                          <div>
+                            <span className="font-medium">{styleName}</span>
+                            <p className="text-xs text-muted-foreground">
+                              {variants.filter(v => v.status === 'completed' && v.style?.name === styleName).length} diseños
+                            </p>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {/* Intelligent Share Button */}
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={() => {
-                setSelectedShareItems([])
-                setShareModalOpen(true)
+                // Intelligent sharing logic
+                if (showSelection && selectedVariants.size > 0) {
+                  // Share selected variants
+                  handleShareSelected()
+                } else if (!showSelection) {
+                  // Simply enter selection mode
+                  setShowSelection(true)
+                  toast.info('Selecciona los diseños que quieres compartir')
+                } else {
+                  // In selection mode but nothing selected, suggest quick options
+                  setShowSelection(true)
+                  toast.info('Selecciona diseños o usa "Selección Rápida"')
+                }
               }}
+              className="bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 transition-colors duration-300"
             >
               <Share2 className="h-4 w-4 mr-2" />
-              Compartir
+              {showSelection && selectedVariants.size > 0
+                ? `Compartir ${selectedVariants.size} diseño${selectedVariants.size !== 1 ? 's' : ''}`
+                : 'Compartir'
+              }
             </Button>
-            <Badge variant="outline">
-              {project.images?.length || 0} imagen{(project.images?.length || 0) !== 1 ? 'es' : ''}
-            </Badge>
-            <Badge variant="outline">
-              {project.total_transformations} transformaciones
-            </Badge>
-            <DashboardHeader />
           </div>
         </div>
       </div>
@@ -1202,6 +1416,9 @@ export default function ProjectWorkspacePage({
               onToggleFavorite={handleToggleFavorite}
               originalImage={selectedBaseImage.url}
               onRefresh={() => selectedBaseImage && fetchVariants(selectedBaseImage.id)}
+              selectedVariants={selectedVariants}
+              onToggleSelection={handleToggleSelection}
+              showSelection={showSelection}
             />
           )}
         </div>
@@ -1251,40 +1468,26 @@ export default function ProjectWorkspacePage({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Favorites Widget */}
-      <FavoritesWidget
-        projectId={id}
-        onShare={(items) => {
-          setSelectedShareItems(items)
-          setShareModalOpen(true)
+
+      {/* Selection Summary Panel */}
+      <SelectionSummary
+        selectedVariants={selectedVariants}
+        variants={variants}
+        onShareSelected={handleShareSelected}
+        onClearSelection={handleClearSelection}
+        onToggleSelection={handleToggleSelection}
+        onViewVariant={(variantId) => {
+          const variant = variants.find(v => v.id === variantId)
+          if (variant && variant.result_image_url) {
+            setViewerModal({
+              isOpen: true,
+              variant
+            })
+          }
         }}
-        className="fixed bottom-6 right-6 z-40 w-80"
-        isCollapsed={!favoritesExpanded}
-        onToggleCollapse={() => setFavoritesExpanded(!favoritesExpanded)}
       />
 
-      {/* Share Modal */}
-      {shareModalOpen && (
-        <ShareModal
-          projectId={id}
-          projectName={project?.name || ''}
-          selectedItems={selectedShareItems}
-          onClose={() => {
-            setShareModalOpen(false)
-            setSelectedShareItems([])
-          }}
-          onShareCreated={(shareData) => {
-            toast.success('¡Proyecto compartido exitosamente!', {
-              description: 'El enlace ha sido copiado al portapapeles',
-              action: {
-                label: 'Ver',
-                onClick: () => window.open(shareData.shareUrl, '_blank')
-              }
-            })
-            setShareModalOpen(false)
-          }}
-        />
-      )}
+
     </div>
   )
 }
