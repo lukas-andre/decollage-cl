@@ -38,6 +38,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { ProjectCreateModal } from '@/components/projects/ProjectCreateModal'
 
 interface Project {
   id: string
@@ -167,6 +168,11 @@ export default function MisEspaciosPage() {
       console.error('Error deleting project:', error)
       toast.error(error instanceof Error ? error.message : 'Error al eliminar espacio')
     }
+  }
+
+  const handleProjectCreated = (project: any) => {
+    // Redirect to the new project
+    window.location.href = `/dashboard/projects/${project.id}`
   }
 
   const handleArchiveProject = async (projectId: string) => {
@@ -579,7 +585,12 @@ export default function MisEspaciosPage() {
         </div>
       )}
 
-      {/* TODO: Add ProjectCreateModal component when needed */}
+      {/* Create Project Modal */}
+      <ProjectCreateModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onSuccess={handleProjectCreated}
+      />
     </div>
   )
 }

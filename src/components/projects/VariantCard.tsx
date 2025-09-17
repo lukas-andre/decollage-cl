@@ -17,14 +17,14 @@ import { cn } from '@/lib/utils'
 function getFurnitureModeLabel(mode: string): { label: string; icon: string } {
   switch (mode) {
     case 'keep_all':
-      return { label: 'Conservar Todo', icon: '🪑' }
+      return { label: 'Conservar Todo', icon: '' }
     case 'keep_reposition':
-      return { label: 'Conservar + Reposicionar', icon: '🔄' }
+      return { label: 'Conservar + Reposicionar', icon: '' }
     case 'keep_add_more':
-      return { label: 'Conservar + Agregar', icon: '➕' }
+      return { label: 'Conservar + Agregar', icon: '' }
     case 'replace_all':
     default:
-      return { label: 'Reemplazar Todo', icon: '🔃' }
+      return { label: 'Reemplazar Todo', icon: '' }
   }
 }
 
@@ -209,9 +209,6 @@ export function VariantCard({
                     variant="outline"
                     className="text-[10px] px-1.5 py-0.5 h-auto bg-primary/5 border-primary/20"
                   >
-                    <span className="mr-1">
-                      {getFurnitureModeLabel(variant.metadata.furniture_mode).icon}
-                    </span>
                     {getFurnitureModeLabel(variant.metadata.furniture_mode).label}
                   </Badge>
                 </div>

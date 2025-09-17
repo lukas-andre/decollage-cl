@@ -29,6 +29,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   ArrowLeft,
   Plus,
   Sparkles,
@@ -49,7 +59,8 @@ import {
   Info,
   Ruler,
   RefreshCw,
-  Armchair
+  Armchair,
+  Trash2
 } from 'lucide-react'
 import { ImageViewerModal } from '@/components/projects/ImageViewerModal'
 import Link from 'next/link'
@@ -97,6 +108,8 @@ interface Variant {
     id: string
     name: string
     code: string
+    category?: string
+    macrocategory?: string
   } | null
   room_type?: {
     id: string
@@ -110,11 +123,19 @@ interface Variant {
     hex_colors: string[]
   } | null
   metadata?: {
+    style_name?: string
+    style_category?: string
+    style_macrocategory?: string
+    furniture_mode?: string
+    room_type_name?: string
+    color_palette_name?: string
+    provider?: string
     cloudflare_variants?: {
       gallery?: string
       preview?: string
       thumbnail?: string
     }
+    [key: string]: any
   }
 }
 
@@ -165,6 +186,11 @@ export default function ProjectWorkspacePage({
     variant?: Variant
   }>({ isOpen: false })
   const [showNoTokensDialog, setShowNoTokensDialog] = useState(false)
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean
+    imageId?: string
+    imageName?: string
+  }>({ isOpen: false })
   
   // Generation form state
   const [selectedStyle, setSelectedStyle] = useState('')
@@ -298,6 +324,38 @@ export default function ProjectWorkspacePage({
       return []
     } finally {
       setLoadingVariants(false)
+    }
+  }
+
+  const handleDeleteImage = async (imageId: string) => {
+    try {
+      const response = await fetch(`/api/images/${imageId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Error al eliminar imagen')
+      }
+
+      // Remove the image from the project state
+      if (project) {
+        const updatedImages = project.images.filter(img => img.id !== imageId)
+        setProject({ ...project, images: updatedImages })
+
+        // If the deleted image was selected, select the first remaining image or clear selection
+        if (selectedBaseImage?.id === imageId) {
+          setSelectedBaseImage(updatedImages.length > 0 ? updatedImages[0] : null)
+          setVariants([])
+        }
+      }
+
+      toast.success('Imagen eliminada correctamente')
+    } catch (error) {
+      console.error('Error deleting image:', error)
+      toast.error(error instanceof Error ? error.message : 'Error al eliminar imagen')
+    } finally {
+      setDeleteDialog({ isOpen: false })
     }
   }
 
@@ -747,28 +805,48 @@ export default function ProjectWorkspacePage({
                 ) : (
                   <>
                     {project?.images?.map((image) => (
-                      <button
+                      <div
                         key={image.id}
-                        onClick={() => setSelectedBaseImage(image)}
                         className={cn(
-                          "relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all hover:scale-105",
+                          "relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all group",
                           selectedBaseImage?.id === image.id
                             ? "border-primary ring-2 ring-primary/20 scale-105"
                             : "border-transparent hover:border-gray-300"
                         )}
                       >
-                        <Image
-                          src={image.url}
-                          alt={image.name || 'Imagen del proyecto'}
-                          fill
-                          className="object-cover"
-                        />
+                        <button
+                          onClick={() => setSelectedBaseImage(image)}
+                          className="w-full h-full hover:scale-105 transition-transform"
+                        >
+                          <Image
+                            src={image.url}
+                            alt={image.name || 'Imagen del proyecto'}
+                            fill
+                            className="object-cover"
+                          />
+                        </button>
+
+                        {/* Delete button - appears on hover */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDeleteDialog({
+                              isOpen: true,
+                              imageId: image.id,
+                              imageName: image.name || 'esta imagen'
+                            })
+                          }}
+                          className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+
                         {(image.transformations?.length || 0) > 0 && (
                           <div className="absolute bottom-0 right-0 bg-black/70 text-white text-xs px-1 rounded-tl">
                             {image.transformations?.length || 0}
                           </div>
                         )}
-                      </button>
+                      </div>
                     ))}
 
                     {/* Show upload skeleton when uploading */}
@@ -1125,10 +1203,35 @@ export default function ProjectWorkspacePage({
       )}
 
       {/* No Tokens Dialog */}
-      <NoTokensDialog 
+      <NoTokensDialog
         isOpen={showNoTokensDialog}
         onClose={() => setShowNoTokensDialog(false)}
       />
+
+      {/* Delete Image Confirmation Dialog */}
+      <AlertDialog
+        open={deleteDialog.isOpen}
+        onOpenChange={(open) => setDeleteDialog({ isOpen: open })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar imagen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas eliminar {deleteDialog.imageName}? Esta acción no se puede deshacer.
+              Todas las transformaciones relacionadas también se eliminarán.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteDialog.imageId && handleDeleteImage(deleteDialog.imageId)}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

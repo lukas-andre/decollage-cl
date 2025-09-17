@@ -429,6 +429,22 @@ async function processTransformation(
     // Get variant URLs
     const imageUrls = cloudflareImages.getVariantUrls(uploadResponse.result.id)
     
+    // Get existing metadata to preserve configuration data
+    const { data: existingTransformation } = await supabase
+      .from('transformations')
+      .select('metadata')
+      .eq('id', transformationId)
+      .single()
+
+    // Merge existing metadata with completion data
+    const updatedMetadata = {
+      ...(existingTransformation?.metadata || {}),
+      finalPrompt: result.finalPrompt,
+      estimatedCostCLP: result.estimatedCostCLP,
+      costBreakdown: result.costBreakdown,
+      cloudflare_variants: imageUrls
+    }
+
     // Update transformation record with service role privileges
     const { error: updateError } = await supabase
       .from('transformations')
@@ -438,12 +454,7 @@ async function processTransformation(
         status: 'completed',
         completed_at: new Date().toISOString(),
         processing_time_ms: Date.now() - startTime,
-        metadata: {
-          finalPrompt: result.finalPrompt,
-          estimatedCostCLP: result.estimatedCostCLP,
-          costBreakdown: result.costBreakdown,
-          cloudflare_variants: imageUrls
-        }
+        metadata: updatedMetadata
       })
       .eq('id', transformationId)
     

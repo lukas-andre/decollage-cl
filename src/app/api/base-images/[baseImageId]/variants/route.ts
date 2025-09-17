@@ -66,7 +66,7 @@ export async function GET(
       .from('transformations')
       .select(`
         *,
-        design_styles!style_id(id, name, code),
+        design_styles!style_id(id, name, code, category, macrocategory),
         color_palettes!palette_id(id, name, code, primary_colors),
         seasonal_themes!season_id(id, name, code)
       `)
