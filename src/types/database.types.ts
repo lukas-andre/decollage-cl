@@ -7,167 +7,257 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
+  }
   public: {
     Tables: {
-      color_palettes: {
+      collection_items: {
         Row: {
+          added_at: string | null
+          collection_id: string
           id: string
-          code: string
-          name: string
-          name_en: string | null
-          description: string | null
-          primary_colors: Json
-          accent_colors: Json | null
-          neutral_colors: Json | null
-          mood: string | null
-          season: string | null
-          preview_image_url: string | null
-          example_rooms: Json
-          is_featured: boolean
-          usage_count: number
-          sort_order: number
-          is_active: boolean
-          created_at: string
+          item_id: string
+          item_type: string
+          metadata: Json | null
+          notes: string | null
+          position: number | null
+          thumbnail_url: string | null
+          title: string | null
         }
         Insert: {
+          added_at?: string | null
+          collection_id: string
           id?: string
-          code: string
-          name: string
-          name_en?: string | null
-          description?: string | null
-          primary_colors: Json
-          accent_colors?: Json | null
-          neutral_colors?: Json | null
-          mood?: string | null
-          season?: string | null
-          preview_image_url?: string | null
-          example_rooms?: Json
-          is_featured?: boolean
-          usage_count?: number
-          sort_order?: number
-          is_active?: boolean
-          created_at?: string
+          item_id: string
+          item_type: string
+          metadata?: Json | null
+          notes?: string | null
+          position?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
         }
         Update: {
+          added_at?: string | null
+          collection_id?: string
           id?: string
+          item_id?: string
+          item_type?: string
+          metadata?: Json | null
+          notes?: string | null
+          position?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "user_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      color_palettes: {
+        Row: {
+          accent_colors: Json | null
+          code: string
+          created_at: string | null
+          description: string | null
+          example_rooms: Json | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          mood: string | null
+          name: string
+          name_en: string | null
+          neutral_colors: Json | null
+          preview_image_url: string | null
+          primary_colors: Json
+          season: string | null
+          sort_order: number | null
+          usage_count: number | null
+        }
+        Insert: {
+          accent_colors?: Json | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          example_rooms?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          mood?: string | null
+          name: string
+          name_en?: string | null
+          neutral_colors?: Json | null
+          preview_image_url?: string | null
+          primary_colors: Json
+          season?: string | null
+          sort_order?: number | null
+          usage_count?: number | null
+        }
+        Update: {
+          accent_colors?: Json | null
           code?: string
+          created_at?: string | null
+          description?: string | null
+          example_rooms?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          mood?: string | null
           name?: string
           name_en?: string | null
-          description?: string | null
-          primary_colors?: Json
-          accent_colors?: Json | null
           neutral_colors?: Json | null
-          mood?: string | null
-          season?: string | null
           preview_image_url?: string | null
-          example_rooms?: Json
-          is_featured?: boolean
-          usage_count?: number
-          sort_order?: number
-          is_active?: boolean
-          created_at?: string
+          primary_colors?: Json
+          season?: string | null
+          sort_order?: number | null
+          usage_count?: number | null
         }
         Relationships: []
       }
-      design_styles: {
+      content_reactions: {
         Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
           id: string
-          code: string
-          name: string
-          name_en: string | null
-          description: string | null
-          category: string | null
-          macrocategory: string | null
-          base_prompt: string
-          negative_prompt: string | null
-          example_images: Json
-          inspiration_keywords: string[] | null
-          usage_count: number
-          is_featured: boolean
-          is_seasonal: boolean
-          is_trending: boolean
-          sort_order: number
-          is_active: boolean
-          created_at: string
+          reaction_type: string | null
+          session_id: string | null
+          user_id: string | null
         }
         Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
           id?: string
-          code: string
-          name: string
-          name_en?: string | null
-          description?: string | null
-          category?: string | null
-          macrocategory?: string | null
-          base_prompt: string
-          negative_prompt?: string | null
-          example_images?: Json
-          inspiration_keywords?: string[] | null
-          usage_count?: number
-          is_featured?: boolean
-          is_seasonal?: boolean
-          is_trending?: boolean
-          sort_order?: number
-          is_active?: boolean
-          created_at?: string
+          reaction_type?: string | null
+          session_id?: string | null
+          user_id?: string | null
         }
         Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
           id?: string
+          reaction_type?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_styles: {
+        Row: {
+          base_prompt: string
+          category: string | null
+          code: string
+          created_at: string | null
+          description: string | null
+          example_images: Json | null
+          id: string
+          inspiration_keywords: string[] | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          is_seasonal: boolean | null
+          is_trending: boolean | null
+          macrocategory: string | null
+          name: string
+          name_en: string | null
+          negative_prompt: string | null
+          sort_order: number | null
+          usage_count: number | null
+        }
+        Insert: {
+          base_prompt: string
+          category?: string | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          example_images?: Json | null
+          id?: string
+          inspiration_keywords?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          is_seasonal?: boolean | null
+          is_trending?: boolean | null
+          macrocategory?: string | null
+          name: string
+          name_en?: string | null
+          negative_prompt?: string | null
+          sort_order?: number | null
+          usage_count?: number | null
+        }
+        Update: {
+          base_prompt?: string
+          category?: string | null
           code?: string
+          created_at?: string | null
+          description?: string | null
+          example_images?: Json | null
+          id?: string
+          inspiration_keywords?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          is_seasonal?: boolean | null
+          is_trending?: boolean | null
+          macrocategory?: string | null
           name?: string
           name_en?: string | null
-          description?: string | null
-          category?: string | null
-          macrocategory?: string | null
-          base_prompt?: string
           negative_prompt?: string | null
-          example_images?: Json
-          inspiration_keywords?: string[] | null
-          usage_count?: number
-          is_featured?: boolean
-          is_seasonal?: boolean
-          is_trending?: boolean
-          sort_order?: number
-          is_active?: boolean
-          created_at?: string
+          sort_order?: number | null
+          usage_count?: number | null
         }
         Relationships: []
       }
       gallery_comments: {
         Row: {
-          id: string
-          gallery_item_id: string
-          user_id: string
-          parent_comment_id: string | null
           content: string
-          is_edited: boolean
+          created_at: string | null
           edited_at: string | null
-          is_hidden: boolean
+          gallery_item_id: string
+          id: string
+          is_edited: boolean | null
+          is_hidden: boolean | null
           moderation_reason: string | null
-          created_at: string
+          parent_comment_id: string | null
+          user_id: string
         }
         Insert: {
-          id?: string
-          gallery_item_id: string
-          user_id: string
-          parent_comment_id?: string | null
           content: string
-          is_edited?: boolean
+          created_at?: string | null
           edited_at?: string | null
-          is_hidden?: boolean
+          gallery_item_id: string
+          id?: string
+          is_edited?: boolean | null
+          is_hidden?: boolean | null
           moderation_reason?: string | null
-          created_at?: string
+          parent_comment_id?: string | null
+          user_id: string
         }
         Update: {
-          id?: string
-          gallery_item_id?: string
-          user_id?: string
-          parent_comment_id?: string | null
           content?: string
-          is_edited?: boolean
+          created_at?: string | null
           edited_at?: string | null
-          is_hidden?: boolean
+          gallery_item_id?: string
+          id?: string
+          is_edited?: boolean | null
+          is_hidden?: boolean | null
           moderation_reason?: string | null
-          created_at?: string
+          parent_comment_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -195,25 +285,25 @@ export type Database = {
       }
       gallery_interactions: {
         Row: {
-          id: string
-          user_id: string
+          created_at: string | null
           gallery_item_id: string
+          id: string
           interaction_type: string
-          created_at: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
+          created_at?: string | null
           gallery_item_id: string
+          id?: string
           interaction_type: string
-          created_at?: string
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
+          created_at?: string | null
           gallery_item_id?: string
+          id?: string
           interaction_type?: string
-          created_at?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -234,82 +324,82 @@ export type Database = {
       }
       gallery_items: {
         Row: {
-          id: string
-          transformation_id: string | null
-          moodboard_id: string | null
-          user_id: string
-          title: string
-          description: string | null
-          before_image_url: string | null
           after_image_url: string | null
-          tags: string[] | null
-          style_tags: string[] | null
-          room_type: string | null
+          before_image_url: string | null
           budget_range: string | null
-          views_count: number
-          likes_count: number
-          saves_count: number
-          comments_count: number
-          is_featured: boolean
-          is_editors_pick: boolean
-          featured_order: number | null
+          comments_count: number | null
+          created_at: string | null
+          description: string | null
           featured_at: string | null
-          is_active: boolean
-          moderation_status: string
-          created_at: string
+          featured_order: number | null
+          id: string
+          is_active: boolean | null
+          is_editors_pick: boolean | null
+          is_featured: boolean | null
+          likes_count: number | null
+          moderation_status: string | null
+          moodboard_id: string | null
           published_at: string | null
+          room_type: string | null
+          saves_count: number | null
+          style_tags: string[] | null
+          tags: string[] | null
+          title: string
+          transformation_id: string | null
+          user_id: string
+          views_count: number | null
         }
         Insert: {
-          id?: string
-          transformation_id?: string | null
-          moodboard_id?: string | null
-          user_id: string
-          title: string
-          description?: string | null
-          before_image_url?: string | null
           after_image_url?: string | null
-          tags?: string[] | null
-          style_tags?: string[] | null
-          room_type?: string | null
+          before_image_url?: string | null
           budget_range?: string | null
-          views_count?: number
-          likes_count?: number
-          saves_count?: number
-          comments_count?: number
-          is_featured?: boolean
-          is_editors_pick?: boolean
-          featured_order?: number | null
+          comments_count?: number | null
+          created_at?: string | null
+          description?: string | null
           featured_at?: string | null
-          is_active?: boolean
-          moderation_status?: string
-          created_at?: string
+          featured_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_editors_pick?: boolean | null
+          is_featured?: boolean | null
+          likes_count?: number | null
+          moderation_status?: string | null
+          moodboard_id?: string | null
           published_at?: string | null
+          room_type?: string | null
+          saves_count?: number | null
+          style_tags?: string[] | null
+          tags?: string[] | null
+          title: string
+          transformation_id?: string | null
+          user_id: string
+          views_count?: number | null
         }
         Update: {
-          id?: string
-          transformation_id?: string | null
-          moodboard_id?: string | null
-          user_id?: string
-          title?: string
-          description?: string | null
-          before_image_url?: string | null
           after_image_url?: string | null
-          tags?: string[] | null
-          style_tags?: string[] | null
-          room_type?: string | null
+          before_image_url?: string | null
           budget_range?: string | null
-          views_count?: number
-          likes_count?: number
-          saves_count?: number
-          comments_count?: number
-          is_featured?: boolean
-          is_editors_pick?: boolean
-          featured_order?: number | null
+          comments_count?: number | null
+          created_at?: string | null
+          description?: string | null
           featured_at?: string | null
-          is_active?: boolean
-          moderation_status?: string
-          created_at?: string
+          featured_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_editors_pick?: boolean | null
+          is_featured?: boolean | null
+          likes_count?: number | null
+          moderation_status?: string | null
+          moodboard_id?: string | null
           published_at?: string | null
+          room_type?: string | null
+          saves_count?: number | null
+          style_tags?: string[] | null
+          tags?: string[] | null
+          title?: string
+          transformation_id?: string | null
+          user_id?: string
+          views_count?: number | null
         }
         Relationships: [
           {
@@ -337,73 +427,73 @@ export type Database = {
       }
       images: {
         Row: {
-          id: string
-          user_id: string
-          project_id: string | null
-          url: string
-          cloudflare_id: string | null
-          thumbnail_url: string | null
-          image_type: string
-          source: string | null
-          pinterest_pin_id: string | null
-          pinterest_board_id: string | null
-          name: string | null
-          description: string | null
-          tags: string[] | null
-          colors: Json | null
-          style_tags: string[] | null
-          room_type: string | null
-          embedding: string | null
           analysis_data: Json | null
-          is_primary: boolean
+          cloudflare_id: string | null
+          colors: Json | null
+          created_at: string | null
+          description: string | null
+          embedding: string | null
+          id: string
+          image_type: string
+          is_primary: boolean | null
+          name: string | null
+          pinterest_board_id: string | null
+          pinterest_pin_id: string | null
+          project_id: string | null
+          room_type: string | null
+          source: string | null
+          style_tags: string[] | null
+          tags: string[] | null
+          thumbnail_url: string | null
           upload_order: number | null
-          created_at: string
+          url: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          project_id?: string | null
-          url: string
-          cloudflare_id?: string | null
-          thumbnail_url?: string | null
-          image_type: string
-          source?: string | null
-          pinterest_pin_id?: string | null
-          pinterest_board_id?: string | null
-          name?: string | null
-          description?: string | null
-          tags?: string[] | null
-          colors?: Json | null
-          style_tags?: string[] | null
-          room_type?: string | null
-          embedding?: string | null
           analysis_data?: Json | null
-          is_primary?: boolean
+          cloudflare_id?: string | null
+          colors?: Json | null
+          created_at?: string | null
+          description?: string | null
+          embedding?: string | null
+          id?: string
+          image_type: string
+          is_primary?: boolean | null
+          name?: string | null
+          pinterest_board_id?: string | null
+          pinterest_pin_id?: string | null
+          project_id?: string | null
+          room_type?: string | null
+          source?: string | null
+          style_tags?: string[] | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
           upload_order?: number | null
-          created_at?: string
+          url: string
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          project_id?: string | null
-          url?: string
-          cloudflare_id?: string | null
-          thumbnail_url?: string | null
-          image_type?: string
-          source?: string | null
-          pinterest_pin_id?: string | null
-          pinterest_board_id?: string | null
-          name?: string | null
-          description?: string | null
-          tags?: string[] | null
-          colors?: Json | null
-          style_tags?: string[] | null
-          room_type?: string | null
-          embedding?: string | null
           analysis_data?: Json | null
-          is_primary?: boolean
+          cloudflare_id?: string | null
+          colors?: Json | null
+          created_at?: string | null
+          description?: string | null
+          embedding?: string | null
+          id?: string
+          image_type?: string
+          is_primary?: boolean | null
+          name?: string | null
+          pinterest_board_id?: string | null
+          pinterest_pin_id?: string | null
+          project_id?: string | null
+          room_type?: string | null
+          source?: string | null
+          style_tags?: string[] | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
           upload_order?: number | null
-          created_at?: string
+          url?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -424,28 +514,28 @@ export type Database = {
       }
       moodboard_images: {
         Row: {
+          created_at: string | null
           id: string
-          moodboard_id: string
           image_id: string
-          position: number
+          moodboard_id: string
           notes: string | null
-          created_at: string
+          position: number | null
         }
         Insert: {
+          created_at?: string | null
           id?: string
-          moodboard_id: string
           image_id: string
-          position?: number
+          moodboard_id: string
           notes?: string | null
-          created_at?: string
+          position?: number | null
         }
         Update: {
+          created_at?: string | null
           id?: string
-          moodboard_id?: string
           image_id?: string
-          position?: number
+          moodboard_id?: string
           notes?: string | null
-          created_at?: string
+          position?: number | null
         }
         Relationships: [
           {
@@ -466,49 +556,52 @@ export type Database = {
       }
       moodboards: {
         Row: {
-          id: string
-          user_id: string
-          project_id: string | null
-          name: string
-          description: string | null
-          synthesized_style: Json | null
           color_palette: Json | null
-          style_keywords: string[] | null
-          is_public: boolean
+          created_at: string | null
+          description: string | null
+          id: string
+          images_count: number | null
+          is_public: boolean | null
+          name: string
+          project_id: string | null
+          share_settings: Json | null
           share_url: string | null
-          images_count: number
-          created_at: string
-          updated_at: string
+          style_keywords: string[] | null
+          synthesized_style: Json | null
+          updated_at: string | null
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          project_id?: string | null
-          name: string
-          description?: string | null
-          synthesized_style?: Json | null
           color_palette?: Json | null
-          style_keywords?: string[] | null
-          is_public?: boolean
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images_count?: number | null
+          is_public?: boolean | null
+          name: string
+          project_id?: string | null
+          share_settings?: Json | null
           share_url?: string | null
-          images_count?: number
-          created_at?: string
-          updated_at?: string
+          style_keywords?: string[] | null
+          synthesized_style?: Json | null
+          updated_at?: string | null
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          project_id?: string | null
-          name?: string
-          description?: string | null
-          synthesized_style?: Json | null
           color_palette?: Json | null
-          style_keywords?: string[] | null
-          is_public?: boolean
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images_count?: number | null
+          is_public?: boolean | null
+          name?: string
+          project_id?: string | null
+          share_settings?: Json | null
           share_url?: string | null
-          images_count?: number
-          created_at?: string
-          updated_at?: string
+          style_keywords?: string[] | null
+          synthesized_style?: Json | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -529,46 +622,46 @@ export type Database = {
       }
       pinterest_boards: {
         Row: {
-          id: string
-          user_id: string
-          pinterest_board_id: string
-          name: string
+          auto_sync: boolean | null
+          created_at: string | null
           description: string | null
-          url: string | null
-          auto_sync: boolean
-          sync_to_project_id: string | null
+          id: string
           last_synced_at: string | null
-          pins_count: number
-          synced_pins_count: number
-          created_at: string
+          name: string
+          pins_count: number | null
+          pinterest_board_id: string
+          sync_to_project_id: string | null
+          synced_pins_count: number | null
+          url: string | null
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          pinterest_board_id: string
-          name: string
+          auto_sync?: boolean | null
+          created_at?: string | null
           description?: string | null
-          url?: string | null
-          auto_sync?: boolean
-          sync_to_project_id?: string | null
+          id?: string
           last_synced_at?: string | null
-          pins_count?: number
-          synced_pins_count?: number
-          created_at?: string
+          name: string
+          pins_count?: number | null
+          pinterest_board_id: string
+          sync_to_project_id?: string | null
+          synced_pins_count?: number | null
+          url?: string | null
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          pinterest_board_id?: string
-          name?: string
+          auto_sync?: boolean | null
+          created_at?: string | null
           description?: string | null
-          url?: string | null
-          auto_sync?: boolean
-          sync_to_project_id?: string | null
+          id?: string
           last_synced_at?: string | null
-          pins_count?: number
-          synced_pins_count?: number
-          created_at?: string
+          name?: string
+          pins_count?: number | null
+          pinterest_board_id?: string
+          sync_to_project_id?: string | null
+          synced_pins_count?: number | null
+          url?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -589,49 +682,49 @@ export type Database = {
       }
       pinterest_pins: {
         Row: {
-          id: string
-          user_id: string
           board_id: string | null
+          description: string | null
+          detected_colors: Json | null
+          detected_style: string[] | null
+          id: string
           image_id: string | null
+          image_url: string | null
+          imported_at: string | null
+          is_processed: boolean | null
           pinterest_pin_id: string
           title: string | null
-          description: string | null
           url: string | null
-          image_url: string | null
-          detected_style: string[] | null
-          detected_colors: Json | null
-          imported_at: string
-          is_processed: boolean
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
           board_id?: string | null
+          description?: string | null
+          detected_colors?: Json | null
+          detected_style?: string[] | null
+          id?: string
           image_id?: string | null
+          image_url?: string | null
+          imported_at?: string | null
+          is_processed?: boolean | null
           pinterest_pin_id: string
           title?: string | null
-          description?: string | null
           url?: string | null
-          image_url?: string | null
-          detected_style?: string[] | null
-          detected_colors?: Json | null
-          imported_at?: string
-          is_processed?: boolean
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
           board_id?: string | null
+          description?: string | null
+          detected_colors?: Json | null
+          detected_style?: string[] | null
+          id?: string
           image_id?: string | null
+          image_url?: string | null
+          imported_at?: string | null
+          is_processed?: boolean | null
           pinterest_pin_id?: string
           title?: string | null
-          description?: string | null
           url?: string | null
-          image_url?: string | null
-          detected_style?: string[] | null
-          detected_colors?: Json | null
-          imported_at?: string
-          is_processed?: boolean
+          user_id?: string
         }
         Relationships: [
           {
@@ -659,154 +752,286 @@ export type Database = {
       }
       profiles: {
         Row: {
-          id: string
-          email: string
-          username: string | null
-          full_name: string | null
           avatar_url: string | null
-          phone: string | null
-          tokens_available: number
-          tokens_total_purchased: number
-          tokens_total_used: number
-          style_personality: Json
-          color_preferences: Json
+          color_preferences: Json | null
+          created_at: string | null
           design_goals: string[] | null
+          email: string
+          full_name: string | null
           home_type: string | null
-          is_public: boolean
+          id: string
           instagram_handle: string | null
-          pinterest_connected: boolean
-          pinterest_user_id: string | null
-          onboarding_completed: boolean
-          onboarding_step: number
+          is_public: boolean | null
           last_active_at: string | null
-          created_at: string
-          updated_at: string
-          role: string
-          user_type: string
+          onboarding_completed: boolean | null
+          onboarding_step: number | null
+          phone: string | null
+          pinterest_connected: boolean | null
+          pinterest_user_id: string | null
+          role: string | null
+          style_personality: Json | null
+          tokens_available: number | null
+          tokens_total_purchased: number | null
+          tokens_total_used: number | null
+          updated_at: string | null
+          user_type: string | null
+          username: string | null
         }
         Insert: {
-          id: string
-          email: string
-          username?: string | null
-          full_name?: string | null
           avatar_url?: string | null
-          phone?: string | null
-          tokens_available?: number
-          tokens_total_purchased?: number
-          tokens_total_used?: number
-          style_personality?: Json
-          color_preferences?: Json
+          color_preferences?: Json | null
+          created_at?: string | null
           design_goals?: string[] | null
+          email: string
+          full_name?: string | null
           home_type?: string | null
-          is_public?: boolean
+          id: string
           instagram_handle?: string | null
-          pinterest_connected?: boolean
-          pinterest_user_id?: string | null
-          onboarding_completed?: boolean
-          onboarding_step?: number
+          is_public?: boolean | null
           last_active_at?: string | null
-          created_at?: string
-          updated_at?: string
-          role?: string
-          user_type?: string
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
+          phone?: string | null
+          pinterest_connected?: boolean | null
+          pinterest_user_id?: string | null
+          role?: string | null
+          style_personality?: Json | null
+          tokens_available?: number | null
+          tokens_total_purchased?: number | null
+          tokens_total_used?: number | null
+          updated_at?: string | null
+          user_type?: string | null
+          username?: string | null
         }
         Update: {
-          id?: string
-          email?: string
-          username?: string | null
-          full_name?: string | null
           avatar_url?: string | null
-          phone?: string | null
-          tokens_available?: number
-          tokens_total_purchased?: number
-          tokens_total_used?: number
-          style_personality?: Json
-          color_preferences?: Json
+          color_preferences?: Json | null
+          created_at?: string | null
           design_goals?: string[] | null
+          email?: string
+          full_name?: string | null
           home_type?: string | null
-          is_public?: boolean
+          id?: string
           instagram_handle?: string | null
-          pinterest_connected?: boolean
-          pinterest_user_id?: string | null
-          onboarding_completed?: boolean
-          onboarding_step?: number
+          is_public?: boolean | null
           last_active_at?: string | null
-          created_at?: string
-          updated_at?: string
-          role?: string
-          user_type?: string
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
+          phone?: string | null
+          pinterest_connected?: boolean | null
+          pinterest_user_id?: string | null
+          role?: string | null
+          style_personality?: Json | null
+          tokens_available?: number | null
+          tokens_total_purchased?: number | null
+          tokens_total_used?: number | null
+          updated_at?: string | null
+          user_type?: string | null
+          username?: string | null
         }
         Relationships: []
       }
-      projects: {
+      project_favorites: {
         Row: {
+          created_at: string | null
           id: string
+          item_id: string
+          item_type: string
+          position: number | null
+          project_id: string
           user_id: string
-          name: string
-          slug: string | null
-          description: string | null
-          cover_image_url: string | null
-          project_type: string
-          space_type: string | null
-          status: string
-          completion_percentage: number
-          is_public: boolean
-          is_featured: boolean
-          share_token: string | null
-          total_transformations: number
-          total_inspirations: number
-          total_views: number
-          total_likes: number
-          tags: string[] | null
-          metadata: Json
-          created_at: string
-          updated_at: string
         }
         Insert: {
+          created_at?: string | null
           id?: string
+          item_id: string
+          item_type: string
+          position?: number | null
+          project_id: string
           user_id: string
-          name: string
-          slug?: string | null
-          description?: string | null
-          cover_image_url?: string | null
-          project_type?: string
-          space_type?: string | null
-          status?: string
-          completion_percentage?: number
-          is_public?: boolean
-          is_featured?: boolean
-          share_token?: string | null
-          total_transformations?: number
-          total_inspirations?: number
-          total_views?: number
-          total_likes?: number
-          tags?: string[] | null
-          metadata?: Json
-          created_at?: string
-          updated_at?: string
         }
         Update: {
+          created_at?: string | null
           id?: string
+          item_id?: string
+          item_type?: string
+          position?: number | null
+          project_id?: string
           user_id?: string
-          name?: string
-          slug?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_favorites_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_shares: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          current_views: number | null
+          description: string | null
+          expires_at: string | null
+          featured_items: string[] | null
+          id: string
+          last_viewed_at: string | null
+          max_views: number | null
+          og_image_generated_at: string | null
+          og_image_url: string | null
+          password_hash: string | null
+          project_id: string
+          share_token: string
+          share_type: string
+          theme_override: Json | null
+          title: string | null
+          visibility: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          current_views?: number | null
           description?: string | null
+          expires_at?: string | null
+          featured_items?: string[] | null
+          id?: string
+          last_viewed_at?: string | null
+          max_views?: number | null
+          og_image_generated_at?: string | null
+          og_image_url?: string | null
+          password_hash?: string | null
+          project_id: string
+          share_token: string
+          share_type?: string
+          theme_override?: Json | null
+          title?: string | null
+          visibility?: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          current_views?: number | null
+          description?: string | null
+          expires_at?: string | null
+          featured_items?: string[] | null
+          id?: string
+          last_viewed_at?: string | null
+          max_views?: number | null
+          og_image_generated_at?: string | null
+          og_image_url?: string | null
+          password_hash?: string | null
+          project_id?: string
+          share_token?: string
+          share_type?: string
+          theme_override?: Json | null
+          title?: string | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_shares_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_shares_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          completion_percentage: number | null
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_featured: boolean | null
+          is_public: boolean | null
+          metadata: Json | null
+          name: string
+          og_image_url: string | null
+          project_type: string | null
+          share_analytics: Json | null
+          share_settings: Json | null
+          share_token: string | null
+          slug: string | null
+          space_type: string | null
+          status: string | null
+          tags: string[] | null
+          total_inspirations: number | null
+          total_likes: number | null
+          total_transformations: number | null
+          total_views: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completion_percentage?: number | null
           cover_image_url?: string | null
-          project_type?: string
-          space_type?: string | null
-          status?: string
-          completion_percentage?: number
-          is_public?: boolean
-          is_featured?: boolean
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_public?: boolean | null
+          metadata?: Json | null
+          name: string
+          og_image_url?: string | null
+          project_type?: string | null
+          share_analytics?: Json | null
+          share_settings?: Json | null
           share_token?: string | null
-          total_transformations?: number
-          total_inspirations?: number
-          total_views?: number
-          total_likes?: number
+          slug?: string | null
+          space_type?: string | null
+          status?: string | null
           tags?: string[] | null
-          metadata?: Json
-          created_at?: string
-          updated_at?: string
+          total_inspirations?: number | null
+          total_likes?: number | null
+          total_transformations?: number | null
+          total_views?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completion_percentage?: number | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_public?: boolean | null
+          metadata?: Json | null
+          name?: string
+          og_image_url?: string | null
+          project_type?: string | null
+          share_analytics?: Json | null
+          share_settings?: Json | null
+          share_token?: string | null
+          slug?: string | null
+          space_type?: string | null
+          status?: string | null
+          tags?: string[] | null
+          total_inspirations?: number | null
+          total_likes?: number | null
+          total_transformations?: number | null
+          total_views?: number | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -820,199 +1045,333 @@ export type Database = {
       }
       room_types: {
         Row: {
-          id: string
           code: string
-          name: string
-          name_en: string | null
+          created_at: string | null
           description: string | null
           icon_name: string | null
-          typical_dimensions: Json | null
+          id: string
+          is_active: boolean | null
+          name: string
+          name_en: string | null
+          sort_order: number | null
           suggested_styles: string[] | null
-          sort_order: number
-          is_active: boolean
-          created_at: string
+          typical_dimensions: Json | null
         }
         Insert: {
-          id?: string
           code: string
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
           name: string
           name_en?: string | null
-          description?: string | null
-          icon_name?: string | null
-          typical_dimensions?: Json | null
+          sort_order?: number | null
           suggested_styles?: string[] | null
-          sort_order?: number
-          is_active?: boolean
-          created_at?: string
+          typical_dimensions?: Json | null
         }
         Update: {
-          id?: string
           code?: string
-          name?: string
-          name_en?: string | null
+          created_at?: string | null
           description?: string | null
           icon_name?: string | null
-          typical_dimensions?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          name_en?: string | null
+          sort_order?: number | null
           suggested_styles?: string[] | null
-          sort_order?: number
-          is_active?: boolean
-          created_at?: string
+          typical_dimensions?: Json | null
         }
         Relationships: []
       }
       seasonal_themes: {
         Row: {
-          id: string
-          code: string
-          name: string
-          description: string | null
-          start_date: string | null
-          end_date: string | null
-          theme_colors: Json | null
-          decoration_elements: Json | null
-          special_prompts: Json | null
           banner_image_url: string | null
+          code: string
+          created_at: string | null
+          decoration_elements: Json | null
+          description: string | null
+          end_date: string | null
           icon_url: string | null
-          is_active: boolean
-          is_current: boolean
-          created_at: string
+          id: string
+          is_active: boolean | null
+          is_current: boolean | null
+          name: string
+          sort_order: number | null
+          special_prompts: Json | null
+          start_date: string | null
+          theme_colors: Json | null
         }
         Insert: {
-          id?: string
-          code: string
-          name: string
-          description?: string | null
-          start_date?: string | null
-          end_date?: string | null
-          theme_colors?: Json | null
-          decoration_elements?: Json | null
-          special_prompts?: Json | null
           banner_image_url?: string | null
+          code: string
+          created_at?: string | null
+          decoration_elements?: Json | null
+          description?: string | null
+          end_date?: string | null
           icon_url?: string | null
-          is_active?: boolean
-          is_current?: boolean
-          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_current?: boolean | null
+          name: string
+          sort_order?: number | null
+          special_prompts?: Json | null
+          start_date?: string | null
+          theme_colors?: Json | null
         }
         Update: {
-          id?: string
-          code?: string
-          name?: string
-          description?: string | null
-          start_date?: string | null
-          end_date?: string | null
-          theme_colors?: Json | null
-          decoration_elements?: Json | null
-          special_prompts?: Json | null
           banner_image_url?: string | null
+          code?: string
+          created_at?: string | null
+          decoration_elements?: Json | null
+          description?: string | null
+          end_date?: string | null
           icon_url?: string | null
-          is_active?: boolean
-          is_current?: boolean
-          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_current?: boolean | null
+          name?: string
+          sort_order?: number | null
+          special_prompts?: Json | null
+          start_date?: string | null
+          theme_colors?: Json | null
+        }
+        Relationships: []
+      }
+      share_analytics: {
+        Row: {
+          action: string
+          browser: string | null
+          country_code: string | null
+          created_at: string | null
+          device_type: string | null
+          id: string
+          ip_address: unknown | null
+          os: string | null
+          platform: string | null
+          referrer: string | null
+          share_id: string
+          share_type: string
+          user_agent: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          action: string
+          browser?: string | null
+          country_code?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: unknown | null
+          os?: string | null
+          platform?: string | null
+          referrer?: string | null
+          share_id: string
+          share_type: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          action?: string
+          browser?: string | null
+          country_code?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: unknown | null
+          os?: string | null
+          platform?: string | null
+          referrer?: string | null
+          share_id?: string
+          share_type?: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      share_templates: {
+        Row: {
+          aspect_ratio: string | null
+          code: string
+          created_at: string | null
+          description_template: string | null
+          hashtags: string[] | null
+          height: number | null
+          id: string
+          include_logo: boolean | null
+          include_watermark: boolean | null
+          is_active: boolean | null
+          is_premium: boolean | null
+          layout_type: string | null
+          max_images: number | null
+          name: string
+          platform: string
+          theme: Json | null
+          title_template: string | null
+          width: number | null
+        }
+        Insert: {
+          aspect_ratio?: string | null
+          code: string
+          created_at?: string | null
+          description_template?: string | null
+          hashtags?: string[] | null
+          height?: number | null
+          id?: string
+          include_logo?: boolean | null
+          include_watermark?: boolean | null
+          is_active?: boolean | null
+          is_premium?: boolean | null
+          layout_type?: string | null
+          max_images?: number | null
+          name: string
+          platform: string
+          theme?: Json | null
+          title_template?: string | null
+          width?: number | null
+        }
+        Update: {
+          aspect_ratio?: string | null
+          code?: string
+          created_at?: string | null
+          description_template?: string | null
+          hashtags?: string[] | null
+          height?: number | null
+          id?: string
+          include_logo?: boolean | null
+          include_watermark?: boolean | null
+          is_active?: boolean | null
+          is_premium?: boolean | null
+          layout_type?: string | null
+          max_images?: number | null
+          name?: string
+          platform?: string
+          theme?: Json | null
+          title_template?: string | null
+          width?: number | null
         }
         Relationships: []
       }
       token_packages: {
         Row: {
-          id: string
-          name: string
-          description: string | null
-          token_amount: number
-          price_clp: number
-          original_price_clp: number | null
-          bonus_tokens: number
           bonus_percentage: number | null
-          icon_name: string | null
+          bonus_tokens: number | null
           color_theme: string | null
-          is_featured: boolean
-          is_limited_offer: boolean
-          offer_ends_at: string | null
-          min_purchase_count: number | null
+          created_at: string | null
+          description: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          is_limited_offer: boolean | null
           max_purchase_count: number | null
-          sort_order: number
-          is_active: boolean
-          created_at: string
+          min_purchase_count: number | null
+          name: string
+          offer_ends_at: string | null
+          original_price_clp: number | null
+          price_clp: number
+          sort_order: number | null
+          token_amount: number
         }
         Insert: {
-          id?: string
-          name: string
-          description?: string | null
-          token_amount: number
-          price_clp: number
-          original_price_clp?: number | null
-          bonus_tokens?: number
           bonus_percentage?: number | null
-          icon_name?: string | null
+          bonus_tokens?: number | null
           color_theme?: string | null
-          is_featured?: boolean
-          is_limited_offer?: boolean
-          offer_ends_at?: string | null
-          min_purchase_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          is_limited_offer?: boolean | null
           max_purchase_count?: number | null
-          sort_order?: number
-          is_active?: boolean
-          created_at?: string
+          min_purchase_count?: number | null
+          name: string
+          offer_ends_at?: string | null
+          original_price_clp?: number | null
+          price_clp: number
+          sort_order?: number | null
+          token_amount: number
         }
         Update: {
-          id?: string
-          name?: string
-          description?: string | null
-          token_amount?: number
-          price_clp?: number
-          original_price_clp?: number | null
-          bonus_tokens?: number
           bonus_percentage?: number | null
-          icon_name?: string | null
+          bonus_tokens?: number | null
           color_theme?: string | null
-          is_featured?: boolean
-          is_limited_offer?: boolean
-          offer_ends_at?: string | null
-          min_purchase_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          is_limited_offer?: boolean | null
           max_purchase_count?: number | null
-          sort_order?: number
-          is_active?: boolean
-          created_at?: string
+          min_purchase_count?: number | null
+          name?: string
+          offer_ends_at?: string | null
+          original_price_clp?: number | null
+          price_clp?: number
+          sort_order?: number | null
+          token_amount?: number
         }
         Relationships: []
       }
       token_transactions: {
         Row: {
-          id: string
-          user_id: string
-          type: string
           amount: number
-          balance_before: number
           balance_after: number
-          transformation_id: string | null
-          package_id: string | null
+          balance_before: number
+          created_at: string | null
           description: string | null
-          metadata: Json
-          created_at: string
+          id: string
+          metadata: Json | null
+          package_id: string | null
+          transformation_id: string | null
+          type: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          type: string
           amount: number
-          balance_before: number
           balance_after: number
-          transformation_id?: string | null
-          package_id?: string | null
+          balance_before: number
+          created_at?: string | null
           description?: string | null
-          metadata?: Json
-          created_at?: string
+          id?: string
+          metadata?: Json | null
+          package_id?: string | null
+          transformation_id?: string | null
+          type: string
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          type?: string
           amount?: number
-          balance_before?: number
           balance_after?: number
-          transformation_id?: string | null
-          package_id?: string | null
+          balance_before?: number
+          created_at?: string | null
           description?: string | null
-          metadata?: Json
-          created_at?: string
+          id?: string
+          metadata?: Json | null
+          package_id?: string | null
+          transformation_id?: string | null
+          type?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -1040,40 +1399,40 @@ export type Database = {
       }
       transformation_iterations: {
         Row: {
+          changes_applied: Json | null
+          created_at: string | null
           id: string
-          transformation_id: string
+          iteration_number: number
           parent_iteration_id: string | null
           refinement_prompt: string | null
-          changes_applied: Json | null
-          result_image_url: string | null
           result_cloudflare_id: string | null
-          iteration_number: number
-          tokens_consumed: number
-          created_at: string
+          result_image_url: string | null
+          tokens_consumed: number | null
+          transformation_id: string
         }
         Insert: {
+          changes_applied?: Json | null
+          created_at?: string | null
           id?: string
-          transformation_id: string
+          iteration_number: number
           parent_iteration_id?: string | null
           refinement_prompt?: string | null
-          changes_applied?: Json | null
-          result_image_url?: string | null
           result_cloudflare_id?: string | null
-          iteration_number: number
-          tokens_consumed?: number
-          created_at?: string
+          result_image_url?: string | null
+          tokens_consumed?: number | null
+          transformation_id: string
         }
         Update: {
+          changes_applied?: Json | null
+          created_at?: string | null
           id?: string
-          transformation_id?: string
+          iteration_number?: number
           parent_iteration_id?: string | null
           refinement_prompt?: string | null
-          changes_applied?: Json | null
-          result_image_url?: string | null
           result_cloudflare_id?: string | null
-          iteration_number?: number
-          tokens_consumed?: number
-          created_at?: string
+          result_image_url?: string | null
+          tokens_consumed?: number | null
+          transformation_id?: string
         }
         Relationships: [
           {
@@ -1094,88 +1453,91 @@ export type Database = {
       }
       transformations: {
         Row: {
-          id: string
-          user_id: string
-          project_id: string | null
           base_image_id: string | null
-          moodboard_id: string | null
-          style_id: string | null
-          palette_id: string | null
-          season_id: string | null
-          prompt_used: string | null
-          custom_instructions: string | null
-          inspiration_weight: number | null
-          result_image_url: string | null
-          result_cloudflare_id: string | null
-          variations: Json | null
-          status: string
-          error_message: string | null
-          tokens_consumed: number
-          processing_time_ms: number | null
-          is_favorite: boolean
-          rating: number | null
-          user_notes: string | null
-          is_shared: boolean
-          share_count: number
-          metadata: Json
-          created_at: string
           completed_at: string | null
+          created_at: string | null
+          custom_instructions: string | null
+          error_message: string | null
+          id: string
+          inspiration_weight: number | null
+          is_favorite: boolean | null
+          is_shared: boolean | null
+          metadata: Json | null
+          moodboard_id: string | null
+          palette_id: string | null
+          processing_time_ms: number | null
+          project_id: string | null
+          prompt_used: string | null
+          rating: number | null
+          result_cloudflare_id: string | null
+          result_image_url: string | null
+          season_id: string | null
+          share_count: number | null
+          share_settings: Json | null
+          status: string | null
+          style_id: string | null
+          tokens_consumed: number | null
+          user_id: string
+          user_notes: string | null
+          variations: Json | null
         }
         Insert: {
-          id?: string
-          user_id: string
-          project_id?: string | null
           base_image_id?: string | null
-          moodboard_id?: string | null
-          style_id?: string | null
-          palette_id?: string | null
-          season_id?: string | null
-          prompt_used?: string | null
-          custom_instructions?: string | null
-          inspiration_weight?: number | null
-          result_image_url?: string | null
-          result_cloudflare_id?: string | null
-          variations?: Json | null
-          status?: string
-          error_message?: string | null
-          tokens_consumed?: number
-          processing_time_ms?: number | null
-          is_favorite?: boolean
-          rating?: number | null
-          user_notes?: string | null
-          is_shared?: boolean
-          share_count?: number
-          metadata?: Json
-          created_at?: string
           completed_at?: string | null
+          created_at?: string | null
+          custom_instructions?: string | null
+          error_message?: string | null
+          id?: string
+          inspiration_weight?: number | null
+          is_favorite?: boolean | null
+          is_shared?: boolean | null
+          metadata?: Json | null
+          moodboard_id?: string | null
+          palette_id?: string | null
+          processing_time_ms?: number | null
+          project_id?: string | null
+          prompt_used?: string | null
+          rating?: number | null
+          result_cloudflare_id?: string | null
+          result_image_url?: string | null
+          season_id?: string | null
+          share_count?: number | null
+          share_settings?: Json | null
+          status?: string | null
+          style_id?: string | null
+          tokens_consumed?: number | null
+          user_id: string
+          user_notes?: string | null
+          variations?: Json | null
         }
         Update: {
-          id?: string
-          user_id?: string
-          project_id?: string | null
           base_image_id?: string | null
-          moodboard_id?: string | null
-          style_id?: string | null
-          palette_id?: string | null
-          season_id?: string | null
-          prompt_used?: string | null
-          custom_instructions?: string | null
-          inspiration_weight?: number | null
-          result_image_url?: string | null
-          result_cloudflare_id?: string | null
-          variations?: Json | null
-          status?: string
-          error_message?: string | null
-          tokens_consumed?: number
-          processing_time_ms?: number | null
-          is_favorite?: boolean
-          rating?: number | null
-          user_notes?: string | null
-          is_shared?: boolean
-          share_count?: number
-          metadata?: Json
-          created_at?: string
           completed_at?: string | null
+          created_at?: string | null
+          custom_instructions?: string | null
+          error_message?: string | null
+          id?: string
+          inspiration_weight?: number | null
+          is_favorite?: boolean | null
+          is_shared?: boolean | null
+          metadata?: Json | null
+          moodboard_id?: string | null
+          palette_id?: string | null
+          processing_time_ms?: number | null
+          project_id?: string | null
+          prompt_used?: string | null
+          rating?: number | null
+          result_cloudflare_id?: string | null
+          result_image_url?: string | null
+          season_id?: string | null
+          share_count?: number | null
+          share_settings?: Json | null
+          status?: string | null
+          style_id?: string | null
+          tokens_consumed?: number | null
+          user_id?: string
+          user_notes?: string | null
+          variations?: Json | null
         }
         Relationships: [
           {
@@ -1229,51 +1591,98 @@ export type Database = {
           },
         ]
       }
-      user_events: {
+      user_collections: {
         Row: {
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
           id: string
-          user_id: string | null
-          session_id: string
-          event_type: string
-          event_category: string | null
-          event_data: Json
-          project_id: string | null
-          page_path: string | null
-          referrer: string | null
-          device_type: string | null
-          browser: string | null
-          os: string | null
-          created_at: string
+          is_public: boolean | null
+          item_count: number | null
+          name: string
+          share_token: string | null
+          updated_at: string | null
+          user_id: string
         }
         Insert: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
           id?: string
-          user_id?: string | null
-          session_id: string
-          event_type: string
-          event_category?: string | null
-          event_data?: Json
-          project_id?: string | null
-          page_path?: string | null
-          referrer?: string | null
-          device_type?: string | null
-          browser?: string | null
-          os?: string | null
-          created_at?: string
+          is_public?: boolean | null
+          item_count?: number | null
+          name: string
+          share_token?: string | null
+          updated_at?: string | null
+          user_id: string
         }
         Update: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
           id?: string
-          user_id?: string | null
-          session_id?: string
-          event_type?: string
-          event_category?: string | null
-          event_data?: Json
-          project_id?: string | null
-          page_path?: string | null
-          referrer?: string | null
-          device_type?: string | null
+          is_public?: boolean | null
+          item_count?: number | null
+          name?: string
+          share_token?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_collections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_events: {
+        Row: {
+          browser: string | null
+          created_at: string | null
+          device_type: string | null
+          event_category: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          os: string | null
+          page_path: string | null
+          project_id: string | null
+          referrer: string | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
           browser?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          event_category?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
           os?: string | null
-          created_at?: string
+          page_path?: string | null
+          project_id?: string | null
+          referrer?: string | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          event_category?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          os?: string | null
+          page_path?: string | null
+          project_id?: string | null
+          referrer?: string | null
+          session_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1294,22 +1703,22 @@ export type Database = {
       }
       user_follows: {
         Row: {
-          id: string
+          created_at: string | null
           follower_id: string
           following_id: string
-          created_at: string
+          id: string
         }
         Insert: {
-          id?: string
+          created_at?: string | null
           follower_id: string
           following_id: string
-          created_at?: string
+          id?: string
         }
         Update: {
-          id?: string
+          created_at?: string | null
           follower_id?: string
           following_id?: string
-          created_at?: string
+          id?: string
         }
         Relationships: [
           {
@@ -1330,55 +1739,55 @@ export type Database = {
       }
       waitlist: {
         Row: {
-          id: string
+          biggest_challenge: string | null
+          converted_at: string | null
+          created_at: string | null
           email: string
+          email_clicks: number | null
+          email_opens: number | null
+          home_type: string | null
+          id: string
+          interest_type: string | null
+          invited_at: string | null
           name: string | null
           phone: string | null
-          interest_type: string | null
-          home_type: string | null
-          biggest_challenge: string | null
-          referral_source: string | null
           referral_code: string | null
-          status: string
-          invited_at: string | null
-          converted_at: string | null
-          email_opens: number
-          email_clicks: number
-          created_at: string
+          referral_source: string | null
+          status: string | null
         }
         Insert: {
-          id?: string
+          biggest_challenge?: string | null
+          converted_at?: string | null
+          created_at?: string | null
           email: string
+          email_clicks?: number | null
+          email_opens?: number | null
+          home_type?: string | null
+          id?: string
+          interest_type?: string | null
+          invited_at?: string | null
           name?: string | null
           phone?: string | null
-          interest_type?: string | null
-          home_type?: string | null
-          biggest_challenge?: string | null
-          referral_source?: string | null
           referral_code?: string | null
-          status?: string
-          invited_at?: string | null
-          converted_at?: string | null
-          email_opens?: number
-          email_clicks?: number
-          created_at?: string
+          referral_source?: string | null
+          status?: string | null
         }
         Update: {
-          id?: string
+          biggest_challenge?: string | null
+          converted_at?: string | null
+          created_at?: string | null
           email?: string
+          email_clicks?: number | null
+          email_opens?: number | null
+          home_type?: string | null
+          id?: string
+          interest_type?: string | null
+          invited_at?: string | null
           name?: string | null
           phone?: string | null
-          interest_type?: string | null
-          home_type?: string | null
-          biggest_challenge?: string | null
-          referral_source?: string | null
           referral_code?: string | null
-          status?: string
-          invited_at?: string | null
-          converted_at?: string | null
-          email_opens?: number
-          email_clicks?: number
-          created_at?: string
+          referral_source?: string | null
+          status?: string | null
         }
         Relationships: []
       }
@@ -1387,46 +1796,166 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
       consume_tokens: {
         Args: {
-          p_user_id: string
           p_amount: number
-          p_transformation_id?: string
           p_description?: string
+          p_transformation_id?: string
+          p_user_id: string
         }
         Returns: boolean
       }
+      generate_share_token: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_unique_username: {
-        Args: {
-          base_name: string
-        }
+        Args: { base_name: string }
         Returns: string
       }
       get_user_token_balance: {
-        Args: {
-          user_id: string
-        }
+        Args: { user_id: string }
         Returns: number
       }
       grant_bonus_tokens: {
-        Args: {
-          p_user_id: string
-          p_amount: number
-          p_reason: string
-        }
+        Args: { p_amount: number; p_reason: string; p_user_id: string }
         Returns: boolean
       }
+      gtrgm_compress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_decompress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_in: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_options: {
+        Args: { "": unknown }
+        Returns: undefined
+      }
+      gtrgm_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
       is_admin: {
-        Args: {
-          user_id?: string
-        }
+        Args: { user_id?: string }
         Returns: boolean
       }
       is_username_available: {
-        Args: {
-          username_to_check: string
-        }
+        Args: { username_to_check: string }
         Returns: boolean
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: string
+      }
+      set_limit: {
+        Args: { "": number }
+        Returns: number
+      }
+      show_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      show_trgm: {
+        Args: { "": string }
+        Returns: string[]
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      user_owns_content: {
+        Args: { content_id_param: string; content_type_param: string }
+        Returns: boolean
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
       }
     }
     Enums: {
@@ -1438,48 +1967,125 @@ export type Database = {
   }
 }
 
-// Helper types for easier usage
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
-export type TablesInsert<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
-export type TablesUpdate<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update']
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-// Specific types for common use
-export type Profile = Tables<'profiles'>
-export type Project = Tables<'projects'>
-export type Transformation = Tables<'transformations'>
-export type Image = Tables<'images'>
-export type Moodboard = Tables<'moodboards'>
-export type DesignStyle = Tables<'design_styles'>
-export type ColorPalette = Tables<'color_palettes'>
-export type SeasonalTheme = Tables<'seasonal_themes'>
-export type RoomType = Tables<'room_types'>
-export type TokenPackage = Tables<'token_packages'>
-export type TokenTransaction = Tables<'token_transactions'>
-export type GalleryItem = Tables<'gallery_items'>
-export type UserEvent = Tables<'user_events'>
-export type PinterestBoard = Tables<'pinterest_boards'>
-export type PinterestPin = Tables<'pinterest_pins'>
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
-// Enums for type safety
-export type UserRole = 'user' | 'admin' | 'moderator'
-export type UserType = 'personal' | 'professional' | 'other'
-export type ProjectType = 'transformation' | 'moodboard' | 'seasonal'
-export type ProjectStatus = 'draft' | 'active' | 'completed' | 'archived'
-export type TransformationStatus = 'pending' | 'processing' | 'completed' | 'failed'
-export type ImageType = 'room' | 'inspiration' | 'pinterest' | 'generated'
-export type ImageSource = 'upload' | 'pinterest' | 'ai' | 'gallery'
-export type InteractionType = 'like' | 'save' | 'view'
-export type TokenTransactionType = 'purchase' | 'consumption' | 'bonus' | 'refund' | 'gift'
-export type ModerationStatus = 'pending' | 'approved' | 'rejected'
-export type BudgetRange = 'economico' | 'medio' | 'premium'
-export type StyleCategory = 'clasico' | 'moderno' | 'rustico' | 'bohemio' | 'minimalista'
-export type StyleMacroCategory = 'Modern' | 'Classic' | 'Regional' | 'Luxury' | 'Nature' | 'Lifestyle'
-export type ColorMood = 'calido' | 'fresco' | 'acogedor' | 'energetico' | 'romantico'
-export type Season = 'verano' | 'oto�o' | 'invierno' | 'primavera' | 'todo-el-a�o'
-export type HomeType = 'casa' | 'departamento' | 'oficina'
-export type InterestType = 'personal' | 'profesional' | 'curiosidad'
-export type ReferralSource = 'instagram' | 'facebook' | 'amiga' | 'google'
-export type WaitlistStatus = 'pending' | 'invited' | 'converted'
-export type DeviceType = 'mobile' | 'tablet' | 'desktop'
-export type EventCategory = 'onboarding' | 'creation' | 'social' | 'purchase'
-export type ColorTheme = 'pink' | 'purple' | 'gold' | 'platinum'
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
