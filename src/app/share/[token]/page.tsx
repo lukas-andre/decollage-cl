@@ -10,24 +10,25 @@ import type { PublicShareData } from '@/types/sharing'
 export const revalidate = 3600
 
 interface SharePageProps {
-  params: {
+  params: Promise<{
     token: string
-  }
-  searchParams: {
+  }>
+  searchParams: Promise<{
     password?: string
-  }
+  }>
 }
 
 // Generate metadata for SEO and OG tags
 export async function generateMetadata({ params }: SharePageProps): Promise<Metadata> {
   try {
-    const shareData = await shareService.getShareByToken(params.token)
+    const { token } = await params
+    const shareData = await shareService.getShareByToken(token)
     
     const title = shareData.share.title || `${shareData.project.name} | Decollage.cl`
     const description = shareData.share.description || 
       `Descubre esta increíble transformación de espacios realizada con Decollage.cl. ${shareData.project.userDisplayName} creó un diseño único utilizando inteligencia artificial.`
     
-    const ogImageUrl = shareData.share.og_image_url || `/api/og?token=${params.token}`
+    const ogImageUrl = shareData.share.og_image_url || `/api/og?token=${token}`
     
     return {
       title,
@@ -58,7 +59,7 @@ export async function generateMetadata({ params }: SharePageProps): Promise<Meta
         follow: true,
       },
       alternates: {
-        canonical: `https://decollage.cl/share/${params.token}`,
+        canonical: `https://decollage.cl/share/${token}`,
       }
     }
   } catch (error) {
@@ -72,8 +73,8 @@ export async function generateMetadata({ params }: SharePageProps): Promise<Meta
 // Pre-render popular shares at build time
 export async function generateStaticParams() {
   try {
-    const supabase = createClient()
-    
+    const supabase = await createClient()
+
     // Get most viewed shares from the last 30 days
     const { data: popularShares } = await supabase
       .from('project_shares')
@@ -94,23 +95,26 @@ export async function generateStaticParams() {
 
 export default async function SharePage({ params, searchParams }: SharePageProps) {
   try {
+    const { token } = await params
+    const search = await searchParams
+
     // Validate share password if required
-    if (searchParams.password) {
+    if (search.password) {
       const isValidPassword = await shareService.validateSharePassword(
-        params.token, 
-        searchParams.password
+        token,
+        search.password
       )
       if (!isValidPassword) {
-        return <PasswordProtectedView token={params.token} error="Contraseña incorrecta" />
+        return <PasswordProtectedView token={token} error="Contraseña incorrecta" />
       }
     }
 
     // Get share data
-    const shareData = await shareService.getShareByToken(params.token)
-    
+    const shareData = await shareService.getShareByToken(token)
+
     // Check if password is required but not provided
-    if (shareData.share.password_hash && !searchParams.password) {
-      return <PasswordProtectedView token={params.token} />
+    if (shareData.share.password_hash && !search.password) {
+      return <PasswordProtectedView token={token} />
     }
 
     // Track the view (server-side for ISR)

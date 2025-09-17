@@ -73,6 +73,10 @@ import { UploadProgress } from '@/components/projects/UploadProgress'
 import { ImageUploadSkeleton, ImagePreviewSkeleton } from '@/components/projects/ImageUploadSkeleton'
 import { NoTokensDialog } from '@/components/tokens/NoTokensDialog'
 import { VariantGallery } from '@/components/projects/VariantGallery'
+import { FavoritesWidget } from '@/components/project/FavoritesWidget'
+import { FavoriteButton } from '@/components/project/FavoriteButton'
+import { ShareModal } from '@/components/share/ShareModal'
+import { Share2 } from 'lucide-react'
 
 interface BaseImage {
   id: string
@@ -177,6 +181,9 @@ export default function ProjectWorkspacePage({
   const [editingName, setEditingName] = useState(false)
   const [projectName, setProjectName] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [selectedShareItems, setSelectedShareItems] = useState<any[]>([])
+  const [favoritesExpanded, setFavoritesExpanded] = useState(true)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadStatus, setUploadStatus] = useState<'selecting' | 'validating' | 'compressing' | 'uploading' | 'processing' | 'complete' | 'error'>('selecting')
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -748,6 +755,17 @@ export default function ProjectWorkspacePage({
             )}
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedShareItems([])
+                setShareModalOpen(true)
+              }}
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Compartir
+            </Button>
             <Badge variant="outline">
               {project.images?.length || 0} imagen{(project.images?.length || 0) !== 1 ? 'es' : ''}
             </Badge>
@@ -1232,6 +1250,41 @@ export default function ProjectWorkspacePage({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Favorites Widget */}
+      <FavoritesWidget
+        projectId={id}
+        onShare={(items) => {
+          setSelectedShareItems(items)
+          setShareModalOpen(true)
+        }}
+        className="fixed bottom-6 right-6 z-40 w-80"
+        isCollapsed={!favoritesExpanded}
+        onToggleCollapse={() => setFavoritesExpanded(!favoritesExpanded)}
+      />
+
+      {/* Share Modal */}
+      {shareModalOpen && (
+        <ShareModal
+          projectId={id}
+          projectName={project?.name || ''}
+          selectedItems={selectedShareItems}
+          onClose={() => {
+            setShareModalOpen(false)
+            setSelectedShareItems([])
+          }}
+          onShareCreated={(shareData) => {
+            toast.success('¡Proyecto compartido exitosamente!', {
+              description: 'El enlace ha sido copiado al portapapeles',
+              action: {
+                label: 'Ver',
+                onClick: () => window.open(shareData.shareUrl, '_blank')
+              }
+            })
+            setShareModalOpen(false)
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -115,8 +115,8 @@ export class ShareAnalyticsService {
       const topPlatforms = Object.entries(platformCounts)
         .map(([platform, count]) => ({
           platform,
-          count,
-          percentage: (count / analytics.length) * 100
+          count: count as number,
+          percentage: ((count as number) / analytics.length) * 100
         }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5)
@@ -168,7 +168,7 @@ export class ShareAnalyticsService {
           id,
           share_token,
           current_views,
-          projects (name)
+          projects:projects!project_id (name)
         `)
         .eq('created_by', user.id)
 
@@ -200,7 +200,7 @@ export class ShareAnalyticsService {
         
         return {
           shareId,
-          projectName: share?.projects?.name || 'Project',
+          projectName: (share as any)?.projects?.name || 'Project',
           views: shareAnalytics.filter(a => a.action === 'viewed').length,
           clicks: shareAnalytics.filter(a => a.action === 'clicked').length,
           platform: shareAnalytics[0]?.platform || 'direct'

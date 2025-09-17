@@ -11,15 +11,16 @@ export const size = {
 export const contentType = 'image/png'
 
 interface OGImageProps {
-  params: {
+  params: Promise<{
     token: string
-  }
+  }>
 }
 
 export default async function Image({ params }: OGImageProps) {
   try {
+    const { token } = await params
     // Get share data
-    const shareData = await shareService.getShareByToken(params.token)
+    const shareData = await shareService.getShareByToken(token)
     
     // Get up to 4 featured images
     const featuredImages = shareData.items.slice(0, 4)

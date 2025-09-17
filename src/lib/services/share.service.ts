@@ -152,17 +152,17 @@ export class ShareService {
             custom_instructions,
             metadata,
             base_image_id,
-            images!base_image_id (url)
+            images:images!base_image_id (url)
           `)
           .in('id', itemIds)
           .eq('status', 'completed')
 
-        items = transformations?.map(t => ({
+        items = transformations?.map((t: any) => ({
           id: t.id,
           type: 'transformation',
           title: t.custom_instructions || 'Transformación',
           imageUrl: t.result_image_url || '',
-          beforeImageUrl: t.images?.url,
+          beforeImageUrl: t.images?.url || '',
           metadata: t.metadata
         })) || []
       } else {
@@ -175,19 +175,19 @@ export class ShareService {
             custom_instructions,
             metadata,
             base_image_id,
-            images!base_image_id (url)
+            images:images!base_image_id (url)
           `)
           .eq('project_id', shareData.project_id)
           .eq('status', 'completed')
           .order('created_at', { ascending: false })
           .limit(6)
 
-        items = transformations?.map(t => ({
+        items = transformations?.map((t: any) => ({
           id: t.id,
           type: 'transformation',
           title: t.custom_instructions || 'Transformación',
           imageUrl: t.result_image_url || '',
-          beforeImageUrl: t.images?.url,
+          beforeImageUrl: t.images?.url || '',
           metadata: t.metadata
         })) || []
       }
