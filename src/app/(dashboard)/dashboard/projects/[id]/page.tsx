@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -44,9 +43,7 @@ import {
   Sparkles,
   Image as ImageIcon,
   Loader2,
-  Download,
   Heart,
-  Eye,
   Grid3x3,
   ChevronDown,
   ChevronRight,
@@ -55,10 +52,8 @@ import {
   Edit2,
   Check,
   X,
-  Upload,
   Info,
   Ruler,
-  RefreshCw,
   Armchair,
   Trash2,
   Zap,
@@ -75,7 +70,6 @@ import { UploadProgress } from '@/components/projects/UploadProgress'
 import { ImageUploadSkeleton, ImagePreviewSkeleton } from '@/components/projects/ImageUploadSkeleton'
 import { NoTokensDialog } from '@/components/tokens/NoTokensDialog'
 import { VariantGallery } from '@/components/projects/VariantGallery'
-import { FavoriteButton } from '@/components/project/FavoriteButton'
 import { SelectionSummary } from '@/components/project/SelectionSummary'
 import { Share2 } from 'lucide-react'
 
@@ -552,26 +546,6 @@ export default function ProjectWorkspacePage({
     setViewerModal({ isOpen: true, variant })
   }
 
-  const handleDownloadImage = async (imageUrl: string, styleName?: string) => {
-    try {
-      const response = await fetch(imageUrl)
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      const timestamp = new Date().getTime()
-      const style = styleName?.toLowerCase().replace(/\s+/g, '-') || 'staged'
-      a.download = `virtual-staging-${style}-${timestamp}.jpg`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      toast.success('Imagen descargada exitosamente')
-    } catch (error) {
-      console.error('Error downloading image:', error)
-      toast.error('Error al descargar la imagen')
-    }
-  }
 
   const handleToggleFavorite = async (variantId: string) => {
     try {
@@ -631,21 +605,6 @@ export default function ProjectWorkspacePage({
     router.push(`/dashboard/projects/${id}/share`)
   }
 
-  const handleShareFavorites = () => {
-    const favoriteItems = variants.filter(v => v.is_favorite && v.status === 'completed')
-    if (favoriteItems.length === 0) {
-      toast.error('No tienes diseños marcados como favoritos')
-      return
-    }
-
-    const favoriteIds = favoriteItems.map(item => item.id)
-    console.log('Saving favorites to localStorage:', favoriteIds)
-    // Save to localStorage for preview page
-    localStorage.setItem(`share-selection-${id}`, JSON.stringify(favoriteIds))
-    console.log('Navigating to share page...')
-    // Navigate to preview page
-    router.push(`/dashboard/projects/${id}/share`)
-  }
 
   const handleClearSelection = () => {
     setSelectedVariants(new Set())
@@ -1419,6 +1378,12 @@ export default function ProjectWorkspacePage({
               selectedVariants={selectedVariants}
               onToggleSelection={handleToggleSelection}
               showSelection={showSelection}
+              onViewVariant={(variantId) => {
+                const variant = variants.find(v => v.id === variantId)
+                if (variant && variant.result_image_url) {
+                  handleViewImage(variant)
+                }
+              }}
             />
           )}
         </div>
@@ -1479,10 +1444,7 @@ export default function ProjectWorkspacePage({
         onViewVariant={(variantId) => {
           const variant = variants.find(v => v.id === variantId)
           if (variant && variant.result_image_url) {
-            setViewerModal({
-              isOpen: true,
-              variant
-            })
+            handleViewImage(variant)
           }
         }}
       />

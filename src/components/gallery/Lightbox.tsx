@@ -315,10 +315,6 @@ export function Lightbox({
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                  {currentImage.tokens_consumed} tokens
-                </Badge>
-                
                 {onToggleFavorite && (
                   <Button
                     variant="ghost"

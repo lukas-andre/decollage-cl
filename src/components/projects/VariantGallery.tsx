@@ -22,7 +22,6 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { VariantCard } from './VariantCard'
-import { Lightbox } from '@/components/gallery/Lightbox'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -61,6 +60,8 @@ interface VariantGalleryProps {
   selectedVariants?: Set<string>
   onToggleSelection?: (variantId: string) => void
   showSelection?: boolean
+  // View functionality
+  onViewVariant?: (variantId: string) => void
 }
 
 type FilterType = 'all' | 'favorites' | 'style' | 'room_type' | 'date'
@@ -74,13 +75,13 @@ export function VariantGallery({
   onRefresh,
   selectedVariants = new Set(),
   onToggleSelection,
-  showSelection = false
+  showSelection = false,
+  onViewVariant
 }: VariantGalleryProps) {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all')
   const [styleFilter, setStyleFilter] = useState<string>('all')
   const [roomTypeFilter, setRoomTypeFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<SortType>('newest')
-  const [lightboxIndex, setLightboxIndex] = useState<number>(-1)
 
   // Get unique styles and room types for filters
   const { uniqueStyles, uniqueRoomTypes } = useMemo(() => {
@@ -319,11 +320,7 @@ export function VariantGallery({
                 key={variant.id}
                 variant={variant}
                 onView={() => {
-                  // Find the index in completed variants for lightbox
-                  const completedIndex = filteredAndSortedVariants.findIndex(v => v.id === variant.id)
-                  if (completedIndex >= 0) {
-                    setLightboxIndex(completedIndex)
-                  }
+                  onViewVariant?.(variant.id)
                 }}
                 onDownload={() => {
                   if (variant.result_image_url) {
@@ -342,15 +339,6 @@ export function VariantGallery({
         </div>
       </ScrollArea>
 
-      {/* Lightbox */}
-      <Lightbox
-        isOpen={lightboxIndex >= 0}
-        onClose={() => setLightboxIndex(-1)}
-        images={filteredAndSortedVariants}
-        initialIndex={Math.max(0, lightboxIndex)}
-        onToggleFavorite={onToggleFavorite}
-        originalImage={originalImage}
-      />
     </div>
   )
 }

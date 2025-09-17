@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useTokenBalance } from '@/hooks/useTokenBalance'
-import { Coins, RefreshCw, AlertCircle } from 'lucide-react'
+import { Coins, RefreshCw, AlertCircle, Sparkle, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useEffect, useRef } from 'react'
 
@@ -44,7 +44,7 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
           {!hasTokens ? (
             <AlertCircle className="h-4 w-4 text-red-500" />
           ) : (
-            <Coins className={cn(
+            <Sparkles className={cn(
               "h-4 w-4",
               isLow ? "text-yellow-600" : "text-primary"
             )} />
