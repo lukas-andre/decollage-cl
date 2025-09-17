@@ -741,9 +741,9 @@ export default function ProjectWorkspacePage({
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <div className="border-b px-8 py-6">
+      <div className="border-b px-8 py-6 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Button variant="ghost" size="sm" asChild>
@@ -951,9 +951,9 @@ export default function ProjectWorkspacePage({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex min-h-0">
         {/* Left Column - Image Management & Controls */}
-        <div className="w-[400px] border-r flex flex-col h-full overflow-hidden">
+        <div className="w-[400px] border-r flex flex-col min-h-0 max-h-screen overflow-auto">
           {/* Base Images Gallery */}
           <div className="p-4 border-b">
             <div className="flex items-center justify-between mb-3">
@@ -1357,7 +1357,7 @@ export default function ProjectWorkspacePage({
         </div>
 
         {/* Right Column - Variant Gallery */}
-        <div className="flex-1 bg-muted/30">
+        <div className="flex-1 bg-muted/30 min-h-0 overflow-auto">
           {!selectedBaseImage ? (
             <div className="h-full flex items-center justify-center text-center p-8">
               <div>
@@ -1399,6 +1399,15 @@ export default function ProjectWorkspacePage({
           styleName={viewerModal.variant.style?.name}
           roomType={viewerModal.variant.room_type?.name}
           colorScheme={viewerModal.variant.color_palette?.name}
+          projectId={id}
+          variantId={viewerModal.variant.id}
+          onQuickShare={() => {
+            // Quick share functionality - create a share with just this variant
+            const variantIds = new Set([viewerModal.variant!.id])
+            setSelectedVariants(variantIds)
+            handleShareSelected()
+            setViewerModal({ isOpen: false })
+          }}
         />
       )}
 

@@ -22,6 +22,16 @@
 
 ## 🔴 MVP CRITICAL FEATURES
 
+### M4: User Freedom in Design Creation 🔴
+**Status**: CRITICAL - User Experience Blocker
+- **Custom Category Option**: Add "Personalizado" or "Otro" style category for free-form prompting
+- **Optional Style Selection**: Make style categories optional, not mandatory
+- **Direct Prompting**: Allow users to describe their vision without forced categorization
+- **Simplified Workflow**: Remove barriers between user intent and AI generation
+- **Chilean UX**: Respect user creativity while maintaining cultural design options
+- **Complete Room Redesign**: "Reemplazar Todo" mode should replace EVERYTHING (walls, floors, furniture, decor) - complete blank slate transformation
+- **True Zero-Start**: AI should imagine room as empty space and design from scratch, not just replace furniture
+
 ### M5: Pricing & Business Strategy 🔴
 **Status**: PENDING - Business Critical
 - Validate Chilean market pricing (CLP packages)
@@ -30,7 +40,7 @@
 - Launch discount strategy
 
 ### M8: Content Sharing & Viral Growth 🔴
-**Status**: ✅ **FULLY COMPLETED** - Growth Engine Ready 🚀
+**Status**: 🟡 **PARTIALLY COMPLETED** - Growth Engine Ready 🚀
 - ✅ **Favorites Widget**: Quick-access panel in project workspace with drag & drop - **INTEGRATED**
 - ✅ **Share Preview**: Live preview of shareable content as you select favorites - **FUNCTIONAL**
 - ✅ **One-Click Sharing**: Generate beautiful project showcases with ISR - **OPERATIONAL**
@@ -41,8 +51,9 @@
 - ✅ **Real-time Engagement**: "Aplausos" reaction system with real-time updates - **REAL-TIME**
 - ✅ **Frontend Integration**: ShareModal, share buttons, complete user workflow - **INTEGRATED**
 - ✅ **Build & Deploy Ready**: All TypeScript errors resolved, production ready - **VERIFIED**
+- 🔄 **Share Management**: CRUD interface for users to manage their shared projects (edit, delete, update privacy settings) - **NEEDED**
 
-**🎉 READY FOR USER TESTING - Complete viral growth engine operational**
+**🎉 READY FOR USER TESTING - Complete viral growth engine operational (needs share management UI)**
 
 ### M9: Saved Content System 🔴
 **Status**: 🟡 PARTIALLY COMPLETED - User Retention

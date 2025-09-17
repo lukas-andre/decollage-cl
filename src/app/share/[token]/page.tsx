@@ -72,25 +72,8 @@ export async function generateMetadata({ params }: SharePageProps): Promise<Meta
 
 // Pre-render popular shares at build time
 export async function generateStaticParams() {
-  try {
-    const supabase = await createClient()
-
-    // Get most viewed shares from the last 30 days
-    const { data: popularShares } = await supabase
-      .from('project_shares')
-      .select('share_token')
-      .eq('visibility', 'public')
-      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-      .order('current_views', { ascending: false })
-      .limit(50)
-
-    return (popularShares || []).map((share) => ({
-      token: share.share_token,
-    }))
-  } catch (error) {
-    console.error('Error generating static params:', error)
-    return []
-  }
+  // Return empty array to disable static generation for dynamic shares
+  return []
 }
 
 export default async function SharePage({ params, searchParams }: SharePageProps) {

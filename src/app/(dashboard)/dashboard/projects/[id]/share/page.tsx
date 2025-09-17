@@ -233,7 +233,7 @@ export default function SharePreviewPage({
     setSelectedVariants(prev => prev.filter(v => v.id !== variantId))
     setShareConfig(prev => ({
       ...prev,
-      featured: prev.featured.filter(id => id !== variantId)
+      featured: prev.featured?.filter(id => id !== variantId) || []
     }))
   }
 

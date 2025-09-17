@@ -13,16 +13,19 @@ export class ShareService {
   /**
    * Create a new project share
    */
-  async createShare(projectId: string, config: ShareConfig): Promise<ShareResponse> {
+  async createShare(projectId: string, config: ShareConfig, authenticatedSupabase?: any): Promise<ShareResponse> {
     try {
+      // Use provided authenticated supabase client or fallback to default
+      const supabaseClient = authenticatedSupabase || this.supabase
+
       // Get current user
-      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
       if (authError || !user) {
         throw new Error('User must be authenticated to create shares')
       }
 
       // Validate project ownership
-      const { data: project, error: projectError } = await this.supabase
+      const { data: project, error: projectError } = await supabaseClient
         .from('projects')
         .select('id, name, user_id')
         .eq('id', projectId)
@@ -56,7 +59,7 @@ export class ShareService {
           .join('')
       }
 
-      const { data: share, error: shareError } = await this.supabase
+      const { data: share, error: shareError } = await supabaseClient
         .from('project_shares')
         .insert(shareData)
         .select()
@@ -66,8 +69,9 @@ export class ShareService {
         throw new Error(`Failed to create share: ${shareError.message}`)
       }
 
-      // Generate share URL
-      const shareUrl = `${window.location.origin}/share/${share.share_token}`
+      // Generate share URL (use environment variable or default)
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      const shareUrl = `${baseUrl}/share/${share.share_token}`
       
       // Generate OG image URL (placeholder for now)
       const ogImageUrl = `/api/og?token=${share.share_token}`
@@ -114,6 +118,10 @@ export class ShareService {
 
       if (shareError || !shareData) {
         throw new Error('Share not found')
+      }
+
+      if (!shareData.projects) {
+        throw new Error('Associated project not found')
       }
 
       // Check if share is expired
@@ -210,14 +218,14 @@ export class ShareService {
       return {
         share: shareData,
         project: {
-          id: shareData.projects.id,
-          name: shareData.projects.name,
-          description: shareData.projects.description,
-          coverImageUrl: shareData.projects.cover_image_url,
-          userDisplayName: shareData.projects.profiles?.full_name || 
-                           shareData.projects.profiles?.username || 
+          id: shareData.projects?.id || '',
+          name: shareData.projects?.name || 'Proyecto sin nombre',
+          description: shareData.projects?.description || '',
+          coverImageUrl: shareData.projects?.cover_image_url || '',
+          userDisplayName: shareData.projects?.profiles?.full_name ||
+                           shareData.projects?.profiles?.username ||
                            'Usuario',
-          userAvatarUrl: shareData.projects.profiles?.avatar_url
+          userAvatarUrl: shareData.projects?.profiles?.avatar_url
         },
         items,
         reactions: reactionCounts,

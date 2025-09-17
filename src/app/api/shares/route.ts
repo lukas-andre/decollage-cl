@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the share
-    const shareResponse = await shareService.createShare(projectId, config as ShareConfig)
+    const shareResponse = await shareService.createShare(projectId, config as ShareConfig, supabase)
 
     // Track the share creation
     await shareAnalyticsService.trackShareCreation(projectId, 'project', 'web')

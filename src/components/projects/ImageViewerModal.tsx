@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Download, X, ArrowLeftRight } from 'lucide-react'
+import { Download, X, ArrowLeftRight, Share2 } from 'lucide-react'
 import { BeforeAfterSlider } from './BeforeAfterSlider'
 
 interface ImageViewerModalProps {
@@ -15,6 +15,9 @@ interface ImageViewerModalProps {
   styleName?: string
   roomType?: string
   colorScheme?: string
+  projectId?: string
+  variantId?: string
+  onQuickShare?: () => void
 }
 
 export function ImageViewerModal({
@@ -24,7 +27,10 @@ export function ImageViewerModal({
   processedImage,
   styleName,
   roomType,
-  colorScheme
+  colorScheme,
+  projectId,
+  variantId,
+  onQuickShare
 }: ImageViewerModalProps) {
   const [viewMode, setViewMode] = useState<'single' | 'comparison'>('single')
   const [showOriginal, setShowOriginal] = useState(false)
@@ -108,7 +114,20 @@ export function ImageViewerModal({
                   </Button>
                 </div>
               )}
-              
+
+              {/* Quick Share Button */}
+              {onQuickShare && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onQuickShare}
+                  className="gap-2 bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white border-[#A3B1A1]"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Compartir
+                </Button>
+              )}
+
               <Button
                 variant="ghost"
                 size="icon"

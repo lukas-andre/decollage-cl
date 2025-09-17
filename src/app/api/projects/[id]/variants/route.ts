@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -59,16 +59,10 @@ export async function GET(
           name,
           code
         ),
-        room_type:room_types!transformations_room_type_id_fkey (
+        color_palette:color_palettes!transformations_palette_id_fkey (
           id,
           name,
           code
-        ),
-        color_palette:color_palettes!transformations_color_palette_id_fkey (
-          id,
-          name,
-          code,
-          hex_colors
         ),
         metadata
       `)
