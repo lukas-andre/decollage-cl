@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Download, Share2, Maximize2, Minimize2 } from 'lucide-react'
+import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { BeforeAfterSlider } from '@/components/projects/BeforeAfterSlider'
@@ -27,7 +27,6 @@ export function BeforeAfterModal({
   onShare
 }: BeforeAfterModalProps) {
   const [imageOrientation, setImageOrientation] = useState<'horizontal' | 'vertical' | 'square'>('horizontal')
-  const [isFullscreen, setIsFullscreen] = useState(false)
 
   // Detect image orientation
   useEffect(() => {
@@ -47,90 +46,29 @@ export function BeforeAfterModal({
     }
   }, [afterImageUrl])
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen()
-      setIsFullscreen(true)
-    } else {
-      document.exitFullscreen()
-      setIsFullscreen(false)
-    }
-  }
-
-  // Handle escape from fullscreen
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
-  }, [])
-
   // Allow modal to open even without beforeImageUrl
   // This lets users see the after image in fullscreen
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={cn(
-        "p-0 bg-black border-0",
-        isFullscreen ? "max-w-full max-h-full w-full h-full" : "max-w-[95vw] max-h-[95vh]"
-      )}>
+      <DialogContent className="p-0 bg-black border-0 max-w-[95vw] max-h-[95vh]">
         <div className="relative flex flex-col h-full">
-          {/* Header */}
-          <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/70 to-transparent p-6">
-            <div className="flex items-center justify-between">
-              <h2
-                className="text-2xl font-light text-white tracking-wide"
-                style={{ fontFamily: 'Cormorant, serif' }}
-              >
-                {title || 'Antes y Después'}
-              </h2>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleFullscreen}
-                  className="text-white hover:bg-white/20 rounded-none"
-                >
-                  {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                </Button>
-                {onShare && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onShare}
-                    className="text-white hover:bg-white/20 rounded-none"
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </Button>
-                )}
-                {onDownload && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onDownload}
-                    className="text-white hover:bg-white/20 rounded-none"
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onClose}
-                  className="text-white hover:bg-white/20 rounded-none"
-                >
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
-            </div>
+          {/* Close Button Only - Top Right */}
+          <div className="absolute top-4 right-4 z-20">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-sm transition-all duration-200"
+            >
+              <X className="w-6 h-6" />
+            </Button>
           </div>
 
           {/* Slider Container */}
-          <div className="flex-1 flex items-center justify-center bg-black pt-20">
+          <div className="flex-1 flex items-center justify-center bg-black">
             <div className={cn(
-              "relative w-full h-full",
+              "relative w-full h-full p-8",
               imageOrientation === 'vertical' && "max-w-3xl mx-auto",
               imageOrientation === 'square' && "max-w-5xl mx-auto"
             )}>
@@ -147,11 +85,8 @@ export function BeforeAfterModal({
                 <div className="w-full h-full flex items-center justify-center">
                   <img
                     src={afterImageUrl}
-                    alt="Transformación"
-                    className={cn(
-                      "max-w-full max-h-full",
-                      imageOrientation === 'vertical' ? "object-contain" : "object-cover"
-                    )}
+                    alt=""
+                    className="max-w-full max-h-full object-contain"
                   />
                 </div>
               )}
