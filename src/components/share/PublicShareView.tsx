@@ -32,13 +32,42 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
     isOpen: boolean
     item?: typeof shareData.items[0]
   }>({ isOpen: false })
+  const [imageOrientations, setImageOrientations] = useState<Record<string, 'horizontal' | 'vertical' | 'square'>>({})
 
-  // Helper function to detect if an image is likely vertical
-  const isVerticalImage = (imageUrl: string) => {
-    // This is a simple heuristic - in a real app you might want to load the image and check dimensions
-    // For now, we'll assume images with certain patterns or metadata indicate vertical orientation
-    return false // You can enhance this logic based on your image metadata
-  }
+  // Detect image orientations on mount
+  useEffect(() => {
+    const detectOrientations = async () => {
+      const orientations: Record<string, 'horizontal' | 'vertical' | 'square'> = {}
+
+      await Promise.all(
+        shareData.items.map((item) => {
+          return new Promise<void>((resolve) => {
+            const img = new Image()
+            img.onload = () => {
+              const aspectRatio = img.width / img.height
+              if (aspectRatio > 1.2) {
+                orientations[item.id] = 'horizontal'
+              } else if (aspectRatio < 0.8) {
+                orientations[item.id] = 'vertical'
+              } else {
+                orientations[item.id] = 'square'
+              }
+              resolve()
+            }
+            img.onerror = () => {
+              orientations[item.id] = 'horizontal' // Default
+              resolve()
+            }
+            img.src = item.imageUrl
+          })
+        })
+      )
+
+      setImageOrientations(orientations)
+    }
+
+    detectOrientations()
+  }, [shareData.items])
   // Track page view on mount
   useEffect(() => {
     shareAnalyticsService.trackShareView(shareData.share.id, 'project')
@@ -310,28 +339,25 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
               </p>
             </div>
 
-            {/* Responsive Magazine Layout Grid */}
+            {/* Smart Grid Layout */}
             <div className={cn(
-              "grid gap-8",
-              // Mobile: Single column, optimized for vertical viewing
-              "grid-cols-1",
-              // Tablet: Two columns
-              "md:grid-cols-2 md:gap-12",
-              // Desktop: Smart grid based on content
-              "lg:grid-cols-3 lg:gap-16"
+              "grid gap-8 md:gap-12 lg:gap-16",
+              // Special layout for 2 items - center them
+              shareData.items.length === 2 && "md:grid-cols-2 max-w-6xl mx-auto",
+              // Standard grid for more items
+              shareData.items.length > 2 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
             )}>
               {shareData.items.map((item, index) => {
-                const isVertical = isVerticalImage(item.imageUrl)
+                const orientation = imageOrientations[item.id] || 'horizontal'
+                const isFirst = index === 0 && shareData.items.length > 2
 
                 return (
                   <div
                     key={item.id}
                     className={cn(
                       "group",
-                      // First item gets special treatment
-                      index === 0 && "md:col-span-2 lg:col-span-3",
-                      // On desktop, make some items span different heights for variety
-                      !isMobile && index > 0 && index % 4 === 1 && "lg:row-span-2"
+                      // First item spans full width only if more than 2 items
+                      isFirst && "md:col-span-2 lg:col-span-3"
                     )}
                   >
                     <div className="space-y-6">
@@ -339,39 +365,56 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
                       <div className="relative shadow-2xl group cursor-pointer">
                         <div
                           onClick={() => {
-                            if (item.beforeImageUrl) {
-                              setModalState({ isOpen: true, item })
-                            }
+                            setModalState({ isOpen: true, item })
                           }}
+                          className="cursor-pointer"
                         >
-                          <BeforeAfterImage
-                            beforeImageUrl={item.beforeImageUrl}
-                            afterImageUrl={item.imageUrl}
-                            title={item.title || `Transformación ${index + 1}`}
-                            isVertical={isVertical}
-                            isMobile={isMobile}
-                            className={cn(
-                              // First item: Hero aspect ratio
-                              index === 0 && "aspect-[21/9]",
-                              // Mobile: Natural aspect for vertical images, 4:3 for others
-                              isMobile && index > 0 && !isVertical && "aspect-[4/3]",
-                              isMobile && index > 0 && isVertical && "aspect-[3/4]",
-                              // Desktop: More varied aspect ratios
-                              !isMobile && index > 0 && "aspect-[4/3]"
-                            )}
-                          />
+                          {item.beforeImageUrl ? (
+                            <BeforeAfterImage
+                              beforeImageUrl={item.beforeImageUrl}
+                              afterImageUrl={item.imageUrl}
+                              title={item.title || `Transformación ${index + 1}`}
+                              isVertical={orientation === 'vertical'}
+                              isMobile={isMobile}
+                              className={cn(
+                                // First item gets hero treatment only if more than 2 items
+                                isFirst && shareData.items.length > 2 && "aspect-[21/9]",
+                                // For 2 items or regular grid items
+                                (!isFirst || shareData.items.length <= 2) && (
+                                  orientation === 'vertical' ? "aspect-[3/4]" :
+                                  orientation === 'square' ? "aspect-square" :
+                                  "aspect-[4/3]"
+                                )
+                              )}
+                            />
+                          ) : (
+                            // Fallback for images without before
+                            <div className={cn(
+                              "relative overflow-hidden bg-[#F8F8F8]",
+                              isFirst && shareData.items.length > 2 && "aspect-[21/9]",
+                              (!isFirst || shareData.items.length <= 2) && (
+                                orientation === 'vertical' ? "aspect-[3/4]" :
+                                orientation === 'square' ? "aspect-square" :
+                                "aspect-[4/3]"
+                              )
+                            )}>
+                              <img
+                                src={item.imageUrl}
+                                alt={item.title || `Transformación ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
                         </div>
 
-                        {/* Click to expand hint - only shows if before image exists */}
-                        {item.beforeImageUrl && (
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-center justify-center">
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg">
-                              <p className="text-sm text-[#333333] font-light" style={{ fontFamily: 'Lato, sans-serif' }}>
-                                Toca para comparar
-                              </p>
-                            </div>
+                        {/* Click to expand hint */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-center justify-center pointer-events-none">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg">
+                            <p className="text-sm text-[#333333] font-light" style={{ fontFamily: 'Lato, sans-serif' }}>
+                              {item.beforeImageUrl ? 'Ver comparación' : 'Ver en detalle'}
+                            </p>
                           </div>
-                        )}
+                        </div>
 
                         {/* Action Buttons - Always visible but subtle */}
                         <div className="absolute top-4 right-4">

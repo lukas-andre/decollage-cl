@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Download, Share2 } from 'lucide-react'
+import { X, Download, Share2, Maximize2, Minimize2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { BeforeAfterSlider } from '@/components/projects/BeforeAfterSlider'
 import { cn } from '@/lib/utils'
 
 interface BeforeAfterModalProps {
@@ -25,9 +26,8 @@ export function BeforeAfterModal({
   onDownload,
   onShare
 }: BeforeAfterModalProps) {
-  const [sliderPosition, setSliderPosition] = useState(50)
-  const [isDragging, setIsDragging] = useState(false)
   const [imageOrientation, setImageOrientation] = useState<'horizontal' | 'vertical' | 'square'>('horizontal')
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   // Detect image orientation
   useEffect(() => {
@@ -47,183 +47,114 @@ export function BeforeAfterModal({
     }
   }, [afterImageUrl])
 
-  // Reset slider position when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setSliderPosition(50)
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen()
+      setIsFullscreen(true)
+    } else {
+      document.exitFullscreen()
+      setIsFullscreen(false)
     }
-  }, [isOpen])
-
-  const handleMouseDown = () => {
-    setIsDragging(true)
   }
 
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
+  // Handle escape from fullscreen
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging) return
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
 
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const percentage = (x / rect.width) * 100
-    setSliderPosition(Math.min(100, Math.max(0, percentage)))
-  }
-
-  const handleTouchStart = () => {
-    setIsDragging(true)
-  }
-
-  const handleTouchEnd = () => {
-    setIsDragging(false)
-  }
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!isDragging) return
-
-    const touch = e.touches[0]
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = touch.clientX - rect.left
-    const percentage = (x / rect.width) * 100
-    setSliderPosition(Math.min(100, Math.max(0, percentage)))
-  }
-
-  if (!beforeImageUrl) {
-    return null
-  }
+  // Allow modal to open even without beforeImageUrl
+  // This lets users see the after image in fullscreen
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] p-0 bg-white border-0">
+      <DialogContent className={cn(
+        "p-0 bg-black border-0",
+        isFullscreen ? "max-w-full max-h-full w-full h-full" : "max-w-[95vw] max-h-[95vh]"
+      )}>
         <div className="relative flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <h2
-              className="text-2xl font-light text-[#333333] tracking-wide"
-              style={{ fontFamily: 'Cormorant, serif' }}
-            >
-              {title || 'Antes y Después'}
-            </h2>
-            <div className="flex items-center gap-3">
-              {onShare && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onShare}
-                  className="px-4 py-2 border border-[#333333] text-[#333333] hover:bg-[#333333] hover:text-white transition-all duration-300 rounded-none"
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Compartir
-                </Button>
-              )}
-              {onDownload && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onDownload}
-                  className="px-4 py-2 border border-[#A3B1A1] text-[#A3B1A1] hover:bg-[#A3B1A1] hover:text-white transition-all duration-300 rounded-none"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Descargar
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-none"
+          <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/70 to-transparent p-6">
+            <div className="flex items-center justify-between">
+              <h2
+                className="text-2xl font-light text-white tracking-wide"
+                style={{ fontFamily: 'Cormorant, serif' }}
               >
-                <X className="w-5 h-5" />
-              </Button>
+                {title || 'Antes y Después'}
+              </h2>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleFullscreen}
+                  className="text-white hover:bg-white/20 rounded-none"
+                >
+                  {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </Button>
+                {onShare && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onShare}
+                    className="text-white hover:bg-white/20 rounded-none"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                )}
+                {onDownload && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onDownload}
+                    className="text-white hover:bg-white/20 rounded-none"
+                  >
+                    <Download className="w-4 h-4" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClose}
+                  className="text-white hover:bg-white/20 rounded-none"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
           </div>
 
           {/* Slider Container */}
-          <div className="flex-1 overflow-hidden bg-[#F8F8F8]">
+          <div className="flex-1 flex items-center justify-center bg-black pt-20">
             <div className={cn(
-              "relative w-full h-full min-h-[400px]",
-              imageOrientation === 'vertical' && "max-w-2xl mx-auto",
-              imageOrientation === 'square' && "max-w-4xl mx-auto"
+              "relative w-full h-full",
+              imageOrientation === 'vertical' && "max-w-3xl mx-auto",
+              imageOrientation === 'square' && "max-w-5xl mx-auto"
             )}>
-              <div
-                className="relative w-full h-full cursor-ew-resize select-none"
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onMouseMove={handleMouseMove}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                onTouchMove={handleTouchMove}
-              >
-                {/* Before Image */}
-                <img
-                  src={beforeImageUrl}
-                  alt="Antes"
-                  className={cn(
-                    "absolute inset-0 w-full h-full",
-                    imageOrientation === 'vertical' ? "object-contain" : "object-cover"
-                  )}
-                  style={{ objectPosition: 'center center' }}
+              {beforeImageUrl ? (
+                <BeforeAfterSlider
+                  beforeImage={beforeImageUrl}
+                  afterImage={afterImageUrl}
+                  beforeAlt="Antes"
+                  afterAlt="Después"
+                  className="w-full h-full"
                 />
-
-                {/* After Image with Clip */}
-                <div
-                  className="absolute inset-0 overflow-hidden"
-                  style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
-                >
+              ) : (
+                // Show just the after image if no before image
+                <div className="w-full h-full flex items-center justify-center">
                   <img
                     src={afterImageUrl}
-                    alt="Después"
+                    alt="Transformación"
                     className={cn(
-                      "absolute inset-0 w-full h-full",
+                      "max-w-full max-h-full",
                       imageOrientation === 'vertical' ? "object-contain" : "object-cover"
                     )}
-                    style={{ objectPosition: 'center center' }}
                   />
                 </div>
-
-                {/* Slider Line */}
-                <div
-                  className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg"
-                  style={{ left: `${sliderPosition}%` }}
-                >
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white border-2 border-[#A3B1A1] flex items-center justify-center shadow-lg cursor-ew-resize">
-                    <div className="flex gap-0.5">
-                      <div className="w-0.5 h-4 bg-[#A3B1A1]"></div>
-                      <div className="w-0.5 h-4 bg-[#A3B1A1]"></div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Labels */}
-                <div className="absolute bottom-6 left-6">
-                  <div
-                    className="bg-black/90 text-white px-4 py-2 text-sm font-light tracking-widest backdrop-blur-sm"
-                    style={{ fontFamily: 'Lato, sans-serif' }}
-                  >
-                    ANTES
-                  </div>
-                </div>
-                <div className="absolute bottom-6 right-6">
-                  <div
-                    className="bg-[#A3B1A1]/90 text-white px-4 py-2 text-sm font-light tracking-widest backdrop-blur-sm"
-                    style={{ fontFamily: 'Lato, sans-serif' }}
-                  >
-                    DESPUÉS
-                  </div>
-                </div>
-
-                {/* Instruction overlay for first-time users */}
-                <div className="absolute top-6 left-1/2 -translate-x-1/2">
-                  <div
-                    className="bg-white/90 backdrop-blur-sm px-4 py-2 text-sm text-[#333333] font-light shadow-lg"
-                    style={{ fontFamily: 'Lato, sans-serif' }}
-                  >
-                    Arrastra para comparar
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

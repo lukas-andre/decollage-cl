@@ -17,13 +17,10 @@ import {
   Calendar,
   Palette,
   Home,
-  Download,
   X,
-  RefreshCw
 } from 'lucide-react'
 import { VariantCard } from './VariantCard'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 
 interface Variant {
   id: string
