@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Heart, Share2, ExternalLink, User, Calendar, Eye } from 'lucide-react'
+import { Heart, Share2, ArrowRight, Download, User, Calendar, Eye, Sparkles, Home, Palette } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -10,6 +10,10 @@ import { useRouter } from 'next/navigation'
 import { shareAnalyticsService } from '@/lib/services/share-analytics.service'
 import type { PublicShareData } from '@/types/sharing'
 import { CHILEAN_SHARING_TEXT } from '@/types/sharing'
+import Link from 'next/link'
+import { ColorPalette } from './ColorPalette'
+import { TransformationCarousel } from './TransformationCarousel'
+import { cn } from '@/lib/utils'
 
 interface PublicShareViewProps {
   shareData: PublicShareData
@@ -19,11 +23,20 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
   const router = useRouter()
   const [isReacting, setIsReacting] = useState(false)
   const [reactionCount, setReactionCount] = useState(shareData.reactions.total)
-
+  const [showCTA, setShowCTA] = useState(false)
   // Track page view on mount
   useEffect(() => {
     shareAnalyticsService.trackShareView(shareData.share.id, 'project')
   }, [shareData.share.id])
+
+  // Show CTA after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowCTA(true)
+    }, 5000)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   const handleReaction = async () => {
     if (!shareData.isAuthenticated) {
@@ -52,244 +65,437 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
     }
   }
 
-  const handleShare = async () => {
+  const trackEngagement = async (eventType: string) => {
     try {
-      await navigator.share({
-        title: shareData.share.title || shareData.project.name,
-        text: shareData.share.description || `Mira esta increíble transformación hecha con Decollage.cl`,
-        url: window.location.href
-      })
-
-      // Track share event
-      await shareAnalyticsService.trackEvent({
-        shareType: 'project',
-        shareId: shareData.share.id,
-        action: 'clicked',
-        platform: 'native_share'
+      await fetch('/api/share/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shareToken: shareData.share.share_token,
+          eventType,
+          eventData: {}
+        })
       })
     } catch (error) {
-      // Fallback to copy to clipboard
-      await navigator.clipboard.writeText(window.location.href)
-      
-      // Track copy event
-      await shareAnalyticsService.trackEvent({
-        shareType: 'project',
-        shareId: shareData.share.id,
-        action: 'clicked',
-        platform: 'copy_link'
-      })
+      console.error('Error tracking engagement:', error)
     }
   }
 
-  const handleViewProject = () => {
-    // Track conversion
-    shareAnalyticsService.trackEvent({
-      shareType: 'project',
-      shareId: shareData.share.id,
-      action: 'converted'
-    })
-
-    router.push('/auth/register')
+  const handleShare = () => {
+    const shareUrl = window.location.href
+    const message = shareData.share.whatsapp_message || `¡Mira esta transformación increíble! ${shareUrl}`
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`
+    window.open(whatsappUrl, '_blank')
+    trackEngagement('reshare')
   }
 
+  const handleDownload = async (imageUrl: string, itemTitle?: string) => {
+    if (imageUrl) {
+      const link = document.createElement('a')
+      link.href = imageUrl
+      link.download = `decollage-${itemTitle || shareData.project.name || 'design'}.jpg`
+      link.click()
+      trackEngagement('download')
+    }
+  }
+
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="text-2xl font-bold text-gray-900">
-                🏠 Decollage.cl
-              </div>
-              <Badge variant="secondary" className="text-xs">
-                {CHILEAN_SHARING_TEXT.transformation}
-              </Badge>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleShare}
-                className="gap-2"
-              >
-                <Share2 size={16} />
-                {CHILEAN_SHARING_TEXT.shareButton}
-              </Button>
-              
-              <Button
-                size="sm"
-                onClick={handleViewProject}
-                className="gap-2"
-              >
-                <ExternalLink size={16} />
-                {CHILEAN_SHARING_TEXT.viewProject}
-              </Button>
-            </div>
+    <div className="min-h-screen bg-white">
+      {/* Elegant Header with subtle shadow */}
+      <header className="bg-white/95 backdrop-blur-sm border-b border-gray-100/50 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-6 flex items-center justify-between">
+          <Link href="/" className="flex items-center group">
+            <span
+              className="text-3xl lg:text-4xl font-light text-[#333333] tracking-wider transition-all duration-500 group-hover:tracking-wide"
+              style={{ fontFamily: 'Cormorant, serif' }}
+            >
+              Decollage
+            </span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="default"
+              onClick={handleShare}
+              className="px-6 py-3 border border-[#333333] text-[#333333] hover:bg-[#333333] hover:text-white transition-all duration-500 rounded-none"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline font-light" style={{ fontFamily: 'Lato, sans-serif' }}>Compartir</span>
+            </Button>
+            <Button
+              size="default"
+              className="px-6 py-3 bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white transition-all duration-500 rounded-none shadow-lg hover:shadow-xl"
+              asChild
+            >
+              <Link href="/auth/register">
+                <Sparkles className="w-4 h-4 mr-2" />
+                <span style={{ fontFamily: 'Lato, sans-serif' }}>Crear mi espacio</span>
+              </Link>
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* Project Header */}
-        <div className="mb-8">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {shareData.share.title || shareData.project.name}
-              </h1>
-              
-              {shareData.share.description && (
-                <p className="text-lg text-gray-600 mb-4">
-                  {shareData.share.description}
-                </p>
-              )}
+      <main>
+        {/* Side-by-side Layout: Carousel + Project Info */}
+        <section className="py-12 lg:py-20">
+          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16 items-start">
 
-              <div className="flex items-center gap-4 text-sm text-gray-500">
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={shareData.project.userAvatarUrl} />
-                    <AvatarFallback>
-                      <User size={16} />
-                    </AvatarFallback>
-                  </Avatar>
-                  <span>{shareData.project.userDisplayName}</span>
-                </div>
-                
-                <div className="flex items-center gap-1">
-                  <Calendar size={16} />
-                  <span>
-                    {new Date(shareData.share.created_at!).toLocaleDateString('es-CL')}
-                  </span>
-                </div>
-                
-                <div className="flex items-center gap-1">
-                  <Eye size={16} />
-                  <span>{shareData.share.current_views || 0} visualizaciones</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Reaction Button */}
-            <div className="flex flex-col items-center gap-2">
-              <Button
-                variant={shareData.isAuthenticated ? "default" : "outline"}
-                size="lg"
-                onClick={handleReaction}
-                disabled={isReacting}
-                className="gap-2 min-w-[120px]"
-              >
-                <Heart 
-                  size={20} 
-                  className={reactionCount > 0 ? "fill-current text-red-500" : ""} 
+              {/* Carousel Section - Takes 3/5 of the width */}
+              <div className="lg:col-span-3">
+                <TransformationCarousel
+                  items={shareData.items.map(item => ({
+                    id: item.id,
+                    title: item.title,
+                    description: item.description,
+                    imageUrl: item.imageUrl,
+                    beforeImageUrl: item.beforeImageUrl,
+                    style: (item.metadata as any)?.style || undefined,
+                    room: (item.metadata as any)?.room || undefined
+                  }))}
+                  autoPlay={true}
+                  interval={6000}
                 />
-                {CHILEAN_SHARING_TEXT.applaud}
-              </Button>
-              
-              <span className="text-sm text-gray-500">
-                {reactionCount} {reactionCount === 1 ? 'aplauso' : 'aplausos'}
-              </span>
-              
-              {!shareData.isAuthenticated && (
-                <p className="text-xs text-center text-gray-400 max-w-[120px]">
-                  Únete para aplaudir
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+              </div>
 
-        {/* Transformations Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {shareData.items.map((item, index) => (
-            <Card key={item.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
-              <CardContent className="p-0">
-                <div className="aspect-square relative overflow-hidden">
-                  <img
-                    src={item.imageUrl}
-                    alt={item.title || `${CHILEAN_SHARING_TEXT.transformation} ${index + 1}`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  
-                  {/* Before/After indicator */}
-                  {item.beforeImageUrl && (
-                    <div className="absolute top-2 left-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {CHILEAN_SHARING_TEXT.beforeAndAfter}
-                      </Badge>
-                    </div>
-                  )}
-                </div>
-                
-                {item.title && (
-                  <div className="p-4">
-                    <h3 className="font-medium text-gray-900 mb-1">
-                      {item.title}
-                    </h3>
-                    {item.description && (
-                      <p className="text-sm text-gray-600">
-                        {item.description}
+              {/* Project Info Section - Takes 2/5 of the width */}
+              <div className="lg:col-span-2 lg:sticky lg:top-32">
+                <div className="space-y-8">
+                  <div>
+                    <h1
+                      className="text-4xl lg:text-5xl font-light text-[#333333] mb-4 tracking-wide"
+                      style={{ fontFamily: 'Cormorant, serif' }}
+                    >
+                      {shareData.share.title || shareData.project.name}
+                    </h1>
+
+                    {shareData.share.description && (
+                      <p
+                        className="text-lg text-gray-600 font-light leading-relaxed"
+                        style={{ fontFamily: 'Lato, sans-serif' }}
+                      >
+                        {shareData.share.description}
                       </p>
                     )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
 
-        {/* Call to Action */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-center text-white">
-          <h2 className="text-2xl font-bold mb-4">
-            ¿Te inspiraste? ¡Crea tu propia transformación!
-          </h2>
-          <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-            Únete a miles de chilenos que ya están transformando sus espacios con 
-            Decollage. Es fácil, rápido y los resultados son increíbles.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              variant="secondary"
-              onClick={handleViewProject}
-              className="gap-2"
-            >
-              <ExternalLink size={20} />
-              Comenzar ahora gratis
-            </Button>
-            
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={handleShare}
-              className="gap-2 border-white text-white hover:bg-white hover:text-blue-600"
-            >
-              <Share2 size={20} />
-              Compartir esta transformación
-            </Button>
-          </div>
-        </div>
-      </main>
+                  {/* Meta Information - Vertical Stack */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-12 w-12 ring-2 ring-[#A3B1A1]/20">
+                        <AvatarImage src={shareData.project.userAvatarUrl} />
+                        <AvatarFallback className="bg-[#A3B1A1]/10">
+                          <User size={20} className="text-[#A3B1A1]" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-xs text-gray-500 font-light uppercase tracking-widest" style={{ fontFamily: 'Lato, sans-serif' }}>Creado por</p>
+                        <p className="font-light text-[#333333]" style={{ fontFamily: 'Lato, sans-serif' }}>
+                          {shareData.project.userDisplayName}
+                        </p>
+                      </div>
+                    </div>
 
-      {/* Footer */}
-      <footer className="bg-white border-t mt-16">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900 mb-2">
-              🏠 Decollage.cl
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-5 h-5 text-[#A3B1A1]" />
+                        <div>
+                          <p className="text-xs text-gray-500 font-light uppercase tracking-widest" style={{ fontFamily: 'Lato, sans-serif' }}>Publicado</p>
+                          <p className="text-sm font-light text-[#333333]" style={{ fontFamily: 'Lato, sans-serif' }}>
+                            {new Date(shareData.share.created_at!).toLocaleDateString('es-CL', {
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <Eye className="w-5 h-5 text-[#A3B1A1]" />
+                        <div>
+                          <p className="text-xs text-gray-500 font-light uppercase tracking-widest" style={{ fontFamily: 'Lato, sans-serif' }}>Vistas</p>
+                          <p className="text-sm font-light text-[#333333]" style={{ fontFamily: 'Lato, sans-serif' }}>
+                            {(shareData.share.current_views || 0).toLocaleString('es-CL')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reaction & Share Buttons */}
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <Button
+                        variant="ghost"
+                        size="lg"
+                        onClick={handleReaction}
+                        disabled={isReacting}
+                        className="w-full group py-4 border-2 border-[#333333] text-[#333333] hover:bg-[#333333] hover:text-white transition-all duration-500 rounded-none"
+                      >
+                        <Heart
+                          size={20}
+                          className={cn(
+                            "mr-3 transition-all duration-500",
+                            reactionCount > 0 ? "fill-current text-[#C4886F]" : "group-hover:scale-110"
+                          )}
+                        />
+                        <span style={{ fontFamily: 'Lato, sans-serif' }}>
+                          {CHILEAN_SHARING_TEXT.applaud}
+                        </span>
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="lg"
+                        onClick={handleShare}
+                        className="w-full group py-4 border-2 border-[#A3B1A1] text-[#A3B1A1] hover:bg-[#A3B1A1] hover:text-white transition-all duration-500 rounded-none"
+                      >
+                        <Share2 className="w-5 h-5 mr-3 group-hover:scale-110 transition-all duration-500" />
+                        <span style={{ fontFamily: 'Lato, sans-serif' }}>Compartir transformación</span>
+                      </Button>
+                    </div>
+
+                    <div className="text-center pt-4 border-t border-gray-100">
+                      <p className="text-gray-500 font-light" style={{ fontFamily: 'Lato, sans-serif' }}>
+                        <span className="text-xl font-light text-[#C4886F]">{reactionCount}</span> {reactionCount === 1 ? 'aplauso' : 'aplausos'}
+                      </p>
+
+                      {!shareData.isAuthenticated && (
+                        <p className="text-xs text-gray-400 font-light italic mt-2" style={{ fontFamily: 'Lato, sans-serif' }}>
+                          Únete para aplaudir
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="text-gray-600 mb-4">
-              Transformamos espacios
-            </p>
-            <p className="text-sm text-gray-500">
-              Diseño chileno • Resultados increíbles
-            </p>
           </div>
-        </div>
-      </footer>
+        </section>
+
+        {/* Magazine-Style Grid Gallery */}
+        <section className="py-20">
+          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+            {/* Section Title */}
+            <div className="text-center mb-16">
+              <h2
+                className="text-4xl lg:text-6xl font-light text-[#333333] mb-4 tracking-wide"
+                style={{ fontFamily: 'Cormorant, serif' }}
+              >
+                Cada Espacio, Una Historia
+              </h2>
+              <p
+                className="text-lg text-gray-600 font-light"
+                style={{ fontFamily: 'Lato, sans-serif' }}
+              >
+                Explora cada transformación en detalle
+              </p>
+            </div>
+
+            {/* Magazine Layout Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+              {shareData.items.map((item, index) => (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "group",
+                    index === 0 && "lg:col-span-2", // First item spans full width
+                    index % 3 === 1 && "lg:row-span-2" // Every third item is taller
+                  )}
+                >
+                  <div className="space-y-6">
+                    {/* Image Container with Elegant Hover */}
+                    <div
+                      className={cn(
+                        "relative overflow-hidden bg-[#F8F8F8] shadow-2xl",
+                        index === 0 ? "aspect-[21/9]" : "aspect-[4/3]"
+                      )}
+                    >
+                      {/* Before Image (hidden by default) */}
+                      {item.beforeImageUrl && (
+                        <img
+                          src={item.beforeImageUrl}
+                          alt="Antes"
+                          className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                        />
+                      )}
+
+                      {/* After Image */}
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title || `Transformación ${index + 1}`}
+                        className={cn(
+                          "w-full h-full object-cover transition-all duration-700",
+                          item.beforeImageUrl && "group-hover:opacity-0"
+                        )}
+                      />
+
+                      {/* Elegant Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+
+                      {/* Hover Indicator for Before/After */}
+                      {item.beforeImageUrl && (
+                        <div className="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                          <p className="text-white text-sm font-light tracking-widest" style={{ fontFamily: 'Lato, sans-serif' }}>
+                            {/* Show opposite state on hover */}
+                            MOSTRANDO: ANTES
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="absolute bottom-6 right-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleDownload(item.imageUrl, item.title)}
+                          className="bg-white/90 backdrop-blur-sm hover:bg-white text-[#333333] h-10 w-10 rounded-none shadow-lg"
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Content Section */}
+                    <div className="space-y-4">
+                      {/* Title */}
+                      {item.title && (
+                        <h3
+                          className="text-2xl lg:text-3xl font-light text-[#333333] tracking-wide"
+                          style={{ fontFamily: 'Cormorant, serif' }}
+                        >
+                          {item.title}
+                        </h3>
+                      )}
+
+                      {/* Description */}
+                      {item.description && (
+                        <p
+                          className="text-gray-600 font-light leading-relaxed"
+                          style={{ fontFamily: 'Lato, sans-serif' }}
+                        >
+                          {item.description}
+                        </p>
+                      )}
+
+                      {/* Color Palette with elegant presentation */}
+                      <div className="pt-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Palette className="w-4 h-4 text-[#A3B1A1]" />
+                          <span
+                            className="text-sm text-gray-500 font-light tracking-widest uppercase"
+                            style={{ fontFamily: 'Lato, sans-serif' }}
+                          >
+                            Paleta de colores
+                          </span>
+                        </div>
+                        <ColorPalette
+                          imageUrl={item.imageUrl}
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Elegant CTA Section with Chilean Touch */}
+        {showCTA && (
+          <section className="relative bg-gradient-to-b from-white via-[#F8F8F8] to-white py-24 overflow-hidden">
+            {/* Decorative Elements */}
+            <div className="absolute inset-0 opacity-5">
+              <div className="absolute top-0 left-0 w-96 h-96 bg-[#A3B1A1] rounded-full blur-3xl" />
+              <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#C4886F] rounded-full blur-3xl" />
+            </div>
+
+            <div className="relative max-w-6xl mx-auto px-6 lg:px-12 text-center">
+              {/* Main Headline */}
+              <h2
+                className="text-5xl lg:text-7xl font-light text-[#333333] mb-8 tracking-wide leading-tight"
+                style={{ fontFamily: 'Cormorant, serif' }}
+              >
+                Hay un hogar soñado<br />
+                <span className="text-[#A3B1A1]">dentro de tus propias paredes</span>
+              </h2>
+
+              {/* Subheadline */}
+              <p
+                className="text-xl lg:text-2xl text-gray-600 mb-16 max-w-3xl mx-auto font-light leading-relaxed"
+                style={{ fontFamily: 'Lato, sans-serif' }}
+              >
+                Únete a miles de chilenas y chilenos que están transformando sus espacios
+                con <span className="text-[#C4886F] font-normal">confianza y creatividad</span>.
+              </p>
+
+              {/* Feature Pills */}
+              <div className="flex flex-wrap justify-center gap-4 mb-16">
+                <Badge
+                  className="bg-white border border-[#A3B1A1]/20 text-[#333333] px-6 py-3 shadow-lg"
+                  style={{ fontFamily: 'Lato, sans-serif' }}
+                >
+                  <Sparkles className="w-4 h-4 mr-2 text-[#A3B1A1]" />
+                  Transformación instantánea
+                </Badge>
+                <Badge
+                  className="bg-white border border-[#C4886F]/20 text-[#333333] px-6 py-3 shadow-lg"
+                  style={{ fontFamily: 'Lato, sans-serif' }}
+                >
+                  <Home className="w-4 h-4 mr-2 text-[#C4886F]" />
+                  Estilos chilenos auténticos
+                </Badge>
+                <Badge
+                  className="bg-white border border-[#A3B1A1]/20 text-[#333333] px-6 py-3 shadow-lg"
+                  style={{ fontFamily: 'Lato, sans-serif' }}
+                >
+                  <Palette className="w-4 h-4 mr-2 text-[#A3B1A1]" />
+                  Paletas curadas
+                </Badge>
+              </div>
+
+              {/* CTA Buttons with enhanced styling */}
+              <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                <Button
+                  size="lg"
+                  className="group px-12 py-6 bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white transition-all duration-500 rounded-none shadow-2xl hover:shadow-3xl transform hover:-translate-y-1"
+                  asChild
+                >
+                  <Link href="/auth/register">
+                    <Sparkles className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform duration-500" />
+                    <span className="text-lg" style={{ fontFamily: 'Lato, sans-serif' }}>Descubre tu hogar soñado</span>
+                    <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-1 transition-transform duration-300" />
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="group px-12 py-6 border-2 border-[#333333] text-[#333333] hover:bg-[#333333] hover:text-white transition-all duration-500 rounded-none"
+                  asChild
+                >
+                  <Link href="/galeria">
+                    <span className="text-lg" style={{ fontFamily: 'Lato, sans-serif' }}>Ver más transformaciones</span>
+                    <ArrowRight className="w-5 h-5 ml-3 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                  </Link>
+                </Button>
+              </div>
+
+              {/* Trust Indicator */}
+              <p
+                className="mt-12 text-sm text-gray-500 font-light italic"
+                style={{ fontFamily: 'Lato, sans-serif' }}
+              >
+                Más de 5,000 espacios transformados en todo Chile
+              </p>
+            </div>
+          </section>
+        )}
+      </main>
     </div>
   )
 }

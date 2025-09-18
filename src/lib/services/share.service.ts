@@ -176,16 +176,24 @@ export class ShareService {
       let items: any[] = []
       
       if (itemIds) {
-        // Get specific featured items
-        const { data: transformations } = await this.supabase
+        // Get specific featured items using service role client to bypass RLS
+        const { createClient: createServiceClient } = await import('@supabase/supabase-js')
+        const serverClient = createServiceClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          {
+            auth: { autoRefreshToken: false, persistSession: false }
+          }
+        )
+
+        const { data: transformations, error } = await serverClient
           .from('transformations')
           .select(`
             id,
             result_image_url,
             custom_instructions,
             metadata,
-            base_image_id,
-            images:images!base_image_id (url)
+            base_image_id
           `)
           .in('id', itemIds)
           .eq('status', 'completed')
@@ -195,7 +203,7 @@ export class ShareService {
           type: 'transformation',
           title: t.custom_instructions || 'Transformación',
           imageUrl: t.result_image_url || '',
-          beforeImageUrl: t.images?.url || '',
+          beforeImageUrl: '', // Will fetch separately if needed
           metadata: t.metadata
         })) || []
       } else {
@@ -208,7 +216,7 @@ export class ShareService {
             custom_instructions,
             metadata,
             base_image_id,
-            images:images!base_image_id (url)
+            images!transformations_base_image_id_fkey (url)
           `)
           .eq('project_id', shareData.project_id)
           .eq('status', 'completed')
