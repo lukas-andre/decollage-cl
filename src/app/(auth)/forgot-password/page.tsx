@@ -108,7 +108,7 @@ export default function ForgotPasswordPage() {
             </h2>
 
             <p className="text-white/80 font-lato leading-relaxed mb-6">
-              Miles de chilenas confían en Decollage para mantener sus sueños de diseño seguros.
+              Miles de chilenas y chilenos confían en Decollage para mantener sus sueños de diseño seguros.
               Tu cuenta y proyectos están protegidos.
             </p>
 

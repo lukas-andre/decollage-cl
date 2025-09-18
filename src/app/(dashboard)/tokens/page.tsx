@@ -406,7 +406,7 @@ export default function TokensPage() {
       <div className={`mt-12 text-center transition-all duration-500 delay-500 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
         <div className="inline-flex items-center gap-2 text-sm text-[#333333]/60 font-lato">
           <Trophy className="h-4 w-4 text-[#C4886F]" />
-          <span>Únete a más de <span className="font-medium text-[#333333]">1,000 chilenas</span> transformando sus hogares</span>
+          <span>Únete a más de <span className="font-medium text-[#333333]">1,000 chilenas y chilenos</span> transformando sus hogares</span>
         </div>
       </div>
     </div>

@@ -25,7 +25,7 @@ export class ShareAnalyticsService {
         user_id: user?.id || null,
         platform: data.platform,
         action: data.action,
-        referrer: data.referrer || document.referrer,
+        referrer: data.referrer || (typeof document !== 'undefined' ? document.referrer : ''),
         utm_source: data.utmSource,
         utm_medium: data.utmMedium,
         utm_campaign: data.utmCampaign,

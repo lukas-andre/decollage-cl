@@ -7,7 +7,7 @@ import { Leaf, ArrowLeft, Sparkles, Home, Users } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Crear Cuenta | Decollage',
-  description: 'Únete a la comunidad de chilenas que transforman sus hogares con Decollage',
+  description: 'Únete a la comunidad de chilenas y chilenos que transforman sus hogares con Decollage',
 }
 
 export default function SignupPage() {
@@ -41,7 +41,7 @@ export default function SignupPage() {
               Transforma tu hogar
             </h1>
             <p className="text-[#333333]/70 font-lato leading-relaxed">
-              Únete a miles de chilenas que ya descubrieron su estilo único con nuestra plataforma de diseño
+              Únete a miles de chilenas y chilenos que ya descubrieron su estilo único con nuestra plataforma de diseño
             </p>
           </div>
 
@@ -120,8 +120,8 @@ export default function SignupPage() {
             </h2>
 
             <p className="text-white/80 font-lato leading-relaxed mb-6">
-              Más de 10,000 chilenas han transformado sus hogares con Decollage.
-              Descubre tu estilo personal con nuestra IA y únete a una comunidad que celebra la creatividad.
+              Más de 10,000 chilenas y chilenos han transformado sus hogares con Decollage.
+              Descubre tu estilo personal y únete a una comunidad que celebra la creatividad.
             </p>
 
             <div className="flex items-center gap-3">

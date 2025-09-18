@@ -74,7 +74,7 @@ export default function LoginPage() {
             {/* Sign Up Link */}
             <div className="text-center">
               <p className="text-sm text-[#333333]/70 font-lato mb-4">
-                Únete a miles de chilenas que ya transformaron sus hogares
+                Únete a miles de chilenas y chilenos que ya transformaron sus hogares
               </p>
               <Link href="/signup">
                 <Button className="w-full bg-[#333333] hover:bg-[#A3B1A1] text-white font-lato rounded-none transition-all duration-300">

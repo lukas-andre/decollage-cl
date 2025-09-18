@@ -878,10 +878,13 @@ export type Database = {
       }
       project_shares: {
         Row: {
+          author_display: Json | null
+          conversion_count: number | null
           created_at: string | null
           created_by: string | null
           current_views: number | null
           description: string | null
+          engagement_metrics: Json | null
           expires_at: string | null
           featured_items: string[] | null
           id: string
@@ -890,18 +893,26 @@ export type Database = {
           og_image_generated_at: string | null
           og_image_url: string | null
           password_hash: string | null
+          pinterest_data: Json | null
+          platform_analytics: Json | null
           project_id: string
+          share_format: string | null
           share_token: string
           share_type: string
+          story_data: Json | null
           theme_override: Json | null
           title: string | null
           visibility: string
+          whatsapp_message: string | null
         }
         Insert: {
+          author_display?: Json | null
+          conversion_count?: number | null
           created_at?: string | null
           created_by?: string | null
           current_views?: number | null
           description?: string | null
+          engagement_metrics?: Json | null
           expires_at?: string | null
           featured_items?: string[] | null
           id?: string
@@ -910,18 +921,26 @@ export type Database = {
           og_image_generated_at?: string | null
           og_image_url?: string | null
           password_hash?: string | null
+          pinterest_data?: Json | null
+          platform_analytics?: Json | null
           project_id: string
+          share_format?: string | null
           share_token: string
           share_type?: string
+          story_data?: Json | null
           theme_override?: Json | null
           title?: string | null
           visibility?: string
+          whatsapp_message?: string | null
         }
         Update: {
+          author_display?: Json | null
+          conversion_count?: number | null
           created_at?: string | null
           created_by?: string | null
           current_views?: number | null
           description?: string | null
+          engagement_metrics?: Json | null
           expires_at?: string | null
           featured_items?: string[] | null
           id?: string
@@ -930,12 +949,17 @@ export type Database = {
           og_image_generated_at?: string | null
           og_image_url?: string | null
           password_hash?: string | null
+          pinterest_data?: Json | null
+          platform_analytics?: Json | null
           project_id?: string
+          share_format?: string | null
           share_token?: string
           share_type?: string
+          story_data?: Json | null
           theme_override?: Json | null
           title?: string | null
           visibility?: string
+          whatsapp_message?: string | null
         }
         Relationships: [
           {
@@ -1207,6 +1231,114 @@ export type Database = {
           },
         ]
       }
+      share_conversions: {
+        Row: {
+          conversion_type: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          referrer_platform: string | null
+          share_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          conversion_type: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          referrer_platform?: string | null
+          share_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          conversion_type?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          referrer_platform?: string | null
+          share_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_conversions_share_id_fkey"
+            columns: ["share_id"]
+            isOneToOne: false
+            referencedRelation: "project_shares"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "share_conversions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      share_engagement_events: {
+        Row: {
+          created_at: string | null
+          device_type: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          platform: string | null
+          session_id: string
+          share_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_type?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          platform?: string | null
+          session_id: string
+          share_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_type?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          platform?: string | null
+          session_id?: string
+          share_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_engagement_events_share_id_fkey"
+            columns: ["share_id"]
+            isOneToOne: false
+            referencedRelation: "project_shares"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "share_engagement_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       share_templates: {
         Row: {
           aspect_ratio: string | null
@@ -1220,12 +1352,16 @@ export type Database = {
           include_watermark: boolean | null
           is_active: boolean | null
           is_premium: boolean | null
+          layout_config: Json | null
           layout_type: string | null
           max_images: number | null
+          message_template: string | null
           name: string
           platform: string
+          template_type: string | null
           theme: Json | null
           title_template: string | null
+          usage_count: number | null
           width: number | null
         }
         Insert: {
@@ -1240,12 +1376,16 @@ export type Database = {
           include_watermark?: boolean | null
           is_active?: boolean | null
           is_premium?: boolean | null
+          layout_config?: Json | null
           layout_type?: string | null
           max_images?: number | null
+          message_template?: string | null
           name: string
           platform: string
+          template_type?: string | null
           theme?: Json | null
           title_template?: string | null
+          usage_count?: number | null
           width?: number | null
         }
         Update: {
@@ -1260,15 +1400,60 @@ export type Database = {
           include_watermark?: boolean | null
           is_active?: boolean | null
           is_premium?: boolean | null
+          layout_config?: Json | null
           layout_type?: string | null
           max_images?: number | null
+          message_template?: string | null
           name?: string
           platform?: string
+          template_type?: string | null
           theme?: Json | null
           title_template?: string | null
+          usage_count?: number | null
           width?: number | null
         }
         Relationships: []
+      }
+      story_sections: {
+        Row: {
+          content: Json
+          created_at: string | null
+          id: string
+          is_visible: boolean | null
+          position: number
+          section_type: string
+          share_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content: Json
+          created_at?: string | null
+          id?: string
+          is_visible?: boolean | null
+          position: number
+          section_type: string
+          share_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: Json
+          created_at?: string | null
+          id?: string
+          is_visible?: boolean | null
+          position?: number
+          section_type?: string
+          share_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_sections_share_id_fkey"
+            columns: ["share_id"]
+            isOneToOne: false
+            referencedRelation: "project_shares"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       token_packages: {
         Row: {
@@ -1733,6 +1918,63 @@ export type Database = {
             columns: ["following_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      viewer_sessions: {
+        Row: {
+          converted_to_user_id: string | null
+          first_seen: string | null
+          id: string
+          interactions: Json | null
+          ip_address: unknown | null
+          last_seen: string | null
+          page_views: number | null
+          session_token: string
+          share_id: string | null
+          total_time_seconds: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          converted_to_user_id?: string | null
+          first_seen?: string | null
+          id?: string
+          interactions?: Json | null
+          ip_address?: unknown | null
+          last_seen?: string | null
+          page_views?: number | null
+          session_token: string
+          share_id?: string | null
+          total_time_seconds?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          converted_to_user_id?: string | null
+          first_seen?: string | null
+          id?: string
+          interactions?: Json | null
+          ip_address?: unknown | null
+          last_seen?: string | null
+          page_views?: number | null
+          session_token?: string
+          share_id?: string | null
+          total_time_seconds?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viewer_sessions_converted_to_user_id_fkey"
+            columns: ["converted_to_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viewer_sessions_share_id_fkey"
+            columns: ["share_id"]
+            isOneToOne: false
+            referencedRelation: "project_shares"
             referencedColumns: ["id"]
           },
         ]

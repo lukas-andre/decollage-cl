@@ -4,7 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { shareService } from '@/lib/services/share.service'
 import { shareAnalyticsService } from '@/lib/services/share-analytics.service'
 import { PublicShareView } from '@/components/share/PublicShareView'
+import { QuickShareView } from '@/components/share/QuickShareView'
 import type { PublicShareData } from '@/types/sharing'
+import type { Database } from '@/types/database.types'
 
 // Enable ISR with 1 hour revalidation
 export const revalidate = 3600
@@ -23,13 +25,13 @@ export async function generateMetadata({ params }: SharePageProps): Promise<Meta
   try {
     const { token } = await params
     const shareData = await shareService.getShareByToken(token)
-    
+
     const title = shareData.share.title || `${shareData.project.name} | Decollage.cl`
-    const description = shareData.share.description || 
-      `Descubre esta increíble transformación de espacios realizada con Decollage.cl. ${shareData.project.userDisplayName} creó un diseño único utilizando inteligencia artificial.`
-    
+    const description = shareData.share.description ||
+      `Descubre esta increíble transformación de espacios realizada con Decollage.cl. ${shareData.project.userDisplayName} creó un diseño único.`
+
     const ogImageUrl = shareData.share.og_image_url || `/api/og?token=${token}`
-    
+
     return {
       title,
       description,
@@ -65,7 +67,7 @@ export async function generateMetadata({ params }: SharePageProps): Promise<Meta
   } catch (error) {
     return {
       title: 'Transformación de Espacios | Decollage.cl',
-      description: 'Descubre increíbles transformaciones de espacios con inteligencia artificial.',
+      description: 'Descubre increíbles transformaciones de espacios con Decollage.',
     }
   }
 }
@@ -106,6 +108,35 @@ export default async function SharePage({ params, searchParams }: SharePageProps
       'project'
     )
 
+    // Check share format and render appropriate view
+    if (shareData.share.share_format === 'quick') {
+      // For quick shares, we need to get the generation data
+      const supabase = await createClient()
+      const featured = shareData.share.featured_items || []
+      console.log({ featured })
+      if (featured.length > 0) {
+        const { data: generation } = await supabase
+          .from('transformations')
+          .select(`
+            *,
+            base_image:images!transformations_base_image_id_fkey(
+              url,
+              cloudflare_id
+            )
+          `)
+          .eq('id', featured[0])
+          .single()
+        console.log({generation})
+        if (generation) {
+          return <QuickShareView
+            share={shareData.share as any}
+            generation={generation as any}
+          />
+        }
+      }
+    }
+
+    // Default to existing public share view for story format and fallback
     return <PublicShareView shareData={shareData} />
   } catch (error) {
     console.error('Error loading share:', error)
@@ -142,7 +173,7 @@ function PasswordProtectedView({ token, error }: { token: string; error?: string
                 placeholder="Ingresa la contraseña"
               />
             </div>
-            
+
             {error && (
               <div className="text-red-600 text-sm">
                 {error}
@@ -160,8 +191,8 @@ function PasswordProtectedView({ token, error }: { token: string; error?: string
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
               Hecho con{' '}
-              <a 
-                href="https://decollage.cl" 
+              <a
+                href="https://decollage.cl"
                 className="text-blue-600 hover:text-blue-800 font-medium"
                 target="_blank"
                 rel="noopener noreferrer"

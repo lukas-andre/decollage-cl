@@ -71,7 +71,7 @@ import { ImageUploadSkeleton, ImagePreviewSkeleton } from '@/components/projects
 import { NoTokensDialog } from '@/components/tokens/NoTokensDialog'
 import { VariantGallery } from '@/components/projects/VariantGallery'
 import { SelectionSummary } from '@/components/project/SelectionSummary'
-import { Share2 } from 'lucide-react'
+import { ShareButton } from '@/components/share/ShareButton'
 
 interface BaseImage {
   id: string
@@ -919,33 +919,42 @@ export default function ProjectWorkspacePage({
               </DropdownMenu>
             )}
 
-            {/* Intelligent Share Button */}
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => {
-                // Intelligent sharing logic
-                if (showSelection && selectedVariants.size > 0) {
-                  // Share selected variants
-                  handleShareSelected()
-                } else if (!showSelection) {
-                  // Simply enter selection mode
-                  setShowSelection(true)
-                  toast.info('Selecciona los diseños que quieres compartir')
-                } else {
-                  // In selection mode but nothing selected, suggest quick options
-                  setShowSelection(true)
-                  toast.info('Selecciona diseños o usa "Selección Rápida"')
-                }
-              }}
-              className="bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 transition-colors duration-300"
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              {showSelection && selectedVariants.size > 0
-                ? `Compartir ${selectedVariants.size} diseño${selectedVariants.size !== 1 ? 's' : ''}`
-                : 'Compartir'
-              }
-            </Button>
+            {/* Enhanced Share Button */}
+            {project && (
+              <ShareButton
+                project={{
+                  id: project.id,
+                  name: project.name,
+                  description: project.description,
+                  user_id: '', // Will be filled by component using auth
+                  created_at: project.created_at,
+                  updated_at: project.updated_at,
+                  status: project.status,
+                  client_id: null,
+                  property_id: null
+                }}
+                generations={variants
+                  .filter(v => v.status === 'completed' && v.result_image_url)
+                  .map(v => ({
+                    id: v.id,
+                    project_id: project.id,
+                    image_url: v.result_image_url,
+                    original_image_url: selectedBaseImage?.url || null,
+                    original_image_id: selectedBaseImage?.id || null,
+                    prompt: v.metadata?.prompt || null,
+                    style: v.style?.name || null,
+                    room_type: v.room_type?.name || null,
+                    status: v.status as 'pending' | 'processing' | 'completed' | 'failed',
+                    created_at: v.created_at,
+                    updated_at: v.created_at,
+                    metadata: v.metadata || null,
+                    error_message: null,
+                    tokens_used: v.tokens_consumed,
+                    user_id: '' // Will be filled by component using auth
+                  }))}
+                className="bg-[#A3B1A1] hover:bg-[#A3B1A1]/90"
+              />
+            )}
           </div>
         </div>
       </div>

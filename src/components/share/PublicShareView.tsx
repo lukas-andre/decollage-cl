@@ -247,7 +247,7 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
           </h2>
           <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
             Únete a miles de chilenos que ya están transformando sus espacios con 
-            inteligencia artificial. Es fácil, rápido y los resultados son increíbles.
+            Decollage. Es fácil, rápido y los resultados son increíbles.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -282,10 +282,10 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
               🏠 Decollage.cl
             </div>
             <p className="text-gray-600 mb-4">
-              Transformamos espacios con inteligencia artificial
+              Transformamos espacios
             </p>
             <p className="text-sm text-gray-500">
-              Diseño chileno • Inteligencia artificial • Resultados increíbles
+              Diseño chileno • Resultados increíbles
             </p>
           </div>
         </div>

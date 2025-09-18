@@ -36,17 +36,28 @@ export class ShareService {
         throw new Error('Project not found or access denied')
       }
 
+      // Generate slug from title or project name
+      const title = config.customTitle || project.name
+
       // Create the share record
       const shareData: any = {
         project_id: projectId,
         created_by: user.id,
         share_type: 'link',
         visibility: config.visibility || 'unlisted',
-        title: config.customTitle,
+        title: title,
         description: config.customDescription,
         featured_items: config.featured || [],
         expires_at: config.expiresAt?.toISOString(),
         max_views: config.maxViews,
+        share_format: 'quick',
+        whatsapp_message: `¡Mira cómo transformé mi espacio con Decollage! 🏠✨\n\nProyecto: ${title}\n\nDescubre más transformaciones en decollage.cl`,
+        engagement_metrics: {
+          saves: 0,
+          shares: 0,
+          slider_uses: 0
+        },
+        platform_analytics: {}
       }
 
       // Hash password if provided
@@ -57,6 +68,14 @@ export class ShareService {
         shareData.password_hash = Array.from(new Uint8Array(hashBuffer))
           .map(b => b.toString(16).padStart(2, '0'))
           .join('')
+      }
+
+      // Generate slug using the database function
+      const { data: slugResult, error: slugError } = await supabaseClient
+        .rpc('generate_slug', { title })
+
+      if (!slugError && slugResult) {
+        shareData.slug = slugResult
       }
 
       const { data: share, error: shareError } = await supabaseClient
@@ -71,8 +90,10 @@ export class ShareService {
 
       // Generate share URL (use environment variable or default)
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      const shareUrl = `${baseUrl}/share/${share.share_token}`
-      
+      const shareUrl = share.slug
+        ? `${baseUrl}/share/${share.slug}`
+        : `${baseUrl}/share/${share.share_token}`
+
       // Generate OG image URL (placeholder for now)
       const ogImageUrl = `/api/og?token=${share.share_token}`
 
@@ -82,6 +103,7 @@ export class ShareService {
       return {
         shareUrl,
         shareToken: share.share_token,
+        shareSlug: share.slug,
         ogImageUrl,
         embedCode
       }
@@ -92,10 +114,13 @@ export class ShareService {
   }
 
   /**
-   * Get share data by token (for public viewing)
+   * Get share data by token or slug (for public viewing)
    */
-  async getShareByToken(token: string): Promise<PublicShareData> {
+  async getShareByToken(tokenOrSlug: string): Promise<PublicShareData> {
     try {
+      // Try to get by slug first (more user-friendly), then by token
+      const isSlug = !tokenOrSlug.match(/^[a-f0-9]{32}$/);
+
       // Get share data with project info
       const { data: shareData, error: shareError } = await this.supabase
         .from('project_shares')
@@ -113,7 +138,7 @@ export class ShareService {
             )
           )
         `)
-        .eq('share_token', token)
+        .eq(isSlug ? 'slug' : 'share_token', tokenOrSlug)
         .single()
 
       if (shareError || !shareData) {
