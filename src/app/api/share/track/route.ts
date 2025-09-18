@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       const { error: conversionError } = await supabase
         .from('share_conversions')
         .insert({
-          share_id: shareId,
+          share_id: share.id,
           viewer_session_id: sessionId,
           conversion_type: eventType === 'signup_click' ? 'signup' : 'trial',
           conversion_data: eventData || {}

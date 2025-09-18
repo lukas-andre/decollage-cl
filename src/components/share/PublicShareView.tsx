@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useMediaQuery } from '@/hooks/use-media-query'
 import { Heart, Share2, ArrowRight, Download, User, Calendar, Eye, Sparkles, Home, Palette } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +14,7 @@ import { CHILEAN_SHARING_TEXT } from '@/types/sharing'
 import Link from 'next/link'
 import { ColorPalette } from './ColorPalette'
 import { TransformationCarousel } from './TransformationCarousel'
+import { BeforeAfterImage } from './BeforeAfterImage'
 import { cn } from '@/lib/utils'
 
 interface PublicShareViewProps {
@@ -24,6 +26,14 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
   const [isReacting, setIsReacting] = useState(false)
   const [reactionCount, setReactionCount] = useState(shareData.reactions.total)
   const [showCTA, setShowCTA] = useState(false)
+  const isMobile = useMediaQuery('(max-width: 768px)')
+
+  // Helper function to detect if an image is likely vertical
+  const isVerticalImage = (imageUrl: string) => {
+    // This is a simple heuristic - in a real app you might want to load the image and check dimensions
+    // For now, we'll assume images with certain patterns or metadata indicate vertical orientation
+    return false // You can enhance this logic based on your image metadata
+  }
   // Track page view on mount
   useEffect(() => {
     shareAnalyticsService.trackShareView(shareData.share.id, 'project')
@@ -295,113 +305,106 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
               </p>
             </div>
 
-            {/* Magazine Layout Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-              {shareData.items.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={cn(
-                    "group",
-                    index === 0 && "lg:col-span-2", // First item spans full width
-                    index % 3 === 1 && "lg:row-span-2" // Every third item is taller
-                  )}
-                >
-                  <div className="space-y-6">
-                    {/* Image Container with Elegant Hover */}
-                    <div
-                      className={cn(
-                        "relative overflow-hidden bg-[#F8F8F8] shadow-2xl",
-                        index === 0 ? "aspect-[21/9]" : "aspect-[4/3]"
-                      )}
-                    >
-                      {/* Before Image (hidden by default) */}
-                      {item.beforeImageUrl && (
-                        <img
-                          src={item.beforeImageUrl}
-                          alt="Antes"
-                          className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+            {/* Responsive Magazine Layout Grid */}
+            <div className={cn(
+              "grid gap-8",
+              // Mobile: Single column, optimized for vertical viewing
+              "grid-cols-1",
+              // Tablet: Two columns
+              "md:grid-cols-2 md:gap-12",
+              // Desktop: Smart grid based on content
+              "lg:grid-cols-3 lg:gap-16"
+            )}>
+              {shareData.items.map((item, index) => {
+                const isVertical = isVerticalImage(item.imageUrl)
+
+                return (
+                  <div
+                    key={item.id}
+                    className={cn(
+                      "group",
+                      // First item gets special treatment
+                      index === 0 && "md:col-span-2 lg:col-span-3",
+                      // On desktop, make some items span different heights for variety
+                      !isMobile && index > 0 && index % 4 === 1 && "lg:row-span-2"
+                    )}
+                  >
+                    <div className="space-y-6">
+                      {/* Interactive Before/After Image with smart aspect ratios */}
+                      <div className="relative shadow-2xl">
+                        <BeforeAfterImage
+                          beforeImageUrl={item.beforeImageUrl}
+                          afterImageUrl={item.imageUrl}
+                          title={item.title || `Transformación ${index + 1}`}
+                          isVertical={isVertical}
+                          isMobile={isMobile}
+                          className={cn(
+                            // First item: Hero aspect ratio
+                            index === 0 && "aspect-[21/9]",
+                            // Mobile: Natural aspect for vertical images, 4:3 for others
+                            isMobile && index > 0 && !isVertical && "aspect-[4/3]",
+                            isMobile && index > 0 && isVertical && "aspect-[3/4]",
+                            // Desktop: More varied aspect ratios
+                            !isMobile && index > 0 && "aspect-[4/3]"
+                          )}
                         />
-                      )}
 
-                      {/* After Image */}
-                      <img
-                        src={item.imageUrl}
-                        alt={item.title || `Transformación ${index + 1}`}
-                        className={cn(
-                          "w-full h-full object-cover transition-all duration-700",
-                          item.beforeImageUrl && "group-hover:opacity-0"
-                        )}
-                      />
-
-                      {/* Elegant Gradient Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-
-                      {/* Hover Indicator for Before/After */}
-                      {item.beforeImageUrl && (
-                        <div className="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                          <p className="text-white text-sm font-light tracking-widest" style={{ fontFamily: 'Lato, sans-serif' }}>
-                            {/* Show opposite state on hover */}
-                            MOSTRANDO: ANTES
-                          </p>
+                        {/* Action Buttons - Always visible but subtle */}
+                        <div className="absolute top-4 right-4">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleDownload(item.imageUrl, item.title)}
+                            className="bg-white/80 backdrop-blur-sm hover:bg-white text-[#333333] h-10 w-10 rounded-none shadow-lg transition-all duration-300 hover:scale-110"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
                         </div>
-                      )}
-
-                      {/* Action Buttons */}
-                      <div className="absolute bottom-6 right-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleDownload(item.imageUrl, item.title)}
-                          className="bg-white/90 backdrop-blur-sm hover:bg-white text-[#333333] h-10 w-10 rounded-none shadow-lg"
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
                       </div>
-                    </div>
 
-                    {/* Content Section */}
-                    <div className="space-y-4">
-                      {/* Title */}
-                      {item.title && (
-                        <h3
-                          className="text-2xl lg:text-3xl font-light text-[#333333] tracking-wide"
-                          style={{ fontFamily: 'Cormorant, serif' }}
-                        >
-                          {item.title}
-                        </h3>
-                      )}
+                      {/* Content Section */}
+                      <div className="space-y-4">
+                        {/* Title */}
+                        {item.title && (
+                          <h3
+                            className="text-2xl lg:text-3xl font-light text-[#333333] tracking-wide"
+                            style={{ fontFamily: 'Cormorant, serif' }}
+                          >
+                            {item.title}
+                          </h3>
+                        )}
 
-                      {/* Description */}
-                      {item.description && (
-                        <p
-                          className="text-gray-600 font-light leading-relaxed"
-                          style={{ fontFamily: 'Lato, sans-serif' }}
-                        >
-                          {item.description}
-                        </p>
-                      )}
-
-                      {/* Color Palette with elegant presentation */}
-                      <div className="pt-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Palette className="w-4 h-4 text-[#A3B1A1]" />
-                          <span
-                            className="text-sm text-gray-500 font-light tracking-widest uppercase"
+                        {/* Description */}
+                        {item.description && (
+                          <p
+                            className="text-gray-600 font-light leading-relaxed"
                             style={{ fontFamily: 'Lato, sans-serif' }}
                           >
-                            Paleta de colores
-                          </span>
+                            {item.description}
+                          </p>
+                        )}
+
+                        {/* Color Palette with elegant presentation */}
+                        <div className="pt-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Palette className="w-4 h-4 text-[#A3B1A1]" />
+                            <span
+                              className="text-sm text-gray-500 font-light tracking-widest uppercase"
+                              style={{ fontFamily: 'Lato, sans-serif' }}
+                            >
+                              Paleta de colores
+                            </span>
+                          </div>
+                          <ColorPalette
+                            imageUrl={item.imageUrl}
+                            className="w-full"
+                          />
                         </div>
-                        <ColorPalette
-                          imageUrl={item.imageUrl}
-                          className="w-full"
-                        />
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </section>

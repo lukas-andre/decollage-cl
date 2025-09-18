@@ -98,13 +98,6 @@ export function TransformationCarousel({
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
         </div>
 
-        {/* Content Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-8 lg:p-12 text-white">
-          <div className="max-w-4xl">
-
-    
-          </div>
-        </div>
 
         {/* Navigation Controls */}
         <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between px-4 lg:px-8">
