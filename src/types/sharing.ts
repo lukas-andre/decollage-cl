@@ -25,6 +25,7 @@ export interface ShareConfig {
 export interface ShareResponse {
   shareUrl: string
   shareToken: string
+  shareSlug?: string | null
   ogImageUrl?: string
   embedCode?: string
 }

@@ -24,7 +24,7 @@ export function BeforeAfterImage({
   const [showBefore, setShowBefore] = useState(false)
   const [isPressed, setIsPressed] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout>({} as NodeJS.Timeout)
 
   const handleMouseEnter = useCallback(() => {
     if (!beforeImageUrl) return

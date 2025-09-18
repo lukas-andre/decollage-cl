@@ -10,8 +10,8 @@ import { Check, Share2, MessageSquare, Image as ImageIcon, Users, ChevronRight, 
 import { cn } from '@/lib/utils'
 import type { Database } from '@/types/database.types'
 
-type Generation = Database['public']['Tables']['staging_generations']['Row']
-type Project = Database['public']['Tables']['staging_projects']['Row']
+type Generation = Database['public']['Tables']['transformations']['Row']
+type Project = Database['public']['Tables']['projects']['Row']
 
 interface EnhancedShareDialogProps {
   open: boolean
@@ -116,9 +116,9 @@ export function EnhancedShareDialog({
                       )}
                     >
                       <div className="aspect-[4/3] relative bg-gray-100">
-                        {generation.image_url && (
+                        {generation.result_image_url && (
                           <img
-                            src={generation.image_url}
+                            src={generation.result_image_url}
                             alt="Diseño generado"
                             className="w-full h-full object-cover"
                           />
@@ -133,7 +133,7 @@ export function EnhancedShareDialog({
                       </div>
                       <div className="p-2 bg-white">
                         <p className="text-xs text-gray-600 truncate">
-                          {generation.style || 'Sin estilo'}
+                          {generation.style_id || 'Sin estilo'}
                         </p>
                       </div>
                     </button>
@@ -183,9 +183,9 @@ export function EnhancedShareDialog({
                       )}
                     >
                       <div className="aspect-[4/3] relative bg-gray-100">
-                        {generation.image_url && (
+                        {generation.result_image_url && (
                           <img
-                            src={generation.image_url}
+                            src={generation.result_image_url}
                             alt="Diseño generado"
                             className="w-full h-full object-cover"
                           />
@@ -207,7 +207,7 @@ export function EnhancedShareDialog({
                       </div>
                       <div className="p-2 bg-white">
                         <p className="text-xs text-gray-600 truncate">
-                          {generation.style || 'Sin estilo'}
+                          {generation.style_id || 'Sin estilo'}
                         </p>
                       </div>
                     </button>

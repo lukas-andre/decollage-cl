@@ -15,6 +15,7 @@ import Link from 'next/link'
 import { ColorPalette } from './ColorPalette'
 import { TransformationCarousel } from './TransformationCarousel'
 import { BeforeAfterImage } from './BeforeAfterImage'
+import { BeforeAfterModal } from './BeforeAfterModal'
 import { cn } from '@/lib/utils'
 
 interface PublicShareViewProps {
@@ -27,6 +28,10 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
   const [reactionCount, setReactionCount] = useState(shareData.reactions.total)
   const [showCTA, setShowCTA] = useState(false)
   const isMobile = useMediaQuery('(max-width: 768px)')
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean
+    item?: typeof shareData.items[0]
+  }>({ isOpen: false })
 
   // Helper function to detect if an image is likely vertical
   const isVerticalImage = (imageUrl: string) => {
@@ -331,30 +336,52 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
                   >
                     <div className="space-y-6">
                       {/* Interactive Before/After Image with smart aspect ratios */}
-                      <div className="relative shadow-2xl">
-                        <BeforeAfterImage
-                          beforeImageUrl={item.beforeImageUrl}
-                          afterImageUrl={item.imageUrl}
-                          title={item.title || `Transformación ${index + 1}`}
-                          isVertical={isVertical}
-                          isMobile={isMobile}
-                          className={cn(
-                            // First item: Hero aspect ratio
-                            index === 0 && "aspect-[21/9]",
-                            // Mobile: Natural aspect for vertical images, 4:3 for others
-                            isMobile && index > 0 && !isVertical && "aspect-[4/3]",
-                            isMobile && index > 0 && isVertical && "aspect-[3/4]",
-                            // Desktop: More varied aspect ratios
-                            !isMobile && index > 0 && "aspect-[4/3]"
-                          )}
-                        />
+                      <div className="relative shadow-2xl group cursor-pointer">
+                        <div
+                          onClick={() => {
+                            if (item.beforeImageUrl) {
+                              setModalState({ isOpen: true, item })
+                            }
+                          }}
+                        >
+                          <BeforeAfterImage
+                            beforeImageUrl={item.beforeImageUrl}
+                            afterImageUrl={item.imageUrl}
+                            title={item.title || `Transformación ${index + 1}`}
+                            isVertical={isVertical}
+                            isMobile={isMobile}
+                            className={cn(
+                              // First item: Hero aspect ratio
+                              index === 0 && "aspect-[21/9]",
+                              // Mobile: Natural aspect for vertical images, 4:3 for others
+                              isMobile && index > 0 && !isVertical && "aspect-[4/3]",
+                              isMobile && index > 0 && isVertical && "aspect-[3/4]",
+                              // Desktop: More varied aspect ratios
+                              !isMobile && index > 0 && "aspect-[4/3]"
+                            )}
+                          />
+                        </div>
+
+                        {/* Click to expand hint - only shows if before image exists */}
+                        {item.beforeImageUrl && (
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg">
+                              <p className="text-sm text-[#333333] font-light" style={{ fontFamily: 'Lato, sans-serif' }}>
+                                Toca para comparar
+                              </p>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Action Buttons - Always visible but subtle */}
                         <div className="absolute top-4 right-4">
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={() => handleDownload(item.imageUrl, item.title)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDownload(item.imageUrl, item.title)
+                            }}
                             className="bg-white/80 backdrop-blur-sm hover:bg-white text-[#333333] h-10 w-10 rounded-none shadow-lg transition-all duration-300 hover:scale-110"
                           >
                             <Download className="w-4 h-4" />
@@ -499,6 +526,23 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
           </section>
         )}
       </main>
+
+      {/* Before/After Modal */}
+      <BeforeAfterModal
+        isOpen={modalState.isOpen}
+        onClose={() => setModalState({ isOpen: false })}
+        beforeImageUrl={modalState.item?.beforeImageUrl}
+        afterImageUrl={modalState.item?.imageUrl || ''}
+        title={modalState.item?.title}
+        onDownload={() => {
+          if (modalState.item) {
+            handleDownload(modalState.item.imageUrl, modalState.item.title)
+          }
+        }}
+        onShare={() => {
+          handleShare()
+        }}
+      />
     </div>
   )
 }

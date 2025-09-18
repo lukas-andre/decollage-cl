@@ -922,35 +922,42 @@ export default function ProjectWorkspacePage({
             {/* Enhanced Share Button */}
             {project && (
               <ShareButton
-                project={{
-                  id: project.id,
-                  name: project.name,
-                  description: project.description,
-                  user_id: '', // Will be filled by component using auth
-                  created_at: project.created_at,
-                  updated_at: project.updated_at,
-                  status: project.status,
-                  client_id: null,
-                  property_id: null
-                }}
+                project={project as any}
                 generations={variants
                   .filter(v => v.status === 'completed' && v.result_image_url)
                   .map(v => ({
                     id: v.id,
-                    project_id: project.id,
-                    image_url: v.result_image_url,
-                    original_image_url: selectedBaseImage?.url || null,
-                    original_image_id: selectedBaseImage?.id || null,
-                    prompt: v.metadata?.prompt || null,
-                    style: v.style?.name || null,
-                    room_type: v.room_type?.name || null,
-                    status: v.status as 'pending' | 'processing' | 'completed' | 'failed',
                     created_at: v.created_at,
                     updated_at: v.created_at,
-                    metadata: v.metadata || null,
+                    user_id: '',
+                    project_id: project.id,
+                    base_image_id: selectedBaseImage?.id || null,
+                    completed_at: v.created_at,
+                    custom_instructions: null,
                     error_message: null,
-                    tokens_used: v.tokens_consumed,
-                    user_id: '' // Will be filled by component using auth
+                    inspiration_weight: null,
+                    inspirations: null,
+                    iterations: null,
+                    metadata: v.metadata || null,
+                    moodboard_id: null,
+                    palette_id: v.color_palette?.id || null,
+                    processing_time_ms: null,
+                    prompt_used: v.metadata?.prompt || null,
+                    rating: null,
+                    result_image_url: v.result_image_url,
+                    result_cloudflare_id: null,
+                    result_public_url: v.result_image_url,
+                    room_type_id: v.room_type?.id || null,
+                    season_id: null,
+                    share_count: 0,
+                    share_settings: null,
+                    status: v.status,
+                    style_id: v.style?.id || null,
+                    tokens_consumed: v.tokens_consumed,
+                    user_notes: null,
+                    variations: null,
+                    is_favorite: v.is_favorite,
+                    is_shared: false
                   }))}
                 className="bg-[#A3B1A1] hover:bg-[#A3B1A1]/90"
               />

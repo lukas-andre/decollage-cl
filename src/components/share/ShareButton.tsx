@@ -10,8 +10,8 @@ import { shareService } from '@/lib/services/share.service'
 import { toast } from 'sonner'
 import type { Database } from '@/types/database.types'
 
-type Generation = Database['public']['Tables']['staging_generations']['Row']
-type Project = Database['public']['Tables']['staging_projects']['Row']
+type Generation = Database['public']['Tables']['transformations']['Row']
+type Project = Database['public']['Tables']['projects']['Row']
 
 interface ShareButtonProps {
   project: Project
@@ -40,8 +40,9 @@ export function ShareButton({ project, generations, className }: ShareButtonProp
 
       // Create share using the existing service
       const shareResponse = await shareService.createShare(project.id, {
+        type: 'project',
         customTitle: project.name,
-        customDescription: project.description,
+        customDescription: project.description || undefined,
         featured: selectedIds,
         visibility: 'public'
       }, supabase)
@@ -85,7 +86,7 @@ export function ShareButton({ project, generations, className }: ShareButtonProp
     }
   }
 
-  const validGenerations = generations.filter(g => g.image_url)
+  const validGenerations = generations.filter(g => g.result_image_url)
 
   if (validGenerations.length === 0) {
     return null
