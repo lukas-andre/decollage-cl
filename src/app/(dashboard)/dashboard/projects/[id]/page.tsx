@@ -60,6 +60,7 @@ import {
   Palette
 } from 'lucide-react'
 import { ImageViewerModal } from '@/components/projects/ImageViewerModal'
+import { BaseImagePreviewModal } from '@/components/projects/BaseImagePreviewModal'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import Image from 'next/image'
@@ -185,6 +186,11 @@ export default function ProjectWorkspacePage({
   const [viewerModal, setViewerModal] = useState<{
     isOpen: boolean
     variant?: Variant
+  }>({ isOpen: false })
+  const [baseImagePreview, setBaseImagePreview] = useState<{
+    isOpen: boolean
+    imageUrl?: string
+    imageName?: string
   }>({ isOpen: false })
   const [showNoTokensDialog, setShowNoTokensDialog] = useState(false)
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -543,6 +549,14 @@ export default function ProjectWorkspacePage({
 
   const handleViewImage = (variant: Variant) => {
     setViewerModal({ isOpen: true, variant })
+  }
+
+  const handleViewBaseImage = (imageUrl: string, imageName?: string) => {
+    setBaseImagePreview({
+      isOpen: true,
+      imageUrl,
+      imageName: imageName || undefined
+    })
   }
 
 
@@ -1083,13 +1097,22 @@ export default function ProjectWorkspacePage({
                 {uploading && !selectedBaseImage ? (
                   <ImagePreviewSkeleton />
                 ) : selectedBaseImage ? (
-                  <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
+                  <div
+                    className="relative aspect-video rounded-lg overflow-hidden bg-muted cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => handleViewBaseImage(selectedBaseImage.url, selectedBaseImage.name || undefined)}
+                  >
                     <Image
                       src={selectedBaseImage.url}
                       alt={selectedBaseImage.name || 'Imagen del proyecto'}
                       fill
                       className="object-cover"
                     />
+                    {/* Hover overlay to indicate clickability */}
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
+                      <div className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg">
+                        <p className="text-sm text-gray-800 font-medium">Ver en pantalla completa</p>
+                      </div>
+                    </div>
                   </div>
                 ) : null}
                 <p className="text-xs text-muted-foreground mt-2">
@@ -1425,6 +1448,14 @@ export default function ProjectWorkspacePage({
           }}
         />
       )}
+
+      {/* Base Image Preview Modal */}
+      <BaseImagePreviewModal
+        isOpen={baseImagePreview.isOpen}
+        onClose={() => setBaseImagePreview({ isOpen: false })}
+        imageUrl={baseImagePreview.imageUrl || ''}
+        imageName={baseImagePreview.imageName}
+      />
 
       {/* No Tokens Dialog */}
       <NoTokensDialog
