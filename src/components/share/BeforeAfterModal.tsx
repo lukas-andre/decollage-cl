@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { BeforeAfterSlider } from '@/components/projects/BeforeAfterSlider'
 import { cn } from '@/lib/utils'
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 
 interface BeforeAfterModalProps {
   isOpen: boolean
@@ -52,6 +53,12 @@ export function BeforeAfterModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="p-0 bg-black border-0 max-w-[95vw] max-h-[95vh]">
+        <VisuallyHidden.Root>
+          <DialogTitle>Comparación de imágenes</DialogTitle>
+          <DialogDescription>
+            Usa el control deslizante para comparar las imágenes antes y después
+          </DialogDescription>
+        </VisuallyHidden.Root>
         <div className="relative flex flex-col h-full">
           {/* Close Button Only - Top Right */}
           <div className="absolute top-4 right-4 z-20">
@@ -66,11 +73,11 @@ export function BeforeAfterModal({
           </div>
 
           {/* Slider Container */}
-          <div className="flex-1 flex items-center justify-center bg-black">
+          <div className="flex-1 flex items-center justify-center bg-black p-4">
             <div className={cn(
-              "relative w-full h-full p-8",
-              imageOrientation === 'vertical' && "max-w-3xl mx-auto",
-              imageOrientation === 'square' && "max-w-5xl mx-auto"
+              "relative w-full h-full",
+              imageOrientation === 'vertical' && "max-w-2xl mx-auto",
+              imageOrientation === 'square' && "max-w-4xl mx-auto"
             )}>
               {beforeImageUrl ? (
                 <BeforeAfterSlider
@@ -85,7 +92,7 @@ export function BeforeAfterModal({
                 <div className="w-full h-full flex items-center justify-center">
                   <img
                     src={afterImageUrl}
-                    alt=""
+                    alt="Transformación"
                     className="max-w-full max-h-full object-contain"
                   />
                 </div>
