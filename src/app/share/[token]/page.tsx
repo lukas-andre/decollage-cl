@@ -129,7 +129,7 @@ export default async function SharePage({ params, searchParams }: SharePageProps
         console.log({generation})
         if (generation) {
           return <QuickShareView
-            share={shareData.share as any}
+            shareData={shareData}
             generation={generation as any}
           />
         }

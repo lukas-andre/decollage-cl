@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Download, Share2 } from 'lucide-react'
+import { ArrowRight, Download, Share2, User, Calendar } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
 import type { Database } from '@/types/database.types'
+import type { PublicShareData } from '@/types/sharing'
 import { ColorPalette } from './ColorPalette'
 
 type ProjectShare = Database['public']['Tables']['project_shares']['Row']
@@ -17,13 +19,12 @@ type Transformation = Database['public']['Tables']['transformations']['Row'] & {
 type Project = Database['public']['Tables']['projects']['Row']
 
 interface QuickShareViewProps {
-  share: ProjectShare & {
-    project: Project | null
-  }
+  shareData: PublicShareData
   generation: Transformation
 }
 
-export function QuickShareView({ share, generation }: QuickShareViewProps) {
+export function QuickShareView({ shareData, generation }: QuickShareViewProps) {
+  const { share, project } = shareData
   const [sliderPosition, setSliderPosition] = useState(50)
   const [isDragging, setIsDragging] = useState(false)
   const [showCTA, setShowCTA] = useState(false)
@@ -109,7 +110,7 @@ export function QuickShareView({ share, generation }: QuickShareViewProps) {
     if (generation.result_image_url) {
       const link = document.createElement('a')
       link.href = generation.result_image_url
-      link.download = `decollage-${share.project?.name || 'design'}.jpg`
+      link.download = `decollage-${project.name || 'design'}.jpg`
       link.click()
       trackEngagement('download')
     }
@@ -237,19 +238,41 @@ export function QuickShareView({ share, generation }: QuickShareViewProps) {
                       : 'Transformación'
                     }
                   </h3>
-                  <p className="text-lg text-gray-600 font-light" style={{ fontFamily: 'Lato, sans-serif' }}>
-                    Creado por {share.project?.name || 'Usuario'}
-                  </p>
+
+                  {/* User Info with Avatar */}
+                  <div className="flex items-center gap-4 mt-4">
+                    <Avatar className="h-12 w-12 ring-2 ring-[#A3B1A1]/20">
+                      <AvatarImage src={project.userAvatarUrl} />
+                      <AvatarFallback className="bg-[#A3B1A1]/10">
+                        <User size={20} className="text-[#A3B1A1]" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-xs text-gray-500 font-light uppercase tracking-widest" style={{ fontFamily: 'Lato, sans-serif' }}>Creado por</p>
+                      <p className="font-light text-[#333333]" style={{ fontFamily: 'Lato, sans-serif' }}>
+                        {project.userDisplayName}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-3 pt-4 border-t border-gray-100">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600 font-light" style={{ fontFamily: 'Lato, sans-serif' }}>Fecha</span>
-                    <span className="text-[#333333] font-light" style={{ fontFamily: 'Lato, sans-serif' }}>
-                      {generation.created_at && new Date(generation.created_at).toLocaleDateString('es-CL')}
-                    </span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-5 h-5 text-[#A3B1A1]" />
+                      <div>
+                        <p className="text-xs text-gray-500 font-light uppercase tracking-widest" style={{ fontFamily: 'Lato, sans-serif' }}>Publicado</p>
+                        <p className="text-sm font-light text-[#333333]" style={{ fontFamily: 'Lato, sans-serif' }}>
+                          {share.created_at && new Date(share.created_at).toLocaleDateString('es-CL', {
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center">
+
+                  <div className="flex justify-between items-center pt-2">
                     <span className="text-gray-600 font-light" style={{ fontFamily: 'Lato, sans-serif' }}>Estilo</span>
                     <span className="text-[#333333] font-light" style={{ fontFamily: 'Lato, sans-serif' }}>
                       {generation.metadata && typeof generation.metadata === 'object' && 'style_name' in generation.metadata
