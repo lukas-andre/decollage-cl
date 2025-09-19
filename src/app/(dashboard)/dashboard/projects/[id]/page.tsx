@@ -16,7 +16,8 @@ import {
   Maximize2,
   Grid2x2,
   Zap,
-  Wand2
+  Wand2,
+  Brush
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -28,6 +29,7 @@ import { ContextFirstWizard } from '@/components/projects/ContextFirstWizard'
 import { ShareButton } from '@/components/share/ShareButton'
 import { ImageViewerModal } from '@/components/projects/ImageViewerModal'
 import { motion } from 'framer-motion'
+
 
 interface BaseImage {
   id: string
@@ -80,6 +82,7 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
   const [viewerModal, setViewerModal] = useState<{
     isOpen: boolean
     variant?: Variant
+    initialMode?: 'view' | 'edit'
   }>({ isOpen: false })
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null)
@@ -282,6 +285,12 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
       console.error('Error toggling favorite:', error)
       toast.error('Error al actualizar favorito')
     }
+  }
+
+  const handleSaveRefinement = (newVariant: any) => {
+    // Add the refined variant to the list
+    setVariants(prev => [newVariant, ...prev])
+    toast.success('Refinamiento guardado exitosamente')
   }
 
   const handleGenerate = async (params: any) => {
@@ -576,7 +585,7 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
                       onClick={() => {
                         setSelectedVariant(variant.id)
                         if (variant.status === 'completed' && variant.result_image_url) {
-                          setViewerModal({ isOpen: true, variant })
+                          setViewerModal({ isOpen: true, variant, initialMode: 'view' })
                         }
                       }}
                     >
@@ -598,24 +607,38 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
                               {/* Overlay Actions */}
                               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-200">
                                 <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleToggleFavorite(variant.id)
-                                    }}
-                                    className="w-7 h-7 rounded-full bg-white/95 hover:bg-white flex items-center justify-center transition-all shadow-lg"
-                                  >
-                                    <Heart className={cn(
-                                      "h-3.5 w-3.5 transition-colors",
-                                      variant.is_favorite ? "fill-red-500 text-red-500" : "text-gray-700"
-                                    )} />
-                                  </button>
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleToggleFavorite(variant.id)
+                                      }}
+                                      className="w-7 h-7 rounded-full bg-white/95 hover:bg-white flex items-center justify-center transition-all shadow-lg"
+                                      title="Favorito"
+                                    >
+                                      <Heart className={cn(
+                                        "h-3.5 w-3.5 transition-colors",
+                                        variant.is_favorite ? "fill-red-500 text-red-500" : "text-gray-700"
+                                      )} />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setViewerModal({ isOpen: true, variant, initialMode: 'edit' })
+                                      }}
+                                      className="w-7 h-7 rounded-full bg-white/95 hover:bg-white flex items-center justify-center transition-all shadow-lg"
+                                      title="Refinar"
+                                    >
+                                      <Brush className="h-3.5 w-3.5 text-gray-700" />
+                                    </button>
+                                  </div>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       setViewerModal({ isOpen: true, variant })
                                     }}
                                     className="w-7 h-7 rounded-full bg-white/95 hover:bg-white flex items-center justify-center transition-all shadow-lg"
+                                    title="Ampliar"
                                   >
                                     <Maximize2 className="h-3.5 w-3.5 text-gray-700" />
                                   </button>
@@ -632,11 +655,16 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
                             </div>
                             {/* Minimal Metadata */}
                             <div className="p-2">
-                              {variant.style && (
-                                <p className="text-[10px] text-gray-600 truncate">
-                                  {variant.style.name}
-                                </p>
-                              )}
+                              <div className="flex items-center justify-between">
+                                {variant.style && (
+                                  <p className="text-[10px] text-gray-600 truncate flex-1">
+                                    {variant.style.name}
+                                  </p>
+                                )}
+                                {variant.metadata?.is_refined && (
+                                  <Brush className="h-2.5 w-2.5 text-[#C4886F]" title="Refinado" />
+                                )}
+                              </div>
                             </div>
                           </>
                         ) : variant.status === 'processing' ? (
@@ -717,7 +745,7 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
       </div>
 
 
-      {/* Image Viewer Modal */}
+      {/* Image Viewer Modal - Unified for view and edit */}
       {viewerModal.variant && selectedBaseImage && (
         <ImageViewerModal
           isOpen={viewerModal.isOpen}
@@ -729,6 +757,13 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
           colorScheme={viewerModal.variant.color_palette?.name}
           projectId={id}
           variantId={viewerModal.variant.id}
+          initialMode={viewerModal.initialMode || 'view'}
+          onSaveRefinement={handleSaveRefinement}
+          onAddAsBaseImage={() => {
+            // Refresh base images to show the new one
+            fetchProject()
+            toast.success('Imagen agregada como base para el proyecto')
+          }}
         />
       )}
 
