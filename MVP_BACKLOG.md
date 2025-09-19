@@ -31,23 +31,22 @@
 - **Chilean Family Values**: Reflect Chilean parenting culture and aesthetics
 - **Growth Adaptable**: Designs that can evolve as children grow
 
-### NEW - M2: Image Preview System 🔴
+### NEW - M2: Image Preview System ✅
 **Status**: CRITICAL - Basic UX Issue
 - **Fullscreen Preview**: View uploaded base images in modal
 - **Zoom Capabilities**: Pinch-to-zoom and pan functionality
 - **Mobile Optimized**: Touch-friendly image viewer
 - **Quick Access**: Preview from project gallery thumbnails
 
-### M3: User Freedom in Design Creation 🔴
-**Status**: CRITICAL - User Experience Blocker
-- **Custom Category Option**: Add "Personalizado" style for free-form prompting
-- **Personalization Hint**: "Agrega más detalles para resultados más personalizados"
-- **Optional Style Selection**: Make style categories optional, not mandatory
-- **Direct Prompting**: Allow users to describe their vision without forced categorization
-- **Simplified Workflow**: Remove barriers between user intent and AI generation
-- **Chilean UX**: Respect user creativity while maintaining cultural design options
-- **Complete Room Redesign**: "Reemplazar Todo" mode should replace EVERYTHING (walls, floors, furniture, decor)
-- **Window Preservation**: AI prompts include "No cambiar fondos de ventanas"
+### M3: User Freedom in Design Creation ✅ **PARTIALLY COMPLETED**
+**Status**: 🟡 ENHANCED - Context-First Wizard Implemented
+- ✅ **4-Step Wizard Flow**: Context → Inspiration → Details → Generate workflow
+- ✅ **Style + Custom Prompt Tabs**: Clear choice between guided styles and custom vision
+- ✅ **Progressive Disclosure**: Optional advanced settings in accordion
+- ✅ **Chilean UX**: Room categorization with cultural design options
+- 🔄 **Style + Prompt Combination**: Need to allow BOTH style selection AND custom prompt
+- 🔄 **Complete Room Redesign**: "Reemplazar Todo" mode enhancement needed
+- 🔄 **Window Preservation**: AI prompts enhancement needed
 
 ### M5: Pricing & Business Strategy 🔴
 **Status**: PENDING - Business Critical
@@ -80,7 +79,7 @@
 - ✅ **Collections Infrastructure**: Database tables and types ready (COMPLETED)
 - 🔄 **Cross-Project Saved**: Unified favorites across all projects (IN PROGRESS)
 - 🔄 **Collections UI**: Frontend for organizing saved content into themed boards
-- 🔄 **Export Options**: PDF/image downloads of collections
+- 🔄 **Export Options**: PDF/image downloads of collections (NOT NEED IT)
 
 ### M10: Basic Analytics 🔴
 **Status**: 🟡 PARTIALLY COMPLETED - Data Foundation
@@ -296,17 +295,53 @@ All MVP features must maintain strong Chilean cultural identity:
 
 ## 🎉 **MAJOR UPDATE - September 19, 2025**
 
-### **Critical New Priorities Added**:
-1. **Children's Rooms** (TOP) - "Pieza Niño/Niña/Bebé" categories for family market expansion
-2. **Image Preview UX** - Basic missing functionality for uploaded images
-3. **User Freedom** - "Personalizado" style option to remove barriers
+### **COMPLETED FEATURES** ✅:
+1. ✅ **Two-Column Gallery + Inspector Layout** - Modern project workspace implemented
+2. ✅ **Context-First 4-Step Wizard** - Intuitive design flow (Define Space → Choose Inspiration → Details → Generate)
+3. ✅ **Progressive Disclosure UI** - Accordion-based optional settings to reduce cognitive overload
+4. ✅ **Room Categorization** - Interior/Infantil/Exterior tabs for better organization
+5. ✅ **Style Categorization** - Grouped by macrocategory with recommended styles per room type
+
+### **CRITICAL NEW REQUIREMENTS** 🔴 **IMMEDIATE**:
+
+#### **M1A: Wizard UX Improvements** 🔴 **TOP PRIORITY**
+- **Furniture Accordion Open by Default** - Show furniture options expanded initially
+- **Tab Navigation Support** - Enable keyboard navigation between tabs
+- **Style + Prompt Combination** - Allow users to select style AND add custom prompt for ultimate flexibility
+- **Remove "Otro" and "Personalizado"** from Step 3 accordion - clean up interface
+- **Smart Navigation Flow**:
+  - If user selects "Personalizado" → jump directly to prompt step
+  - If user selects style → allow optional prompt addition → continue to summary
+- **Step 4 Streamlined Summary** - Combine final review with essential details only
+
+#### **M1B: Room Categories & Style Recommendations** 🔴 **CRITICAL**
+- **Missing Room Categories** - Only seeing "Living Comedor" and "Dormitorio Infantil", need full range
+- **Macrocategory Restoration** - Bring back all style macrocategories (Moderno, Clásico, Lujo, etc.)
+- **Smart Style Recommendations** - When selecting "Dormitorio Infantil" → show child-friendly styles
+- **Complete Room Types** - Add all missing interior/exterior room categories
+- **Interior/Exterior Structure** - Consider reorganizing as main Interior/Exterior categories
+
+#### **M1C: Project Layout Improvements** 🔴 **UX CRITICAL**
+- **Center Generations List** - Main screen should focus on generated designs, not base image preview
+- **Active Image Highlight** - Visual frame/border to clearly show which image is being edited
+- **Quick Image Expansion** - Click/tap any image to expand instantly (remove eye button requirement)
+- **Fullscreen Image Viewer** - Restore capability to view current editing image in fullscreen
+- **Base Image Size Reduction** - Reduce preview size to give more space to generations
+
+#### **M1D: Advanced Generation Controls** 🔴 **FUNCTIONALITY**
+- **Room Dimension Auto-Detection** - Add note that dimensions can be auto-detected (optional user input)
+- **Remove Color Palette Section** - Mark as "En Desarrollo" and temporarily remove
+- **Enhanced Furniture Modes** - Improve furniture handling options and descriptions
+
+### **Previously Identified Priorities**:
+3. **Image Preview UX** - Basic missing functionality for uploaded images
 4. **Facade Module** - Exterior design capabilities for complete home transformation
 5. **Login Gates** - Strategic conversion points in sharing flow
 
 ### **Development Status**:
-- ✅ **Sharing Engine**: 90% complete, viral growth ready
-- 🔄 **Current Focus**: Children's categories + UX improvements
-- 🎯 **Next Milestone**: Complete family segment expansion
+- ✅ **Modern Layout & Wizard**: Context-First wizard with two-column layout **COMPLETED**
+- 🔄 **Current Focus**: Wizard UX improvements + room categories + layout refinements
+- 🎯 **Next Milestone**: Perfect the generation workflow user experience
 
 ---
 

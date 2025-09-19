@@ -1,77 +1,33 @@
 'use client'
 
 import { use, useEffect, useState, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft,
   Plus,
-  Sparkles,
-  Image as ImageIcon,
   Loader2,
   Heart,
-  Grid3x3,
-  ChevronDown,
-  ChevronRight,
-  FolderOpen,
-  AlertCircle,
   Edit2,
   Check,
   X,
-  Info,
-  Ruler,
-  Armchair,
-  Trash2,
+  Maximize2,
+  Grid2x2,
   Zap,
-  Palette
+  Wand2
 } from 'lucide-react'
-import { ImageViewerModal } from '@/components/projects/ImageViewerModal'
-import { BaseImagePreviewModal } from '@/components/projects/BaseImagePreviewModal'
+import Image from 'next/image'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { useTokenBalance } from '@/hooks/useTokenBalance'
-import { UploadProgress } from '@/components/projects/UploadProgress'
-import { ImageUploadSkeleton, ImagePreviewSkeleton } from '@/components/projects/ImageUploadSkeleton'
 import { NoTokensDialog } from '@/components/tokens/NoTokensDialog'
-import { VariantGallery } from '@/components/projects/VariantGallery'
-import { SelectionSummary } from '@/components/project/SelectionSummary'
+import { ContextFirstWizard } from '@/components/projects/ContextFirstWizard'
 import { ShareButton } from '@/components/share/ShareButton'
+import { ImageViewerModal } from '@/components/projects/ImageViewerModal'
+import { motion } from 'framer-motion'
 
 interface BaseImage {
   id: string
@@ -79,10 +35,6 @@ interface BaseImage {
   url: string
   upload_order: number | null
   created_at: string
-  transformations?: Array<{
-    id: string
-    status: string
-  }>
 }
 
 interface Project {
@@ -91,8 +43,6 @@ interface Project {
   description: string | null
   status: 'active' | 'completed' | 'archived'
   total_transformations: number
-  created_at: string
-  updated_at: string
   images: BaseImage[]
 }
 
@@ -103,67 +53,19 @@ interface Variant {
   created_at: string
   tokens_consumed: number
   status: 'pending' | 'processing' | 'completed' | 'failed'
-  style: {
-    id: string
-    name: string
-    code: string
-    category?: string
-    macrocategory?: string
-  } | null
-  room_type?: {
-    id: string
-    name: string
-    code: string
-  } | null
-  color_palette?: {
-    id: string
-    name: string
-    code: string
-    hex_colors: string[]
-  } | null
-  metadata?: {
-    style_name?: string
-    style_category?: string
-    style_macrocategory?: string
-    furniture_mode?: string
-    room_type_name?: string
-    color_palette_name?: string
-    provider?: string
-    cloudflare_variants?: {
-      gallery?: string
-      preview?: string
-      thumbnail?: string
-    }
-    [key: string]: any
-  }
+  style: { name: string } | null
+  room_type: { name: string } | null
+  color_palette: { name: string; hex_colors: string[] } | null
+  metadata?: any
 }
 
 interface DesignData {
-  styles: Array<{
-    id: string
-    name: string
-    code: string
-    macrocategory?: string | null
-    token_cost: number
-  }>
-  roomTypes: Array<{
-    id: string
-    name: string
-    code: string
-  }>
-  colorSchemes: Array<{
-    id: string
-    name: string
-    code: string
-    hex_colors: string[]
-  }>
+  styles: Array<{ id: string; name: string; code: string; token_cost: number }>
+  roomTypes: Array<{ id: string; name: string; code: string }>
+  colorSchemes: Array<{ id: string; name: string; code: string; hex_colors: string[] }>
 }
 
-export default function ProjectWorkspacePage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default function ModernProjectWorkspace({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
@@ -172,62 +74,25 @@ export default function ProjectWorkspacePage({
   const [loadingVariants, setLoadingVariants] = useState(false)
   const [designData, setDesignData] = useState<DesignData | null>(null)
   const [generating, setGenerating] = useState(false)
-  const [allProjects, setAllProjects] = useState<Array<{id: string, name: string}>>([])
   const [editingName, setEditingName] = useState(false)
   const [projectName, setProjectName] = useState('')
-  const [uploading, setUploading] = useState(false)
-  // Selection state for sharing
-  const [selectedVariants, setSelectedVariants] = useState<Set<string>>(new Set())
-  const [showSelection, setShowSelection] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [uploadStatus, setUploadStatus] = useState<'selecting' | 'validating' | 'compressing' | 'uploading' | 'processing' | 'complete' | 'error'>('selecting')
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const nameInputRef = useRef<HTMLInputElement>(null)
+  const [showNoTokensDialog, setShowNoTokensDialog] = useState(false)
   const [viewerModal, setViewerModal] = useState<{
     isOpen: boolean
     variant?: Variant
   }>({ isOpen: false })
-  const [baseImagePreview, setBaseImagePreview] = useState<{
-    isOpen: boolean
-    imageUrl?: string
-    imageName?: string
-  }>({ isOpen: false })
-  const [showNoTokensDialog, setShowNoTokensDialog] = useState(false)
-  const [deleteDialog, setDeleteDialog] = useState<{
-    isOpen: boolean
-    imageId?: string
-    imageName?: string
-  }>({ isOpen: false })
-  
-  // Generation form state
-  const [selectedStyle, setSelectedStyle] = useState('')
-  const [selectedRoomType, setSelectedRoomType] = useState('')
-  const [selectedColorScheme, setSelectedColorScheme] = useState('')
-  const [selectedFurnitureMode, setSelectedFurnitureMode] = useState('replace_all')
-  const [customPrompt, setCustomPrompt] = useState('')
-  const [roomWidth, setRoomWidth] = useState('')
-  const [roomHeight, setRoomHeight] = useState('')
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
-  const [selectedMacroCategory, setSelectedMacroCategory] = useState('')
-
-  const router = useRouter()
-  const { available: tokenBalance, hasTokens, isLow, deduct: deductTokens } = useTokenBalance()
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const nameInputRef = useRef<HTMLInputElement>(null)
+  const { available: tokenBalance, hasTokens, deduct: deductTokens } = useTokenBalance()
 
   useEffect(() => {
     fetchProject()
     fetchDesignData()
-    fetchAllProjects()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   useEffect(() => {
     if (selectedBaseImage) {
       fetchVariants(selectedBaseImage.id)
-      // Reset generation form when switching base images
-      setSelectedStyle('')
-      setSelectedRoomType('')
-      setSelectedColorScheme('')
-      setSelectedFurnitureMode('replace_all')
     }
   }, [selectedBaseImage])
 
@@ -236,15 +101,14 @@ export default function ProjectWorkspacePage({
       setLoading(true)
       const response = await fetch(`/api/projects/${id}`)
       const data = await response.json()
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Error al cargar proyecto')
       }
 
       setProject(data.project)
       setProjectName(data.project.name)
-      
-      // Auto-select first image if available
+
       if (data.project.images?.length > 0 && !selectedBaseImage) {
         setSelectedBaseImage(data.project.images[0])
       }
@@ -260,7 +124,7 @@ export default function ProjectWorkspacePage({
     try {
       const response = await fetch('/api/design-data')
       const data = await response.json()
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Error al cargar datos de diseño')
       }
@@ -272,53 +136,12 @@ export default function ProjectWorkspacePage({
     }
   }
 
-  const fetchAllProjects = async () => {
-    try {
-      const response = await fetch('/api/projects?status=active')
-      const data = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al cargar proyectos')
-      }
-
-      setAllProjects(data.projects?.map((p: { id: string; name: string }) => ({
-        id: p.id,
-        name: p.name
-      })) || [])
-    } catch (error) {
-      console.error('Error fetching all projects:', error)
-    }
-  }
-
-  // Computed filtered styles based on selected macrocategory
-  const filteredStyles = designData?.styles?.filter(style => {
-    if (!selectedMacroCategory || selectedMacroCategory === 'all') {
-      return true
-    }
-    return style.macrocategory === selectedMacroCategory
-  }) || []
-
-  // Get unique macrocategories from available styles
-  const availableMacroCategories = Array.from(
-    new Set(designData?.styles?.map(style => style.macrocategory).filter((cat): cat is string => Boolean(cat)))
-  ).sort()
-
-  // Reset selected style when macrocategory filter changes if current style is not in filtered list
-  useEffect(() => {
-    if (selectedStyle && filteredStyles.length > 0) {
-      const styleExists = filteredStyles.some(style => style.id === selectedStyle)
-      if (!styleExists) {
-        setSelectedStyle('')
-      }
-    }
-  }, [selectedMacroCategory, filteredStyles, selectedStyle])
-
   const fetchVariants = async (baseImageId: string) => {
     try {
       setLoadingVariants(true)
       const response = await fetch(`/api/base-images/${baseImageId}/variants`)
       const data = await response.json()
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Error al cargar variantes')
       }
@@ -334,6 +157,52 @@ export default function ProjectWorkspacePage({
     }
   }
 
+  const handleImageUpload = async (file: File) => {
+    if (!project) return
+
+    setIsUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('name', file.name)
+
+      const response = await fetch(`/api/projects/${project.id}/upload-image`, {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al subir imagen')
+      }
+
+      toast.success('Imagen subida correctamente')
+
+      if (data.projectImage && project) {
+        const newImage = {
+          id: data.projectImage.id,
+          name: data.projectImage.name,
+          url: data.projectImage.url,
+          upload_order: data.projectImage.upload_order,
+          created_at: data.projectImage.created_at
+        }
+
+        const updatedProject = {
+          ...project,
+          images: [...(project.images || []), newImage]
+        }
+
+        setProject(updatedProject)
+        setSelectedBaseImage(newImage)
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      toast.error(error instanceof Error ? error.message : 'Error al subir imagen')
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
+
   const handleDeleteImage = async (imageId: string) => {
     try {
       const response = await fetch(`/api/images/${imageId}`, {
@@ -345,131 +214,20 @@ export default function ProjectWorkspacePage({
         throw new Error(data.error || 'Error al eliminar imagen')
       }
 
-      // Remove the image from the project state
       if (project) {
         const updatedImages = project.images.filter(img => img.id !== imageId)
         setProject({ ...project, images: updatedImages })
 
-        // If the deleted image was selected, select the first remaining image or clear selection
         if (selectedBaseImage?.id === imageId) {
           setSelectedBaseImage(updatedImages.length > 0 ? updatedImages[0] : null)
           setVariants([])
         }
       }
 
-      toast.success('Imagen eliminada correctamente')
+      toast.success('Imagen eliminada')
     } catch (error) {
       console.error('Error deleting image:', error)
       toast.error(error instanceof Error ? error.message : 'Error al eliminar imagen')
-    } finally {
-      setDeleteDialog({ isOpen: false })
-    }
-  }
-
-  const handleImageUpload = async (file: File) => {
-    if (!project) return
-
-    setUploading(true)
-    setUploadProgress(0)
-    setUploadError(null)
-    setUploadStatus('validating')
-
-    try {
-      // Validation phase
-      const maxSize = 10 * 1024 * 1024 // 10MB
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-      
-      if (file.size > maxSize) {
-        throw new Error('La imagen es muy grande. Máximo 10MB permitido.')
-      }
-      
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error('Formato no soportado. Usa JPG, PNG o WebP.')
-      }
-
-      setUploadProgress(10)
-      
-      // Compression check (simulated)
-      if (file.size > 5 * 1024 * 1024) {
-        setUploadStatus('compressing')
-        setUploadProgress(20)
-        await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate compression time
-      }
-
-      // Upload phase
-      setUploadStatus('uploading')
-      setUploadProgress(30)
-
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('name', file.name)
-      
-      const response = await fetch(`/api/projects/${project.id}/upload-image`, {
-        method: 'POST',
-        body: formData
-      })
-
-      setUploadProgress(70)
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al subir imagen')
-      }
-
-      // Processing phase
-      setUploadStatus('processing')
-      setUploadProgress(90)
-      await new Promise(resolve => setTimeout(resolve, 500)) // Brief processing simulation
-
-      setUploadProgress(100)
-      setUploadStatus('complete')
-
-      toast.success('Imagen subida correctamente')
-
-      // Update project state directly instead of refetching
-      if (data.projectImage && project) {
-        const newImage = {
-          id: data.projectImage.id,
-          name: data.projectImage.name,
-          url: data.projectImage.url,
-          upload_order: data.projectImage.upload_order,
-          created_at: data.projectImage.created_at,
-          transformations: []
-        }
-
-        // Add the new image to the project's images array
-        const updatedProject = {
-          ...project,
-          images: [...(project.images || []), newImage],
-          updated_at: new Date().toISOString()
-        }
-
-        setProject(updatedProject)
-        setSelectedBaseImage(newImage)
-      }
-
-      // Reset upload state after 2 seconds
-      setTimeout(() => {
-        setUploading(false)
-        setUploadProgress(0)
-        setUploadStatus('selecting')
-      }, 2000)
-
-    } catch (error) {
-      console.error('Error uploading image:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Error al subir imagen'
-      setUploadError(errorMessage)
-      setUploadStatus('error')
-      toast.error(errorMessage)
-      
-      // Reset error state after 5 seconds
-      setTimeout(() => {
-        setUploading(false)
-        setUploadProgress(0)
-        setUploadStatus('selecting')
-        setUploadError(null)
-      }, 5000)
     }
   }
 
@@ -482,9 +240,7 @@ export default function ProjectWorkspacePage({
     try {
       const response = await fetch(`/api/projects/${project.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: projectName.trim() })
       })
 
@@ -503,63 +259,6 @@ export default function ProjectWorkspacePage({
     }
   }
 
-  useEffect(() => {
-    if (editingName && nameInputRef.current) {
-      nameInputRef.current.focus()
-      nameInputRef.current.select()
-    }
-  }, [editingName])
-
-  // Handle share events
-  useEffect(() => {
-    const handleShareWholeProject = () => {
-      // Clear selection storage and navigate to preview page
-      localStorage.removeItem(`share-selection-${id}`)
-      router.push(`/dashboard/projects/${id}/share`)
-    }
-
-    const handleQuickSelectBest = () => {
-      handleSelectBest()
-      toast.success('Mejores diseños seleccionados')
-    }
-
-    const handleQuickSelectFavorites = () => {
-      handleSelectAllFavorites()
-      toast.success('Favoritos seleccionados')
-    }
-
-    const handleQuickSelectByStyle = () => {
-      // For now, just select all favorites as it's the most common use case
-      handleSelectAllFavorites()
-      toast.success('Diseños seleccionados por estilo')
-    }
-
-    window.addEventListener('share-whole-project', handleShareWholeProject)
-    window.addEventListener('quick-select-best', handleQuickSelectBest)
-    window.addEventListener('quick-select-favorites', handleQuickSelectFavorites)
-    window.addEventListener('quick-select-by-style', handleQuickSelectByStyle)
-
-    return () => {
-      window.removeEventListener('share-whole-project', handleShareWholeProject)
-      window.removeEventListener('quick-select-best', handleQuickSelectBest)
-      window.removeEventListener('quick-select-favorites', handleQuickSelectFavorites)
-      window.removeEventListener('quick-select-by-style', handleQuickSelectByStyle)
-    }
-  }, [id, router, variants])
-
-  const handleViewImage = (variant: Variant) => {
-    setViewerModal({ isOpen: true, variant })
-  }
-
-  const handleViewBaseImage = (imageUrl: string, imageName?: string) => {
-    setBaseImagePreview({
-      isOpen: true,
-      imageUrl,
-      imageName: imageName || undefined
-    })
-  }
-
-
   const handleToggleFavorite = async (variantId: string) => {
     try {
       const response = await fetch(`/api/variants/${variantId}/favorite`, {
@@ -570,7 +269,6 @@ export default function ProjectWorkspacePage({
         throw new Error('Error al actualizar favorito')
       }
 
-      // Optimistically update the variant in the list
       setVariants(prev => prev.map(variant =>
         variant.id === variantId
           ? { ...variant, is_favorite: !variant.is_favorite }
@@ -578,174 +276,68 @@ export default function ProjectWorkspacePage({
       ))
 
       const variant = variants.find(v => v.id === variantId)
-      toast.success(
-        variant?.is_favorite
-          ? 'Removido de favoritos'
-          : 'Agregado a favoritos'
-      )
+      toast.success(variant?.is_favorite ? 'Removido de favoritos' : 'Agregado a favoritos')
     } catch (error) {
       console.error('Error toggling favorite:', error)
       toast.error('Error al actualizar favorito')
     }
   }
 
-  // Selection management functions
-  const handleToggleSelection = (variantId: string) => {
-    setSelectedVariants(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(variantId)) {
-        newSet.delete(variantId)
-      } else {
-        newSet.add(variantId)
-      }
-      return newSet
-    })
-  }
-
-  const handleShareSelected = () => {
-    if (selectedVariants.size === 0) {
-      toast.error('Selecciona al menos un diseño para compartir')
-      return
-    }
-
-    const selectedItems = variants.filter(v => selectedVariants.has(v.id))
-    const selectedIds = selectedItems.map(item => item.id)
-    console.log('Saving to localStorage:', selectedIds)
-    // Save to localStorage for preview page
-    localStorage.setItem(`share-selection-${id}`, JSON.stringify(selectedIds))
-    console.log('Navigating to share page...')
-    // Navigate to preview page
-    router.push(`/dashboard/projects/${id}/share`)
-  }
-
-
-  const handleClearSelection = () => {
-    setSelectedVariants(new Set())
-    setShowSelection(false)
-  }
-
-
-  // Quick selection modes
-  const handleSelectBest = () => {
-    // Select variants with highest token consumption (most complex/premium)
-    const bestVariants = variants
-      .filter(v => v.status === 'completed')
-      .sort((a, b) => b.tokens_consumed - a.tokens_consumed)
-      .slice(0, 5) // Top 5 most complex
-      .map(v => v.id)
-
-    setSelectedVariants(new Set(bestVariants))
-    toast.success(`Seleccionados ${bestVariants.length} diseños premium`)
-  }
-
-  const handleSelectByStyle = (styleName: string) => {
-    const styleVariants = variants
-      .filter(v => v.status === 'completed' && v.style?.name === styleName)
-      .map(v => v.id)
-
-    setSelectedVariants(prev => {
-      const newSet = new Set(prev)
-      styleVariants.forEach(id => newSet.add(id))
-      return newSet
-    })
-
-    toast.success(`Agregados ${styleVariants.length} diseños de ${styleName}`)
-  }
-
-  const handleSelectAllFavorites = () => {
-    const favoriteVariants = variants
-      .filter(v => v.status === 'completed' && v.is_favorite)
-      .map(v => v.id)
-
-    setSelectedVariants(new Set(favoriteVariants))
-    toast.success(`Seleccionados ${favoriteVariants.length} favoritos`)
-  }
-
-  const handleGenerateVariant = async () => {
-    if (!selectedBaseImage || !selectedStyle) {
-      toast.error('Selecciona un estilo para generar')
-      return
-    }
-
-    // Check token balance
-    if (!hasTokens) {
-      setShowNoTokensDialog(true)
-      return
-    }
-
+  const handleGenerate = async (params: any) => {
+    if (!selectedBaseImage) return
     setGenerating(true)
 
     try {
       const response = await fetch(`/api/base-images/${selectedBaseImage.id}/generate-variant`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          style_id: selectedStyle,
-          room_type_id: selectedRoomType || null,
-          color_scheme_id: selectedColorScheme || null,
-          furniture_mode: selectedFurnitureMode,
-          custom_prompt: customPrompt || null,
-          dimensions: {
-            width: roomWidth ? parseFloat(roomWidth) : null,
-            height: roomHeight ? parseFloat(roomHeight) : null
-          },
-          provider: 'gemini' // Use Gemini for state-of-the-art image generation
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...params, provider: 'gemini' })
       })
 
       const data = await response.json()
-
       if (!response.ok) {
         throw new Error(data.error || 'Error al generar variante')
       }
 
-      // Deduct tokens optimistically
-      const tokenCost = filteredStyles.find(s => s.id === selectedStyle)?.token_cost || 1
-      deductTokens(tokenCost)
+      deductTokens(1)
 
-      // If the transformation is already completed (as shown in your response), add it immediately
       if (data.transformation) {
-        // Add the new transformation to the list
         setVariants(prev => [data.transformation, ...prev])
-
-        if (data.transformation.status === 'completed') {
-          toast.success('¡Diseño generado exitosamente!')
-        } else {
-          toast.success('Diseño en proceso de generación...')
-        }
+        toast.success(
+          data.transformation.status === 'completed'
+            ? '¡Diseño generado!'
+            : 'Generando diseño...'
+        )
       } else {
         toast.success('Diseño enviado a generar')
-        // Refresh variants to get the latest
         await fetchVariants(selectedBaseImage.id)
       }
-
-      setGenerating(false)
     } catch (error) {
       console.error('Error generating variant:', error)
       toast.error(error instanceof Error ? error.message : 'Error al generar variante')
+    } finally {
       setGenerating(false)
     }
   }
 
-  // Don't show loading spinner for better UX
+
   if (loading) {
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#A3B1A1]" />
+      </div>
+    )
   }
 
   if (!project) {
     return (
-      <div className="container mx-auto py-6">
-        <div className="text-center py-12">
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Proyecto no encontrado</h1>
-          <p className="text-muted-foreground mb-4">
-            El proyecto que buscas no existe o no tienes acceso a él.
-          </p>
           <Button asChild>
             <Link href="/dashboard/projects">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver a proyectos
+              Volver
             </Link>
           </Button>
         </div>
@@ -754,678 +346,342 @@ export default function ProjectWorkspacePage({
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <div className="border-b px-8 py-6 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard/projects">
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-            
-            {/* Project Name with Inline Editing */}
-            <div className="flex items-center gap-4">
-              {editingName ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    ref={nameInputRef}
-                    value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleProjectNameUpdate()
-                      if (e.key === 'Escape') {
-                        setProjectName(project.name)
-                        setEditingName(false)
-                      }
-                    }}
-                    className="w-[300px] text-xl font-light"
-                  />
-                  <Button size="sm" variant="ghost" onClick={handleProjectNameUpdate}>
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setProjectName(project.name)
-                      setEditingName(false)
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 group">
-                  <h1 className="text-xl font-light text-[#333333]">{project.name}</h1>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setEditingName(true)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Minimalist Header Bar */}
+      <div className="h-12 border-b bg-white flex items-center px-6 gap-6 flex-shrink-0">
+        <Button variant="ghost" size="icon" asChild className="h-8 w-8">
+          <Link href="/dashboard/projects">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
 
-            {/* Project Switcher */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[250px]">
-                <DropdownMenuLabel>Cambiar proyecto</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <ScrollArea className="h-[300px]">
-                  {allProjects
-                    .filter(p => p.id !== project.id)
-                    .map((p) => (
-                      <DropdownMenuItem
-                        key={p.id}
-                        onClick={() => router.push(`/dashboard/projects/${p.id}`)}
-                        className="cursor-pointer"
-                      >
-                        <FolderOpen className="h-4 w-4 mr-2" />
-                        <span className="truncate">{p.name}</span>
-                      </DropdownMenuItem>
-                    ))}
-                </ScrollArea>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/projects" className="cursor-pointer">
-                    <Grid3x3 className="h-4 w-4 mr-2" />
-                    Ver todos los proyectos
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <div className="flex items-center gap-6 text-xs text-muted-foreground">
-              {project.description && (
-                <p className="text-sm text-[#A3B1A1] font-light hidden lg:block">
-                  {project.description}
-                </p>
-              )}
-              <div className="flex items-center gap-4 text-xs">
-                <span>{project.images?.length || 0} imagen{(project.images?.length || 0) !== 1 ? 'es' : ''}</span>
-                <span>•</span>
-                <span>{project.total_transformations} transformación{project.total_transformations !== 1 ? 'es' : ''}</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Selection Mode Toggle */}
-            {showSelection && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowSelection(false)
-                  setSelectedVariants(new Set())
+        {/* Project Name */}
+        <div className="flex items-center gap-2 flex-1">
+          {editingName ? (
+            <div className="flex items-center gap-2">
+              <Input
+                ref={nameInputRef}
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleProjectNameUpdate()
+                  if (e.key === 'Escape') {
+                    setProjectName(project.name)
+                    setEditingName(false)
+                  }
                 }}
-                className="text-muted-foreground hover:text-foreground transition-all duration-300"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancelar selección
-              </Button>
-            )}
-
-            {/* Quick Selection Options */}
-            {showSelection && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-[#A3B1A1] hover:text-[#A3B1A1]/80">
-                    <Zap className="h-4 w-4 mr-2" />
-                    Selección Rápida
-                    <ChevronDown className="h-3 w-3 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="text-xs">Modos de selección</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem onClick={handleSelectBest}>
-                    <Sparkles className="h-4 w-4 mr-2 text-yellow-600" />
-                    <div>
-                      <span className="font-medium">Seleccionar Mejores</span>
-                      <p className="text-xs text-muted-foreground">Top 5 diseños premium</p>
-                    </div>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem onClick={handleSelectAllFavorites}>
-                    <Heart className="h-4 w-4 mr-2 text-red-500" />
-                    <div>
-                      <span className="font-medium">Todos los Favoritos</span>
-                      <p className="text-xs text-muted-foreground">
-                        {variants.filter(v => v.is_favorite && v.status === 'completed').length} diseños
-                      </p>
-                    </div>
-                  </DropdownMenuItem>
-
-                  {/* Style-based selection */}
-                  {Array.from(new Set(variants.filter(v => v.status === 'completed' && v.style?.name).map(v => v.style!.name))).length > 1 && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuLabel className="text-xs">Por estilo</DropdownMenuLabel>
-                      {Array.from(new Set(variants.filter(v => v.status === 'completed' && v.style?.name).map(v => v.style!.name))).slice(0, 4).map(styleName => (
-                        <DropdownMenuItem
-                          key={styleName}
-                          onClick={() => handleSelectByStyle(styleName)}
-                        >
-                          <Palette className="h-4 w-4 mr-2 text-[#A3B1A1]" />
-                          <div>
-                            <span className="font-medium">{styleName}</span>
-                            <p className="text-xs text-muted-foreground">
-                              {variants.filter(v => v.status === 'completed' && v.style?.name === styleName).length} diseños
-                            </p>
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
-            {/* Enhanced Share Button */}
-            {project && (
-              <ShareButton
-                project={project as any}
-                generations={variants
-                  .filter(v => v.status === 'completed' && v.result_image_url)
-                  .map(v => ({
-                    id: v.id,
-                    created_at: v.created_at,
-                    updated_at: v.created_at,
-                    user_id: '',
-                    project_id: project.id,
-                    base_image_id: selectedBaseImage?.id || null,
-                    completed_at: v.created_at,
-                    custom_instructions: null,
-                    error_message: null,
-                    inspiration_weight: null,
-                    inspirations: null,
-                    iterations: null,
-                    metadata: v.metadata || null,
-                    moodboard_id: null,
-                    palette_id: v.color_palette?.id || null,
-                    processing_time_ms: null,
-                    prompt_used: v.metadata?.prompt || null,
-                    rating: null,
-                    result_image_url: v.result_image_url,
-                    result_cloudflare_id: null,
-                    result_public_url: v.result_image_url,
-                    room_type_id: v.room_type?.id || null,
-                    season_id: null,
-                    share_count: 0,
-                    share_settings: null,
-                    status: v.status,
-                    style_id: v.style?.id || null,
-                    tokens_consumed: v.tokens_consumed,
-                    user_notes: null,
-                    variations: null,
-                    is_favorite: v.is_favorite,
-                    is_shared: false
-                  }))}
-                className="bg-[#A3B1A1] hover:bg-[#A3B1A1]/90"
+                className="h-7 w-[250px] text-sm"
               />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex min-h-0">
-        {/* Left Column - Image Management & Controls */}
-        <div className="w-[400px] border-r flex flex-col min-h-0 max-h-screen overflow-auto">
-          {/* Base Images Gallery */}
-          <div className="p-4 border-b">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-sm flex items-center gap-2">
-                <Grid3x3 className="h-4 w-4" />
-                Imágenes Base
-                {project?.images && project.images.length > 4 && (
-                  <span className="text-xs text-muted-foreground">
-                    ({project.images.length} total)
-                  </span>
-                )}
-              </h2>
-              <label htmlFor="upload-input">
-                <Button size="sm" variant="outline" asChild>
-                  <span>
-                    <Plus className="h-3 w-3 mr-1" />
-                    Agregar
-                  </span>
-                </Button>
-                <input
-                  id="upload-input"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) handleImageUpload(file)
-                  }}
-                />
-              </label>
-            </div>
-
-            <div className="relative">
-              <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
-                <div className="flex gap-2 pb-2 min-h-[88px]">
-                {(!project?.images || project.images.length === 0) && !uploading ? (
-                  <div className="text-sm text-muted-foreground py-4 text-center w-full">
-                    No hay imágenes. Sube una para comenzar.
-                  </div>
-                ) : (
-                  <>
-                    {project?.images?.map((image) => (
-                      <div
-                        key={image.id}
-                        className={cn(
-                          "relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all group",
-                          selectedBaseImage?.id === image.id
-                            ? "border-primary ring-2 ring-primary/20 scale-105"
-                            : "border-transparent hover:border-gray-300"
-                        )}
-                      >
-                        <button
-                          onClick={() => setSelectedBaseImage(image)}
-                          className="w-full h-full hover:scale-105 transition-transform"
-                        >
-                          <Image
-                            src={image.url}
-                            alt={image.name || 'Imagen del proyecto'}
-                            fill
-                            className="object-cover"
-                          />
-                        </button>
-
-                        {/* Delete button - appears on hover */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setDeleteDialog({
-                              isOpen: true,
-                              imageId: image.id,
-                              imageName: image.name || 'esta imagen'
-                            })
-                          }}
-                          className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-
-                        {(image.transformations?.length || 0) > 0 && (
-                          <div className="absolute bottom-0 right-0 bg-black/70 text-white text-xs px-1 rounded-tl">
-                            {image.transformations?.length || 0}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-
-                    {/* Show upload skeleton when uploading */}
-                    {uploading && <ImageUploadSkeleton />}
-                  </>
-                )}
-                </div>
-              </div>
-            </div>
-
-            {/* Upload Progress */}
-            {uploading && (
-              <div className="mt-3">
-                <UploadProgress 
-                  progress={uploadProgress}
-                  status={uploadStatus}
-                  error={uploadError || undefined}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Active Base Image */}
-          {(selectedBaseImage || uploading) && (
-            <>
-              <div className="p-4 border-b">
-                <h3 className="font-semibold text-sm mb-2">Imagen Activa</h3>
-                {uploading && !selectedBaseImage ? (
-                  <ImagePreviewSkeleton />
-                ) : selectedBaseImage ? (
-                  <div
-                    className="relative aspect-video rounded-lg overflow-hidden bg-muted cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={() => handleViewBaseImage(selectedBaseImage.url, selectedBaseImage.name || undefined)}
-                  >
-                    <Image
-                      src={selectedBaseImage.url}
-                      alt={selectedBaseImage.name || 'Imagen del proyecto'}
-                      fill
-                      className="object-cover"
-                    />
-                    {/* Hover overlay to indicate clickability */}
-                    <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
-                      <div className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg">
-                        <p className="text-sm text-gray-800 font-medium">Ver en pantalla completa</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-                <p className="text-xs text-muted-foreground mt-2">
-                  {uploading && !selectedBaseImage 
-                    ? 'Subiendo imagen...' 
-                    : selectedBaseImage?.name || 'Imagen del proyecto'}
-                </p>
-              </div>
-
-              {/* Generation Panel */}
-              <div className="flex-1 flex flex-col min-h-0">
-                <div className="p-4 pb-0">
-                  <h3 className="font-semibold text-sm mb-3">Generar Nuevo Diseño</h3>
-                </div>
-
-                <div className="flex-1 overflow-y-auto px-4 min-h-0">
-                  <div className="space-y-3 pb-4">
-                  {/* Macrocategory Filter */}
-                  {availableMacroCategories.length > 0 && (
-                    <div>
-                      <label className="text-xs font-medium mb-1 block">
-                        Categoría de Estilo
-                      </label>
-                      <Select value={selectedMacroCategory} onValueChange={setSelectedMacroCategory}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Todas las categorías" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todas las categorías</SelectItem>
-                          {availableMacroCategories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">
-                      Estilo de Diseño *
-                    </label>
-                    <Select value={selectedStyle} onValueChange={setSelectedStyle}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecciona un estilo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filteredStyles?.map((style) => (
-                          <SelectItem key={style.id} value={style.id}>
-                            {style.name} ({style.token_cost} tokens)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Furniture Preservation Mode */}
-                  <div>
-                    <label className="text-xs font-medium mb-1 block flex items-center gap-1">
-                      <Armchair className="h-3 w-3" />
-                      Manejo de Mobiliario
-                    </label>
-                    <Select value={selectedFurnitureMode} onValueChange={setSelectedFurnitureMode}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="keep_all">
-                          <div className="flex flex-col items-start">
-                            <span className="font-medium">Conservar Todo (Misma Posición)</span>
-                            <span className="text-xs text-muted-foreground">Preserva mobiliario exactamente como está</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="keep_reposition">
-                          <div className="flex flex-col items-start">
-                            <span className="font-medium">Conservar (Permitir Reposición)</span>
-                            <span className="text-xs text-muted-foreground">Mismo mobiliario, pero puede reorganizarse</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="keep_add_more">
-                          <div className="flex flex-col items-start">
-                            <span className="font-medium">Conservar + Agregar Más</span>
-                            <span className="text-xs text-muted-foreground">Preserva existente y añade piezas complementarias</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="replace_all">
-                          <div className="flex flex-col items-start">
-                            <span className="font-medium">Reemplazar Todo</span>
-                            <span className="text-xs text-muted-foreground">Transformación completa del mobiliario</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Controla cómo se maneja el mobiliario existente
-                    </p>
-                  </div>
-
-                  {/* Custom Prompt Field */}
-                  <div>
-                    <label className="text-xs font-medium mb-1 block flex items-center gap-1">
-                      Instrucciones Personalizadas
-                      <Info className="h-3 w-3 text-muted-foreground" />
-                    </label>
-                    <Textarea
-                      value={customPrompt}
-                      onChange={(e) => setCustomPrompt(e.target.value)}
-                      placeholder="Ej: Añade una lámpara colgante moderna sobre la mesa del comedor..."
-                      className="min-h-[60px] resize-none text-xs"
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      💡 Pro tip: Añade detalles específicos para obtener resultados más precisos
-                    </p>
-                  </div>
-
-                  {/* Room Dimensions */}
-                  <div>
-                    <label className="text-xs font-medium mb-1 block flex items-center gap-1">
-                      <Ruler className="h-3 w-3" />
-                      Dimensiones Estimadas (metros)
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          value={roomWidth}
-                          onChange={(e) => setRoomWidth(e.target.value)}
-                          placeholder="Ancho"
-                          className="text-xs"
-                        />
-                      </div>
-                      <div>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          value={roomHeight}
-                          onChange={(e) => setRoomHeight(e.target.value)}
-                          placeholder="Alto"
-                          className="text-xs"
-                        />
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Recomendado para mejor proporción del mobiliario
-                    </p>
-                  </div>
-
-                  {/* Advanced Options Collapsible */}
-                  <Collapsible
-                    open={showAdvancedOptions}
-                    onOpenChange={setShowAdvancedOptions}
-                  >
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start text-xs p-0 h-auto hover:bg-transparent"
-                      >
-                        {showAdvancedOptions ? (
-                          <ChevronDown className="h-3 w-3 mr-1" />
-                        ) : (
-                          <ChevronRight className="h-3 w-3 mr-1" />
-                        )}
-                        Opciones Avanzadas
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-3 mt-2">
-                      <div>
-                        <label className="text-xs font-medium mb-1 block">
-                          Tipo de Habitación
-                        </label>
-                        <Select value={selectedRoomType} onValueChange={setSelectedRoomType}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Opcional - Sin especificar" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {designData?.roomTypes?.map((room) => (
-                              <SelectItem key={room.id} value={room.id}>
-                                {room.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {selectedRoomType && (
-                          <button
-                            onClick={() => setSelectedRoomType('')}
-                            className="text-xs text-muted-foreground hover:text-foreground mt-1"
-                          >
-                            Limpiar selección
-                          </button>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-medium mb-1 block">
-                          Esquema de Color
-                        </label>
-                        <Select value={selectedColorScheme} onValueChange={setSelectedColorScheme}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Opcional - Sin especificar" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {designData?.colorSchemes?.map((scheme) => (
-                              <SelectItem key={scheme.id} value={scheme.id}>
-                                <div className="flex items-center gap-2">
-                                  {scheme.name}
-                                  <div className="flex gap-1">
-                                    {scheme.hex_colors?.slice(0, 3).map((color, i) => (
-                                      <div
-                                        key={i}
-                                        className="w-3 h-3 rounded-full border"
-                                        style={{ backgroundColor: color }}
-                                      />
-                                    ))}
-                                  </div>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {selectedColorScheme && (
-                          <button
-                            onClick={() => setSelectedColorScheme('')}
-                            className="text-xs text-muted-foreground hover:text-foreground mt-1"
-                          >
-                            Limpiar selección
-                          </button>
-                        )}
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                  </div>
-                </div>
-
-                {/* Generation Button - Always visible at bottom */}
-                <div className="p-4 border-t flex-shrink-0">
-                  <Button
-                    className="w-full"
-                    onClick={handleGenerateVariant}
-                    disabled={!selectedStyle || generating || !hasTokens}
-                    variant={!hasTokens ? "destructive" : "default"}
-                  >
-                    {generating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generando...
-                      </>
-                    ) : !hasTokens ? (
-                      <>
-                        <AlertCircle className="mr-2 h-4 w-4" />
-                        Sin tokens
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Generar Diseño ({filteredStyles.find(s => s.id === selectedStyle)?.token_cost || 1} tokens)
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Token consumption preview */}
-                  {selectedStyle && hasTokens && (
-                    <div className="mt-2 text-xs text-muted-foreground text-center">
-                      Esto consumirá {filteredStyles.find(s => s.id === selectedStyle)?.token_cost || 1} tokens.
-                      Te quedarán {tokenBalance - (filteredStyles.find(s => s.id === selectedStyle)?.token_cost || 1)} tokens.
-                    </div>
-                  )}
-
-                  {isLow && hasTokens && (
-                    <div className="mt-2 text-xs text-yellow-600 text-center">
-                      ⚠️ Tienes pocos tokens disponibles
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Right Column - Variant Gallery */}
-        <div className="flex-1 bg-muted/30 min-h-0 overflow-auto">
-          {!selectedBaseImage ? (
-            <div className="h-full flex items-center justify-center text-center p-8">
-              <div>
-                <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-semibold mb-2">Selecciona una imagen base</h3>
-                <p className="text-sm text-muted-foreground">
-                  Sube imágenes base y selecciona una para ver y generar variantes de diseño
-                </p>
-              </div>
+              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={handleProjectNameUpdate}>
+                <Check className="h-3 w-3" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6"
+                onClick={() => {
+                  setProjectName(project.name)
+                  setEditingName(false)
+                }}
+              >
+                <X className="h-3 w-3" />
+              </Button>
             </div>
           ) : (
-            <VariantGallery
-              variants={variants}
-              loading={loadingVariants}
-              onToggleFavorite={handleToggleFavorite}
-              originalImage={selectedBaseImage.url}
-              onRefresh={() => selectedBaseImage && fetchVariants(selectedBaseImage.id)}
-              selectedVariants={selectedVariants}
-              onToggleSelection={handleToggleSelection}
-              showSelection={showSelection}
-              onViewVariant={(variantId) => {
-                const variant = variants.find(v => v.id === variantId)
-                if (variant && variant.result_image_url) {
-                  handleViewImage(variant)
-                }
-              }}
-            />
+            <div className="flex items-center gap-2 group">
+              <h1 className="text-sm font-medium text-gray-900">{project.name}</h1>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => setEditingName(true)}
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            </div>
           )}
         </div>
+
+        {/* Token Balance */}
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#A3B1A1]/10 to-[#C4886F]/10 border border-[#A3B1A1]/20">
+          <Zap className="h-3.5 w-3.5 text-[#A3B1A1]" />
+          <span className="text-xs font-semibold text-gray-700">{tokenBalance}</span>
+          <span className="text-xs text-gray-500">tokens</span>
+        </div>
+
+        {/* Share Button */}
+        {project && (
+          <ShareButton
+            project={project as any}
+            generations={variants.filter(v => v.status === 'completed' && v.result_image_url).map(v => ({
+              id: v.id,
+              created_at: v.created_at,
+              updated_at: v.created_at,
+              user_id: '',
+              project_id: project.id,
+              base_image_id: selectedBaseImage?.id || null,
+              completed_at: v.created_at,
+              custom_instructions: null,
+              error_message: null,
+              inspiration_weight: null,
+              inspirations: null,
+              iterations: null,
+              metadata: v.metadata || null,
+              moodboard_id: null,
+              palette_id: null,
+              processing_time_ms: null,
+              prompt_used: null,
+              rating: null,
+              result_image_url: v.result_image_url,
+              result_cloudflare_id: null,
+              result_public_url: v.result_image_url,
+              room_type_id: null,
+              season_id: null,
+              share_count: 0,
+              share_settings: null,
+              status: v.status,
+              style_id: null,
+              tokens_consumed: v.tokens_consumed,
+              user_notes: null,
+              variations: null,
+              is_favorite: v.is_favorite,
+              is_shared: false
+            }))}
+            className="h-7 px-3 text-xs"
+          />
+        )}
       </div>
+
+      {/* Two Column Gallery + Inspector Layout */}
+      <div className="flex-1 flex min-h-0">
+        {/* Left Column: Gallery (Visual Workspace) */}
+        <div className="flex-1 bg-white overflow-auto">
+          <div className="p-6 space-y-6">
+            {/* Base Images Section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-gray-900">Imágenes Base</h2>
+                <label htmlFor="upload-input">
+                  <Button size="sm" variant="outline" asChild>
+                    <span className="text-xs">
+                      {isUploadingImage ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Plus className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      Agregar
+                    </span>
+                  </Button>
+                  <input
+                    id="upload-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleImageUpload(file)
+                    }}
+                  />
+                </label>
+              </div>
+
+              {/* Base Images Horizontal Scroll */}
+              <div className="overflow-x-auto pb-2">
+                <div className="flex gap-3 min-w-0">
+                  {project?.images?.map((image) => (
+                    <div
+                      key={image.id}
+                      className={cn(
+                        "relative group flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border-2 transition-all cursor-pointer",
+                        selectedBaseImage?.id === image.id
+                          ? "border-[#A3B1A1] shadow-lg ring-2 ring-[#A3B1A1]/20"
+                          : "border-gray-200 hover:border-gray-300"
+                      )}
+                      onClick={() => setSelectedBaseImage(image)}
+                    >
+                      <Image
+                        src={image.url}
+                        alt={image.name || 'Imagen'}
+                        fill
+                        className="object-cover"
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteImage(image.id)
+                        }}
+                        className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    </div>
+                  ))}
+                  {(!project?.images || project.images.length === 0) && !isUploadingImage && (
+                    <div className="text-center py-4 px-8 text-sm text-gray-500">
+                      Sube tu primera imagen para comenzar
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Selected Base Image Preview */}
+            {selectedBaseImage && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Imagen Activa</h3>
+                <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-100 border border-gray-200 shadow-sm">
+                  <Image
+                    src={selectedBaseImage.url}
+                    alt={selectedBaseImage.name || 'Imagen'}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Generated Variants Section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-gray-900">Diseños Generados</h2>
+                {selectedBaseImage && (
+                  <Badge variant="secondary" className="text-xs">
+                    {variants.length} diseño{variants.length !== 1 ? 's' : ''}
+                  </Badge>
+                )}
+              </div>
+
+              {loadingVariants ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-6 w-6 animate-spin text-[#A3B1A1]" />
+                </div>
+              ) : variants.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  {variants.map((variant) => (
+                    <motion.div
+                      key={variant.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.2 }}
+                      className="group relative"
+                    >
+                      <Card className="overflow-hidden hover:shadow-xl transition-all duration-200 border-gray-200">
+                        {variant.status === 'completed' && variant.result_image_url ? (
+                          <>
+                            <div className="relative aspect-square">
+                              <Image
+                                src={variant.result_image_url}
+                                alt="Variante"
+                                fill
+                                className="object-cover"
+                              />
+                              {/* Overlay Actions */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                                  <button
+                                    onClick={() => handleToggleFavorite(variant.id)}
+                                    className="w-7 h-7 rounded-full bg-white/95 hover:bg-white flex items-center justify-center transition-all shadow-lg"
+                                  >
+                                    <Heart className={cn(
+                                      "h-3.5 w-3.5 transition-colors",
+                                      variant.is_favorite ? "fill-red-500 text-red-500" : "text-gray-700"
+                                    )} />
+                                  </button>
+                                  <button
+                                    onClick={() => setViewerModal({ isOpen: true, variant })}
+                                    className="w-7 h-7 rounded-full bg-white/95 hover:bg-white flex items-center justify-center transition-all shadow-lg"
+                                  >
+                                    <Maximize2 className="h-3.5 w-3.5 text-gray-700" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                            {/* Minimal Metadata */}
+                            <div className="p-2">
+                              {variant.style && (
+                                <p className="text-[10px] text-gray-600 truncate">
+                                  {variant.style.name}
+                                </p>
+                              )}
+                            </div>
+                          </>
+                        ) : variant.status === 'processing' ? (
+                          <div className="aspect-square flex items-center justify-center bg-gray-50">
+                            <Loader2 className="h-5 w-5 animate-spin text-[#A3B1A1]" />
+                          </div>
+                        ) : variant.status === 'failed' ? (
+                          <div className="aspect-square flex items-center justify-center bg-red-50 text-red-500 text-xs p-3 text-center">
+                            Error al generar
+                          </div>
+                        ) : (
+                          <div className="aspect-square flex items-center justify-center bg-gray-50">
+                            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                          </div>
+                        )}
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : selectedBaseImage ? (
+                <div className="text-center py-16 px-8 border-2 border-dashed border-gray-200 rounded-xl">
+                  <Grid2x2 className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-600 font-medium">
+                    No hay diseños generados aún
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Usa el panel de controles para crear tu primer diseño
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-16 px-8">
+                  <p className="text-sm text-gray-500">
+                    Selecciona una imagen base para comenzar
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Inspector (Controls) */}
+        <div className="w-[420px] bg-gray-50 border-l flex flex-col">
+          <div className="p-5 border-b bg-white">
+            <h2 className="text-sm font-semibold text-gray-900">Panel de Diseño</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Personaliza tu transformación</p>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-5">
+            {selectedBaseImage && designData ? (
+              <ContextFirstWizard
+                designData={{
+                  styles: designData.styles || [],
+                  roomTypes: designData.roomTypes || [],
+                  colorPalettes: designData.colorSchemes || []
+                }}
+                selectedBaseImage={selectedBaseImage}
+                generating={generating}
+                hasTokens={hasTokens}
+                tokenBalance={tokenBalance}
+                onGenerate={handleGenerate}
+                onNoTokens={() => setShowNoTokensDialog(true)}
+              />
+            ) : (
+              <div className="text-center py-16">
+                <div className="w-12 h-12 rounded-full bg-gray-200 mx-auto mb-3 flex items-center justify-center">
+                  <Wand2 className="h-6 w-6 text-gray-400" />
+                </div>
+                <p className="text-sm text-gray-600 font-medium">
+                  Selecciona una imagen
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Para comenzar a diseñar
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
 
       {/* Image Viewer Modal */}
       {viewerModal.variant && selectedBaseImage && (
@@ -1439,72 +695,14 @@ export default function ProjectWorkspacePage({
           colorScheme={viewerModal.variant.color_palette?.name}
           projectId={id}
           variantId={viewerModal.variant.id}
-          onQuickShare={() => {
-            // Quick share functionality - create a share with just this variant
-            const variantIds = new Set([viewerModal.variant!.id])
-            setSelectedVariants(variantIds)
-            handleShareSelected()
-            setViewerModal({ isOpen: false })
-          }}
         />
       )}
-
-      {/* Base Image Preview Modal */}
-      <BaseImagePreviewModal
-        isOpen={baseImagePreview.isOpen}
-        onClose={() => setBaseImagePreview({ isOpen: false })}
-        imageUrl={baseImagePreview.imageUrl || ''}
-        imageName={baseImagePreview.imageName}
-      />
 
       {/* No Tokens Dialog */}
       <NoTokensDialog
         isOpen={showNoTokensDialog}
         onClose={() => setShowNoTokensDialog(false)}
       />
-
-      {/* Delete Image Confirmation Dialog */}
-      <AlertDialog
-        open={deleteDialog.isOpen}
-        onOpenChange={(open) => setDeleteDialog({ isOpen: open })}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar imagen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Estás seguro de que deseas eliminar {deleteDialog.imageName}? Esta acción no se puede deshacer.
-              Todas las transformaciones relacionadas también se eliminarán.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteDialog.imageId && handleDeleteImage(deleteDialog.imageId)}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-
-      {/* Selection Summary Panel */}
-      <SelectionSummary
-        selectedVariants={selectedVariants}
-        variants={variants}
-        onShareSelected={handleShareSelected}
-        onClearSelection={handleClearSelection}
-        onToggleSelection={handleToggleSelection}
-        onViewVariant={(variantId) => {
-          const variant = variants.find(v => v.id === variantId)
-          if (variant && variant.result_image_url) {
-            handleViewImage(variant)
-          }
-        }}
-      />
-
-
     </div>
   )
 }

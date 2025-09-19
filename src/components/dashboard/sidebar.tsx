@@ -92,6 +92,16 @@ export function DashboardSidebar({ onCollapsedChange }: DashboardSidebarProps = 
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [expandedItems, setExpandedItems] = useState<string[]>([])
 
+  // Check if we're in a project page
+  const isInProject = pathname?.includes('/dashboard/projects/') && pathname.split('/').length > 3
+
+  useEffect(() => {
+    // Auto-collapse when entering a project
+    if (isInProject && !isCollapsed) {
+      setIsCollapsed(true)
+    }
+  }, [isInProject])
+
   useEffect(() => {
     onCollapsedChange?.(isCollapsed)
   }, [isCollapsed, onCollapsedChange])
