@@ -82,6 +82,7 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
     variant?: Variant
   }>({ isOpen: false })
   const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [selectedVariant, setSelectedVariant] = useState<string | null>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
   const { available: tokenBalance, hasTokens, deduct: deductTokens } = useTokenBalance()
 
@@ -456,11 +457,11 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
       <div className="flex-1 flex min-h-0">
         {/* Left Column: Gallery (Visual Workspace) */}
         <div className="flex-1 bg-white overflow-auto">
-          <div className="p-6 space-y-6">
-            {/* Base Images Section */}
+          <div className="p-4 space-y-4">
+            {/* Base Images Section - Compact */}
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-gray-900">Imágenes Base</h2>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xs font-semibold text-gray-900">Imágenes Base</h2>
                 <label htmlFor="upload-input">
                   <Button size="sm" variant="outline" asChild>
                     <span className="text-xs">
@@ -492,7 +493,7 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
                     <div
                       key={image.id}
                       className={cn(
-                        "relative group flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border-2 transition-all cursor-pointer",
+                        "relative group flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all cursor-pointer",
                         selectedBaseImage?.id === image.id
                           ? "border-[#A3B1A1] shadow-lg ring-2 ring-[#A3B1A1]/20"
                           : "border-gray-200 hover:border-gray-300"
@@ -525,24 +526,32 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
               </div>
             </div>
 
-            {/* Selected Base Image Preview */}
+            {/* Selected Base Image Preview - Smaller */}
             {selectedBaseImage && (
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Imagen Activa</h3>
-                <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-100 border border-gray-200 shadow-sm">
-                  <Image
-                    src={selectedBaseImage.url}
-                    alt={selectedBaseImage.name || 'Imagen'}
-                    fill
-                    className="object-contain"
-                  />
+              <div className="flex gap-4">
+                <div className="w-32">
+                  <h3 className="text-xs font-semibold text-gray-900 mb-2">Imagen Activa</h3>
+                  <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-[#A3B1A1] shadow-sm">
+                    <Image
+                      src={selectedBaseImage.url}
+                      alt={selectedBaseImage.name || 'Imagen'}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500">
+                    Haz clic en cualquier diseño generado para expandirlo.
+                    Usa el panel derecho para crear nuevas variaciones.
+                  </p>
                 </div>
               </div>
             )}
 
-            {/* Generated Variants Section */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
+            {/* Generated Variants Section - Centered Focus */}
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-gray-900">Diseños Generados</h2>
                 {selectedBaseImage && (
                   <Badge variant="secondary" className="text-xs">
@@ -556,7 +565,7 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
                   <Loader2 className="h-6 w-6 animate-spin text-[#A3B1A1]" />
                 </div>
               ) : variants.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {variants.map((variant) => (
                     <motion.div
                       key={variant.id}
@@ -564,8 +573,19 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.2 }}
                       className="group relative"
+                      onClick={() => {
+                        setSelectedVariant(variant.id)
+                        if (variant.status === 'completed' && variant.result_image_url) {
+                          setViewerModal({ isOpen: true, variant })
+                        }
+                      }}
                     >
-                      <Card className="overflow-hidden hover:shadow-xl transition-all duration-200 border-gray-200">
+                      <Card className={cn(
+                        "overflow-hidden hover:shadow-xl transition-all duration-200 cursor-pointer",
+                        selectedVariant === variant.id
+                          ? "border-2 border-[#A3B1A1] ring-2 ring-[#A3B1A1]/20"
+                          : "border-gray-200"
+                      )}>
                         {variant.status === 'completed' && variant.result_image_url ? (
                           <>
                             <div className="relative aspect-square">
@@ -579,7 +599,10 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
                               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-200">
                                 <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
                                   <button
-                                    onClick={() => handleToggleFavorite(variant.id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleToggleFavorite(variant.id)
+                                    }}
                                     className="w-7 h-7 rounded-full bg-white/95 hover:bg-white flex items-center justify-center transition-all shadow-lg"
                                   >
                                     <Heart className={cn(
@@ -588,13 +611,24 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
                                     )} />
                                   </button>
                                   <button
-                                    onClick={() => setViewerModal({ isOpen: true, variant })}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setViewerModal({ isOpen: true, variant })
+                                    }}
                                     className="w-7 h-7 rounded-full bg-white/95 hover:bg-white flex items-center justify-center transition-all shadow-lg"
                                   >
                                     <Maximize2 className="h-3.5 w-3.5 text-gray-700" />
                                   </button>
                                 </div>
                               </div>
+                              {/* Active indicator */}
+                              {selectedVariant === variant.id && (
+                                <div className="absolute top-2 right-2">
+                                  <div className="w-6 h-6 rounded-full bg-[#A3B1A1] flex items-center justify-center shadow-lg">
+                                    <Check className="h-3 w-3 text-white" />
+                                  </div>
+                                </div>
+                              )}
                             </div>
                             {/* Minimal Metadata */}
                             <div className="p-2">
@@ -644,13 +678,13 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
         </div>
 
         {/* Right Column: Inspector (Controls) */}
-        <div className="w-[420px] bg-gray-50 border-l flex flex-col">
-          <div className="p-5 border-b bg-white">
+        <div className="w-[380px] bg-gray-50 border-l flex flex-col">
+          <div className="p-4 border-b bg-white">
             <h2 className="text-sm font-semibold text-gray-900">Panel de Diseño</h2>
             <p className="text-xs text-gray-500 mt-0.5">Personaliza tu transformación</p>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 overflow-y-auto p-4">
             {selectedBaseImage && designData ? (
               <ContextFirstWizard
                 designData={{
@@ -666,14 +700,14 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
                 onNoTokens={() => setShowNoTokensDialog(true)}
               />
             ) : (
-              <div className="text-center py-16">
-                <div className="w-12 h-12 rounded-full bg-gray-200 mx-auto mb-3 flex items-center justify-center">
-                  <Wand2 className="h-6 w-6 text-gray-400" />
+              <div className="text-center py-12">
+                <div className="w-10 h-10 rounded-full bg-gray-200 mx-auto mb-2 flex items-center justify-center">
+                  <Wand2 className="h-5 w-5 text-gray-400" />
                 </div>
-                <p className="text-sm text-gray-600 font-medium">
+                <p className="text-xs text-gray-600 font-medium">
                   Selecciona una imagen
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-[10px] text-gray-400 mt-1">
                   Para comenzar a diseñar
                 </p>
               </div>

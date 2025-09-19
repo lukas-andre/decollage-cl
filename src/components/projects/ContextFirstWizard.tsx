@@ -87,8 +87,29 @@ interface ContextFirstWizardProps {
 // Room type icons mapping
 const getRoomIcon = (roomCode: string) => {
   const iconMap: Record<string, React.ReactNode> = {
-    bedroom: <Bed className="h-5 w-5" />,
+    // Main categories
+    dormitorio: <Bed className="h-5 w-5" />,
+    dormitorio_principal: <Bed className="h-5 w-5" />,
+    dormitorio_ninos: <Baby className="h-5 w-5" />,
     living: <Sofa className="h-5 w-5" />,
+    cocina: <ChefHat className="h-5 w-5" />,
+    bano: <Bath className="h-5 w-5" />,
+    bano_visitas: <Bath className="h-5 w-5" />,
+    comedor: <Home className="h-5 w-5" />,
+    home_office: <Home className="h-5 w-5" />,
+    pieza_bebe: <Baby className="h-5 w-5" />,
+    pieza_nina: <Baby className="h-5 w-5" />,
+    pieza_nino: <Baby className="h-5 w-5" />,
+    jardin: <Trees className="h-5 w-5" />,
+    terraza: <Trees className="h-5 w-5" />,
+    quincho: <Trees className="h-5 w-5" />,
+    logia: <Trees className="h-5 w-5" />,
+    sala_estar: <Sofa className="h-5 w-5" />,
+    sala_juegos: <Baby className="h-5 w-5" />,
+    entrada: <Home className="h-5 w-5" />,
+    bodega: <Home className="h-5 w-5" />,
+    // Legacy codes
+    bedroom: <Bed className="h-5 w-5" />,
     kitchen: <ChefHat className="h-5 w-5" />,
     bathroom: <Bath className="h-5 w-5" />,
     dining: <Home className="h-5 w-5" />,
@@ -102,15 +123,38 @@ const getRoomIcon = (roomCode: string) => {
 // Categorize room types
 const categorizeRooms = (roomTypes: any[]) => {
   const categories = {
-    interiores: roomTypes.filter(room =>
-      ['bedroom', 'living', 'kitchen', 'bathroom', 'dining', 'office'].includes(room.code)
-    ),
-    infantil: roomTypes.filter(room =>
-      room.code === 'kids' || room.name.toLowerCase().includes('infantil')
-    ),
-    exteriores: roomTypes.filter(room =>
-      ['outdoor', 'garden', 'patio'].includes(room.code)
-    )
+    interiores: roomTypes.filter(room => {
+      const interiorCodes = [
+        'dormitorio', 'dormitorio_principal', 'living', 'cocina', 'bano', 'bano_visitas',
+        'comedor', 'home_office', 'entrada', 'sala_estar', 'bodega',
+        // Legacy codes
+        'bedroom', 'kitchen', 'bathroom', 'dining', 'office'
+      ]
+      return interiorCodes.includes(room.code) ||
+             (room.name.toLowerCase().includes('dormitorio') && !room.name.toLowerCase().includes('niñ') && !room.name.toLowerCase().includes('beb'))
+    }),
+    infantil: roomTypes.filter(room => {
+      const infantilCodes = [
+        'dormitorio_ninos', 'pieza_bebe', 'pieza_nina', 'pieza_nino', 'sala_juegos',
+        // Legacy codes
+        'kids'
+      ]
+      return infantilCodes.includes(room.code) ||
+             room.name.toLowerCase().includes('infantil') ||
+             room.name.toLowerCase().includes('niñ') ||
+             room.name.toLowerCase().includes('bebé')
+    }),
+    exteriores: roomTypes.filter(room => {
+      const exteriorCodes = [
+        'jardin', 'terraza', 'quincho', 'logia',
+        // Legacy codes
+        'outdoor', 'garden', 'patio'
+      ]
+      return exteriorCodes.includes(room.code) ||
+             room.name.toLowerCase().includes('jardín') ||
+             room.name.toLowerCase().includes('terraza') ||
+             room.name.toLowerCase().includes('balcón')
+    })
   }
   return categories
 }
@@ -119,13 +163,52 @@ const categorizeRooms = (roomTypes: any[]) => {
 const categorizeStyles = (styles: any[]) => {
   const categories: Record<string, any[]> = {}
   styles.forEach(style => {
-    const category = style.macrocategory || 'Otros'
+    const category = style.macrocategory || 'Clásicos'
     if (!categories[category]) {
       categories[category] = []
     }
     categories[category].push(style)
   })
   return categories
+}
+
+// Get recommended styles for a room type
+const getRecommendedStyles = (roomCode: string, styles: any[]) => {
+  const recommendations: Record<string, string[]> = {
+    // Dormitorios
+    dormitorio: ['Minimalista', 'Escandinavo', 'Moderno', 'Boho'],
+    dormitorio_principal: ['Elegante', 'Minimalista', 'Mediterráneo', 'Moderno'],
+    dormitorio_ninos: ['Infantil', 'Colorido', 'Lúdico', 'Nórdico'],
+    pieza_bebe: ['Infantil', 'Suave', 'Nórdico', 'Minimalista'],
+    pieza_nina: ['Romántico', 'Infantil', 'Boho', 'Colorido'],
+    pieza_nino: ['Aventurero', 'Infantil', 'Industrial', 'Colorido'],
+    // Living/Comedor
+    living: ['Moderno', 'Minimalista', 'Industrial', 'Escandinavo'],
+    comedor: ['Elegante', 'Moderno', 'Rústico', 'Industrial'],
+    sala_estar: ['Acogedor', 'Boho', 'Escandinavo', 'Moderno'],
+    // Cocina/Baño
+    cocina: ['Moderno', 'Industrial', 'Rústico', 'Minimalista'],
+    bano: ['Spa', 'Minimalista', 'Moderno', 'Elegante'],
+    bano_visitas: ['Minimalista', 'Moderno', 'Elegante', 'Industrial'],
+    // Trabajo
+    home_office: ['Minimalista', 'Industrial', 'Moderno', 'Escandinavo'],
+    // Exteriores
+    jardin: ['Natural', 'Mediterráneo', 'Tropical', 'Zen'],
+    terraza: ['Mediterráneo', 'Boho', 'Moderno', 'Tropical'],
+    quincho: ['Rústico', 'Industrial', 'Chileno', 'Mediterráneo'],
+    logia: ['Minimalista', 'Mediterráneo', 'Boho', 'Moderno'],
+    // Otros
+    entrada: ['Minimalista', 'Moderno', 'Elegante', 'Industrial'],
+    bodega: ['Industrial', 'Organizado', 'Minimalista', 'Funcional'],
+    sala_juegos: ['Colorido', 'Lúdico', 'Moderno', 'Creativo']
+  }
+
+  const recommendedNames = recommendations[roomCode] || ['Moderno', 'Minimalista', 'Elegante', 'Escandinavo']
+  return styles.filter(style =>
+    recommendedNames.some(name =>
+      style.name.toLowerCase().includes(name.toLowerCase())
+    )
+  ).slice(0, 4)
 }
 
 export function ContextFirstWizard({
@@ -149,6 +232,7 @@ export function ContextFirstWizard({
     roomHeight: 4,
     colorPaletteId: ''
   })
+  const [openAccordions, setOpenAccordions] = useState(['furniture']) // Furniture accordion open by default
 
   const updateFormData = (updates: Partial<FormData>) => {
     setFormData(prev => ({ ...prev, ...updates }))
@@ -159,6 +243,7 @@ export function ContextFirstWizard({
   const selectedRoom = designData.roomTypes.find(r => r.id === formData.roomTypeId)
   const selectedStyle = designData.styles.find(s => s.id === formData.styleId)
   const selectedPalette = designData.colorPalettes.find(p => p.id === formData.colorPaletteId)
+  const recommendedStyles = selectedRoom ? getRecommendedStyles(selectedRoom.code, designData.styles) : []
 
   const handleGenerate = () => {
     if (!hasTokens) {
@@ -173,8 +258,16 @@ export function ContextFirstWizard({
       room_height: formData.roomHeight
     }
 
-    if (formData.inspirationMode === 'prompt') {
+    // Support combined style + custom prompt
+    if (formData.inspirationMode === 'prompt' || formData.customPrompt) {
       params.prompt = formData.customPrompt
+      if (formData.styleId && formData.inspirationMode === 'style') {
+        // Combine style with custom prompt
+        const style = designData.styles.find(s => s.id === formData.styleId)
+        if (style) {
+          params.prompt = `${style.name} style. ${formData.customPrompt || ''}`
+        }
+      }
     } else {
       params.style_id = formData.styleId
     }
@@ -190,6 +283,26 @@ export function ContextFirstWizard({
   const canProceedStep2 = formData.inspirationMode === 'prompt'
     ? formData.customPrompt.trim().length > 0
     : formData.styleId !== ''
+
+  // Support keyboard navigation
+  const handleKeyNavigation = (e: KeyboardEvent) => {
+    if (e.key === 'Tab' && !e.shiftKey && currentStep < 4 && canProceedToNext()) {
+      e.preventDefault()
+      setCurrentStep(prev => prev + 1)
+    } else if (e.key === 'Tab' && e.shiftKey && currentStep > 1) {
+      e.preventDefault()
+      setCurrentStep(prev => prev - 1)
+    }
+  }
+
+  const canProceedToNext = () => {
+    switch (currentStep) {
+      case 1: return canProceedStep1
+      case 2: return canProceedStep2
+      case 3: return true
+      default: return false
+    }
+  }
 
   const jumpToStep = (step: number) => {
     setCurrentStep(step)
@@ -357,11 +470,11 @@ export function ContextFirstWizard({
 
               <TabsContent value="style" className="mt-4 space-y-3">
                 {/* Recommended Styles First */}
-                {selectedRoom && (
+                {selectedRoom && recommendedStyles.length > 0 && (
                   <div className="mb-4">
-                    <Label className="text-xs font-medium text-[#A3B1A1]">✨ Estilos Recomendados para {selectedRoom.name}</Label>
+                    <Label className="text-xs font-medium text-[#A3B1A1]">✨ Recomendados para {selectedRoom.name}</Label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
-                      {designData.styles.slice(0, 4).map((style) => (
+                      {recommendedStyles.map((style) => (
                         <button
                           key={style.id}
                           onClick={() => updateFormData({ styleId: style.id })}
@@ -380,16 +493,30 @@ export function ContextFirstWizard({
                           </div>
                         </button>
                       ))}
+                      {/* Personalizado button that switches to prompt tab */}
+                      <button
+                        onClick={() => updateFormData({ inspirationMode: 'prompt' })}
+                        className="p-2 rounded-lg border text-left transition-all text-xs border-dashed border-gray-300 hover:border-[#C4886F] hover:bg-[#C4886F]/5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium flex items-center gap-1">
+                            <Wand2 className="h-3 w-3" />
+                            Personalizado
+                          </span>
+                        </div>
+                      </button>
                     </div>
                   </div>
                 )}
 
                 {/* Categorized Styles */}
                 <Label className="text-xs">Explorar por Categoría</Label>
-                <Accordion type="single" collapsible className="w-full">
+                <Accordion type="single" collapsible className="w-full" defaultValue="Clásicos">
                   {Object.entries(categorizedStyles).map(([category, styles]) => (
                     <AccordionItem key={category} value={category}>
-                      <AccordionTrigger className="text-xs">{category}</AccordionTrigger>
+                      <AccordionTrigger className="text-xs">
+                        {category} ({styles.length})
+                      </AccordionTrigger>
                       <AccordionContent>
                         <div className="grid grid-cols-2 gap-2">
                           {styles.map((style) => (
@@ -425,14 +552,15 @@ export function ContextFirstWizard({
                   onChange={(e) => updateFormData({ customPrompt: e.target.value })}
                   placeholder={`Un ${selectedRoom?.name.toLowerCase() || 'espacio'} con estilo...`}
                   className="min-h-[100px] text-sm"
+                  autoFocus
                 />
                 <div className="flex flex-wrap gap-1.5">
                   {[
-                    'Moderno y minimalista',
-                    'Acogedor y cálido',
-                    'Elegante y sofisticado',
-                    'Rústico chileno',
-                    'Boho mediterráneo'
+                    'Moderno y minimalista con toques cálidos',
+                    'Acogedor estilo mediterráneo chileno',
+                    'Elegante con detalles en madera nativa',
+                    'Rústico inspirado en el sur de Chile',
+                    'Boho con colores de Valparaíso'
                   ].map((suggestion) => (
                     <button
                       key={suggestion}
@@ -443,6 +571,12 @@ export function ContextFirstWizard({
                     </button>
                   ))}
                 </div>
+                {/* Option to combine with a style */}
+                {formData.styleId && (
+                  <div className="p-2 rounded-lg bg-[#A3B1A1]/5 border border-[#A3B1A1]/20">
+                    <p className="text-xs text-gray-600">💡 Combinando con estilo: <strong>{selectedStyle?.name}</strong></p>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
 
@@ -481,7 +615,7 @@ export function ContextFirstWizard({
               <p className="text-xs text-gray-500">Personaliza aspectos específicos (opcional)</p>
             </div>
 
-            <Accordion type="multiple" className="w-full">
+            <Accordion type="multiple" className="w-full" value={openAccordions} onValueChange={setOpenAccordions}>
               {/* Furniture Mode */}
               <AccordionItem value="furniture">
                 <AccordionTrigger className="text-xs">
@@ -496,23 +630,26 @@ export function ContextFirstWizard({
                     onValueChange={(value) => updateFormData({ furnitureMode: value })}
                   >
                     <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="replace_all" id="replace_all" />
-                        <Label htmlFor="replace_all" className="text-xs">
-                          Reemplazar todo el mobiliario
-                        </Label>
+                      <div className="flex items-start space-x-2">
+                        <RadioGroupItem value="replace_all" id="replace_all" className="mt-1" />
+                        <div className="flex-1">
+                          <Label htmlFor="replace_all" className="text-xs font-medium">Renovación completa</Label>
+                          <p className="text-[10px] text-gray-500 mt-0.5">Reemplaza todo el mobiliario con opciones nuevas que coincidan con el estilo</p>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="keep_existing" id="keep_existing" />
-                        <Label htmlFor="keep_existing" className="text-xs">
-                          Mantener mobiliario existente
-                        </Label>
+                      <div className="flex items-start space-x-2">
+                        <RadioGroupItem value="keep_existing" id="keep_existing" className="mt-1" />
+                        <div className="flex-1">
+                          <Label htmlFor="keep_existing" className="text-xs font-medium">Conservar lo actual</Label>
+                          <p className="text-[10px] text-gray-500 mt-0.5">Mantiene tus muebles y solo mejora decoración, colores y ambiente</p>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="mix" id="mix" />
-                        <Label htmlFor="mix" className="text-xs">
-                          Mezclar ambos enfoques
-                        </Label>
+                      <div className="flex items-start space-x-2">
+                        <RadioGroupItem value="mix" id="mix" className="mt-1" />
+                        <div className="flex-1">
+                          <Label htmlFor="mix" className="text-xs font-medium">Mezcla inteligente</Label>
+                          <p className="text-[10px] text-gray-500 mt-0.5">Combina muebles existentes con nuevas piezas clave</p>
+                        </div>
                       </div>
                     </div>
                   </RadioGroup>
@@ -529,6 +666,9 @@ export function ContextFirstWizard({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-3">
+                    <div className="p-2 rounded-md bg-blue-50 border border-blue-200">
+                      <p className="text-[10px] text-blue-700">🔍 Detección automática: El sistema analiza las proporciones de tu imagen para ajustar el espacio</p>
+                    </div>
                     <div>
                       <Label className="text-xs">Ancho: {formData.roomWidth}m</Label>
                       <Slider
@@ -555,52 +695,14 @@ export function ContextFirstWizard({
                 </AccordionContent>
               </AccordionItem>
 
-              {/* Color Palette */}
-              <AccordionItem value="colors">
-                <AccordionTrigger className="text-xs">
+              {/* Color Palette - Coming Soon */}
+              <AccordionItem value="colors" disabled>
+                <AccordionTrigger className="text-xs opacity-50 cursor-not-allowed">
                   <div className="flex items-center gap-2">
                     <Palette className="h-3.5 w-3.5" />
-                    Paleta de Colores
+                    Paleta de Colores <Badge variant="outline" className="ml-2 text-[8px] px-1">Próximamente</Badge>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => updateFormData({ colorPaletteId: '' })}
-                      className={cn(
-                        "w-full p-2 rounded-lg border text-xs text-left",
-                        !formData.colorPaletteId
-                          ? "border-[#A3B1A1] bg-[#A3B1A1]/5"
-                          : "border-gray-200"
-                      )}
-                    >
-                      Automático (recomendado)
-                    </button>
-                    {designData.colorPalettes.map((palette) => (
-                      <button
-                        key={palette.id}
-                        onClick={() => updateFormData({ colorPaletteId: palette.id })}
-                        className={cn(
-                          "w-full p-2 rounded-lg border flex items-center justify-between",
-                          formData.colorPaletteId === palette.id
-                            ? "border-[#A3B1A1] bg-[#A3B1A1]/5"
-                            : "border-gray-200"
-                        )}
-                      >
-                        <span className="text-xs">{palette.name}</span>
-                        <div className="flex gap-1">
-                          {palette.hex_colors.slice(0, 4).map((color, idx) => (
-                            <div
-                              key={idx}
-                              className="w-4 h-4 rounded-full border border-gray-300"
-                              style={{ backgroundColor: color }}
-                            />
-                          ))}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </AccordionContent>
               </AccordionItem>
             </Accordion>
 
