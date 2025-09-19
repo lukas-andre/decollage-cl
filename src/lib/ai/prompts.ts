@@ -61,6 +61,24 @@ export const ROOM_TYPES: Record<string, RoomType> = {
     name: 'Home Office',
     furniture: ['desk', 'chair', 'shelving', 'lighting'],
     atmosphere: 'productive workspace'
+  },
+  pieza_nino: {
+    id: 'pieza_nino',
+    name: 'Pieza Niño',
+    furniture: ['cama infantil', 'escritorio', 'juguetes', 'estanterías'],
+    atmosphere: 'espacio divertido y educativo'
+  },
+  pieza_nina: {
+    id: 'pieza_nina',
+    name: 'Pieza Niña',
+    furniture: ['cama princesa', 'tocador', 'juguetes', 'espejo'],
+    atmosphere: 'espacio mágico y creativo'
+  },
+  pieza_bebe: {
+    id: 'pieza_bebe',
+    name: 'Pieza Bebé',
+    furniture: ['cuna', 'cambiador', 'mecedora', 'móvil'],
+    atmosphere: 'espacio seguro y tranquilo'
   }
 }
 
@@ -71,7 +89,7 @@ export const STAGING_STYLES: Record<string, StagingStyle> = {
     id: 'contemporary',
     name: 'Contemporary',
     description: 'Modern clean lines with current trends',
-    prompt: 'Contemporary style DECORATION ONLY. Clean lines, neutral colors, modern furniture. MAINTAIN ALL existing walls, windows, doors, ceiling, floor structure. Only add furniture and decor. Professional staging, photorealistic.',
+    prompt: 'Contemporary style DECORATION ONLY. Clean lines, neutral colors, modern furniture. MAINTAIN ALL existing walls, windows, doors, ceiling, floor structure. PRESERVE window views/backgrounds. Only add furniture and decor. Professional staging, photorealistic.',
     keywords: ['modern', 'clean', 'neutral', 'minimal']
   },
   traditional: {
@@ -143,6 +161,13 @@ export const STAGING_STYLES: Record<string, StagingStyle> = {
     description: 'Coastal European elegance',
     prompt: 'Mediterranean coastal interior. Terracotta, blue accents. PRESERVE existing windows, doors, architecture. Warm lighting. Professional staging.',
     keywords: ['coastal', 'terracotta', 'warm', 'european']
+  },
+  personalizado: {
+    id: 'personalizado',
+    name: 'Personalizado',
+    description: 'Describe tu visión única - agrega más detalles para resultados más personalizados',
+    prompt: 'Custom interior design as specified by user. PRESERVE existing windows, doors, architecture. PRESERVE window views/backgrounds. Professional staging with user-defined style elements.',
+    keywords: ['custom', 'personalized', 'unique', 'user-defined']
   }
 }
 
@@ -194,7 +219,7 @@ export function generateStagingPrompt(
   
   // Add architectural preservation if not already in prompt
   if (!prompt.includes('MAINTAIN')) {
-    prompt += ' MAINTAIN ALL existing architecture. DECORATION ONLY.'
+    prompt += ' MAINTAIN ALL existing architecture. PRESERVE window views/backgrounds. DECORATION ONLY.'
   }
   
   // Trim if over 500 chars

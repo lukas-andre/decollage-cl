@@ -22,15 +22,32 @@
 
 ## 🔴 MVP CRITICAL FEATURES
 
-### M4: User Freedom in Design Creation 🔴
+### NEW - M1: Children's Rooms & Decoration 🔴 **TOP PRIORITY**
+**Status**: CRITICAL - Market Expansion (Family Segment)
+- **Kids Categories**: Add "Pieza Niño", "Pieza Niña", "Pieza Bebé" room types
+- **Age-Appropriate Designs**: Safe, educational, and fun decorative elements
+- **Soft Color Palettes**: Gentle, child-friendly color schemes
+- **Safety First**: Child-safe furniture and decor suggestions
+- **Chilean Family Values**: Reflect Chilean parenting culture and aesthetics
+- **Growth Adaptable**: Designs that can evolve as children grow
+
+### NEW - M2: Image Preview System 🔴
+**Status**: CRITICAL - Basic UX Issue
+- **Fullscreen Preview**: View uploaded base images in modal
+- **Zoom Capabilities**: Pinch-to-zoom and pan functionality
+- **Mobile Optimized**: Touch-friendly image viewer
+- **Quick Access**: Preview from project gallery thumbnails
+
+### M3: User Freedom in Design Creation 🔴
 **Status**: CRITICAL - User Experience Blocker
-- **Custom Category Option**: Add "Personalizado" or "Otro" style category for free-form prompting
+- **Custom Category Option**: Add "Personalizado" style for free-form prompting
+- **Personalization Hint**: "Agrega más detalles para resultados más personalizados"
 - **Optional Style Selection**: Make style categories optional, not mandatory
 - **Direct Prompting**: Allow users to describe their vision without forced categorization
 - **Simplified Workflow**: Remove barriers between user intent and AI generation
 - **Chilean UX**: Respect user creativity while maintaining cultural design options
-- **Complete Room Redesign**: "Reemplazar Todo" mode should replace EVERYTHING (walls, floors, furniture, decor) - complete blank slate transformation
-- **True Zero-Start**: AI should imagine room as empty space and design from scratch, not just replace furniture
+- **Complete Room Redesign**: "Reemplazar Todo" mode should replace EVERYTHING (walls, floors, furniture, decor)
+- **Window Preservation**: AI prompts include "No cambiar fondos de ventanas"
 
 ### M5: Pricing & Business Strategy 🔴
 **Status**: PENDING - Business Critical
@@ -39,8 +56,8 @@
 - Create pricing psychology strategy
 - Launch discount strategy
 
-### M8: Content Sharing & Viral Growth 🔴
-**Status**: 🟡 **PARTIALLY COMPLETED** - Growth Engine Ready 🚀
+### M4: Content Sharing & Viral Growth 🔴
+**Status**: 🟡 **90% COMPLETED** - Growth Engine Ready 🚀
 - ✅ **Favorites Widget**: Quick-access panel in project workspace with drag & drop - **INTEGRATED**
 - ✅ **Share Preview**: Live preview of shareable content as you select favorites - **FUNCTIONAL**
 - ✅ **One-Click Sharing**: Generate beautiful project showcases with ISR - **OPERATIONAL**
@@ -51,9 +68,10 @@
 - ✅ **Real-time Engagement**: "Aplausos" reaction system with real-time updates - **REAL-TIME**
 - ✅ **Frontend Integration**: ShareModal, share buttons, complete user workflow - **INTEGRATED**
 - ✅ **Build & Deploy Ready**: All TypeScript errors resolved, production ready - **VERIFIED**
+- 🔄 **Login Gate Strategy**: Quick shares public but require login for interactions (likes, downloads, "crear mi diseño") - **NEEDED**
 - 🔄 **Share Management**: CRUD interface for users to manage their shared projects (edit, delete, update privacy settings) - **NEEDED**
 
-**🎉 READY FOR USER TESTING - Complete viral growth engine operational (needs share management UI)**
+**🎉 90% COMPLETE - Growth engine operational, needs login gates & management UI**
 
 ### M9: Saved Content System 🔴
 **Status**: 🟡 PARTIALLY COMPLETED - User Retention
@@ -74,17 +92,41 @@
 - 🔄 **Basic Metrics**: Token consumption, project completion rates (PENDING)
 - 🔄 **Analytics Dashboard**: Frontend for viewing metrics (PENDING)
 
-### M11: Seasonal & Children Categories 🔴
-**Status**: PENDING - Market Expansion
-- **Seasonal Themes**: 18 de Septiembre, Navidad Chilena, Halloween, Día de la Madre
-- **Baby Rooms**: Neutral, niña, niño options with soft palettes
-- **Children Rooms**: Age-appropriate designs (3-12 años)
-- **Seasonal Style Variations**: Apply Chilean holiday themes to existing styles
-- **Family-Safe Content**: Child-appropriate imagery and themes
-
 ---
 
 ## 🟡 MVP CORE FEATURES
+
+### NEW - Facades & Exteriors Module 🟡
+**Status**: IMPORTANT - Market Expansion
+- **Fachadas Category**: Add exterior house design transformations
+- **Exteriores/Jardines**: Landscaping and outdoor space design
+- **Architectural Elements**: Windows, doors, roof, materials
+- **Chilean Architecture**: Traditional and modern Chilean home styles
+- **Seasonal Gardens**: Native Chilean plants and outdoor aesthetics
+
+### NEW - Save Custom Styles 🟡
+**Status**: IMPORTANT - User Personalization
+- **"Guardar Estilo" Button**: Save successful generations as templates
+- **Personal Style Library**: User's saved custom prompts and preferences
+- **Reusable Templates**: Apply saved styles to new projects
+- **Style Naming**: Custom names for personal design preferences
+- **Style Sharing**: Option to share custom styles with community
+
+### NEW - Quick Iterate Feature 🟡
+**Status**: ENHANCEMENT - Design Workflow
+- **"Quick Add" Button**: Rapid iteration on generated images
+- **Smart Defaults**: Pre-fill with "conservar todo" + clear prompt
+- **Additive Design**: Add elements to existing designs without starting over
+- **Context Preservation**: Maintain room context while adding new elements
+- **Iteration History**: Track changes made in quick iterations
+
+### NEW - Project Style Selection 🟡
+**Status**: ENHANCEMENT - Project Organization
+- **Project-Level Styles**: Optional style assignment per project
+- **Style Consistency**: Maintain design coherence across generations
+- **Default Project Style**: Pre-select style for all new generations
+- **Style Override**: Allow per-generation style changes when needed
+- **Style History**: Track style evolution within projects
 
 ### Mobile Experience 🟡
 **Status**: PENDING - User Experience
@@ -173,34 +215,46 @@
 
 ---
 
-## 🚀 Implementation Priority
+## 🚀 Updated Implementation Priority (Post-Sharing Success)
 
-### Phase 1 (Weeks 1-2): Core Sharing ✅ **FULLY COMPLETED**
+### Phase 1 (Week 1): Critical UX Blockers 🔴 **IMMEDIATE**
+1. 🔄 **Children's Room Categories** - Add "Pieza Niño/Niña/Bebé" room types (M1)
+2. 🔄 **Image Preview Modal** - Fullscreen image viewer for uploads (M2)
+3. 🔄 **Custom Style Option** - Add "Personalizado" category for free prompting (M3)
+4. 🔄 **Window Preservation** - Update AI prompts to preserve window backgrounds (M3)
+5. 🔄 **Login Gate for Shares** - Public viewing, login required for interactions (M4)
+
+### Phase 2 (Week 2): Growth & Retention Features 🟡
+1. 🔄 **Share Management Dashboard** - CRUD interface for user shares (M4)
+2. 🔄 **Facades & Exteriors Module** - New room categories for exteriors
+3. 🔄 **Basic Mobile Optimizations** - Touch improvements, responsive fixes
+
+### Phase 3 (Week 3): Enhanced Features 🟢
+1. 🔄 **Save Custom Styles** - Personal style library system
+2. 🔄 **Quick Iterate Feature** - Rapid iteration on generated images
+3. 🔄 **Project Style Selection** - Optional style assignment per project
+
+### COMPLETED ✅
+**Phase 0: Core Sharing Infrastructure (September 2024)**
 1. ✅ Favorites widget in project workspace with drag & drop - **INTEGRATED & FUNCTIONAL**
 2. ✅ Share preview system with live updates - **WORKING IN SHAREMODAL**
 3. ✅ Public project pages with dynamic OG images and ISR - **DEPLOYED & WORKING**
 4. ✅ Analytics infrastructure and real-time engagement - **TRACKING ACTIVE**
 5. ✅ Frontend UI integration and user workflow - **COMPLETE & TESTED**
 6. ✅ Build system and TypeScript fixes - **PRODUCTION READY**
-7. 🔄 Basic mobile responsive improvements (ONGOING)
 
-### Phase 2 (Weeks 3-4): Social & Discovery
+### Future Roadmap (Post-Current Development)
+**Social & Discovery Phase**:
 1. Public gallery with featured content
-2. Like/save functionality (with login prompts)
-3. Moodboard creation system
-4. User onboarding flow
+2. Advanced moodboard system
+3. User onboarding flow improvements
+4. Community features
 
-### Phase 3 (Weeks 5-6): Polish & Analytics
-1. Design iteration tracking
-2. Basic analytics implementation
-3. Mobile touch optimizations
-4. Pricing strategy finalization
-
-### Phase 4 (Post-MVP): Expansion
-1. Seasonal themes implementation (18 Sept, Navidad)
-2. Children & baby room categories
-3. Advanced social features
-4. Enhanced mobile experience
+**Seasonal & Cultural Expansion**:
+1. Seasonal themes (18 Sept, Navidad Chilena, Día de la Madre)
+2. Advanced children's categories (age-specific designs)
+3. Chilean cultural celebrations integration
+4. Regional aesthetic variations
 
 ---
 
@@ -235,6 +289,24 @@ All MVP features must maintain strong Chilean cultural identity:
 - **Type Safety**: 100% TypeScript coverage, production-ready build
 
 **Next Priority**: Focus on M5 (Pricing Strategy) and M11 (Seasonal Content) to complete MVP for Chilean market launch.
+
+---
+
+---
+
+## 🎉 **MAJOR UPDATE - September 19, 2025**
+
+### **Critical New Priorities Added**:
+1. **Children's Rooms** (TOP) - "Pieza Niño/Niña/Bebé" categories for family market expansion
+2. **Image Preview UX** - Basic missing functionality for uploaded images
+3. **User Freedom** - "Personalizado" style option to remove barriers
+4. **Facade Module** - Exterior design capabilities for complete home transformation
+5. **Login Gates** - Strategic conversion points in sharing flow
+
+### **Development Status**:
+- ✅ **Sharing Engine**: 90% complete, viral growth ready
+- 🔄 **Current Focus**: Children's categories + UX improvements
+- 🎯 **Next Milestone**: Complete family segment expansion
 
 ---
 
