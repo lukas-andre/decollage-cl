@@ -17,7 +17,8 @@ import {
   Grid2x2,
   Zap,
   Wand2,
-  Brush
+  Brush,
+  Expand
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -28,6 +29,7 @@ import { NoTokensDialog } from '@/components/tokens/NoTokensDialog'
 import { ContextFirstWizard } from '@/components/projects/ContextFirstWizard'
 import { ShareButton } from '@/components/share/ShareButton'
 import { ImageViewerModal } from '@/components/projects/ImageViewerModal'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { motion } from 'framer-motion'
 
 
@@ -84,6 +86,7 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
     variant?: Variant
     initialMode?: 'view' | 'edit'
   }>({ isOpen: false })
+  const [expandedBaseImage, setExpandedBaseImage] = useState(false)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
@@ -540,13 +543,19 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
               <div className="flex gap-4">
                 <div className="w-32">
                   <h3 className="text-xs font-semibold text-gray-900 mb-2">Imagen Activa</h3>
-                  <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-[#A3B1A1] shadow-sm">
+                  <div
+                    className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-[#A3B1A1] shadow-sm cursor-pointer group transition-all hover:shadow-md"
+                    onClick={() => setExpandedBaseImage(true)}
+                  >
                     <Image
                       src={selectedBaseImage.url}
                       alt={selectedBaseImage.name || 'Imagen'}
                       fill
                       className="object-cover"
                     />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                      <Expand className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
                   </div>
                 </div>
                 <div className="flex-1">
@@ -765,6 +774,26 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
             toast.success('Imagen agregada como base para el proyecto')
           }}
         />
+      )}
+
+      {/* Base Image Expanded Modal */}
+      {expandedBaseImage && selectedBaseImage && (
+        <Dialog open={expandedBaseImage} onOpenChange={setExpandedBaseImage}>
+          <DialogContent className="max-w-[90vw] md:max-w-[70vw] lg:max-w-[60vw] p-0">
+            <DialogHeader className="p-4 border-b">
+              <DialogTitle>{selectedBaseImage.name || 'Imagen Base'}</DialogTitle>
+            </DialogHeader>
+            <div className="relative w-full" style={{ aspectRatio: '16/10' }}>
+              <Image
+                src={selectedBaseImage.url}
+                alt={selectedBaseImage.name || 'Imagen Base'}
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* No Tokens Dialog */}

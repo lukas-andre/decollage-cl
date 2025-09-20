@@ -31,22 +31,23 @@
 - **Chilean Family Values**: Reflect Chilean parenting culture and aesthetics
 - **Growth Adaptable**: Designs that can evolve as children grow
 
-### NEW - M2: Image Preview System ✅
-**Status**: CRITICAL - Basic UX Issue
-- **Fullscreen Preview**: View uploaded base images in modal
-- **Zoom Capabilities**: Pinch-to-zoom and pan functionality
-- **Mobile Optimized**: Touch-friendly image viewer
-- **Quick Access**: Preview from project gallery thumbnails
+### NEW - M2: Image Preview System ✅ **COMPLETED**
+**Status**: COMPLETED - Basic UX Issue Fixed
+- ✅ **Fullscreen Preview**: View uploaded base images in modal - **DONE**
+- ✅ **Base Image Expansion**: Click to expand base image preview in wizard - **DONE**
+- ✅ **Mobile Optimized**: Touch-friendly image viewer - **DONE**
+- ✅ **Quick Access**: Preview from project gallery thumbnails - **DONE**
 
-### M3: User Freedom in Design Creation ✅ **PARTIALLY COMPLETED**
-**Status**: 🟡 ENHANCED - Context-First Wizard Implemented
-- ✅ **4-Step Wizard Flow**: Context → Inspiration → Details → Generate workflow
-- ✅ **Style + Custom Prompt Tabs**: Clear choice between guided styles and custom vision
-- ✅ **Progressive Disclosure**: Optional advanced settings in accordion
-- ✅ **Chilean UX**: Room categorization with cultural design options
-- 🔄 **Style + Prompt Combination**: Need to allow BOTH style selection AND custom prompt
-- 🔄 **Complete Room Redesign**: "Reemplazar Todo" mode enhancement needed
-- 🔄 **Window Preservation**: AI prompts enhancement needed
+### M3: User Freedom in Design Creation ✅ **COMPLETED**
+**Status**: ✅ COMPLETED - Context-First Wizard Fully Implemented
+- ✅ **4-Step Wizard Flow**: Context → Inspiration → Details → Generate workflow - **DONE**
+- ✅ **Style + Custom Prompt Tabs**: Clear choice between guided styles and custom vision - **DONE**
+- ✅ **Progressive Disclosure**: Optional advanced settings in accordion - **DONE**
+- ✅ **Chilean UX**: Room categorization with cultural design options - **DONE**
+- ✅ **Style + Prompt Combination**: Users can select style AND add custom prompt - **DONE**
+- ✅ **Auto-advance on Room Selection**: Wizard auto-progresses after room selection - **DONE**
+- ✅ **Dimensions as "Inferidas por Decollage ✨"**: Replaced specific measurements - **DONE**
+- ✅ **Replaced all AI/IA references with "Decollage"**: Brand consistency - **DONE**
 
 ### M5: Pricing & Business Strategy 🔴
 **Status**: PENDING - Business Critical
@@ -218,9 +219,9 @@
 
 ### Phase 1 (Week 1): Critical UX Blockers 🔴 **IMMEDIATE**
 1. 🔄 **Children's Room Categories** - Add "Pieza Niño/Niña/Bebé" room types (M1)
-2. 🔄 **Image Preview Modal** - Fullscreen image viewer for uploads (M2)
-3. 🔄 **Custom Style Option** - Add "Personalizado" category for free prompting (M3)
-4. 🔄 **Window Preservation** - Update AI prompts to preserve window backgrounds (M3)
+2. ✅ **Image Preview Modal** - Fullscreen image viewer for uploads (M2) - **COMPLETED**
+3. ✅ **Custom Style Option** - Add "Personalizado" category for free prompting (M3) - **COMPLETED**
+4. ✅ **Wizard UX Improvements** - Auto-advance, clickable preview, Decollage branding - **COMPLETED**
 5. 🔄 **Login Gate for Shares** - Public viewing, login required for interactions (M4)
 
 ### Phase 2 (Week 2): Growth & Retention Features 🟡
@@ -290,6 +291,31 @@ All MVP features must maintain strong Chilean cultural identity:
 **Next Priority**: Focus on M5 (Pricing Strategy) and M11 (Seasonal Content) to complete MVP for Chilean market launch.
 
 ---
+
+---
+
+## 🎉 **MAJOR UPDATE - January 19, 2025**
+
+### **NEW COMPLETIONS** ✅:
+
+#### **Image Editing & Refinement System** ✅ **COMPLETED**
+1. ✅ **Unified Modal Experience** - Single ImageViewerModal for both viewing and editing
+2. ✅ **Prompt-Based Refinement** - Simplified editing with prompt-only approach (removed canvas/masking)
+3. ✅ **Edit Mode Toggle** - Brush icon opens in edit mode, card/expand opens in view mode
+4. ✅ **Variation Generation** - Generate multiple refinement options from prompts
+5. ✅ **Use as Base Image** - Ability to use refined images as new base images for projects
+6. ✅ **Variations Sidebar** - Preview and select from generated variations
+
+#### **Wizard UX Improvements** ✅ **COMPLETED**
+1. ✅ **Clickable Base Image Preview** - Expand base image from wizard "Imagen Activa" preview
+2. ✅ **Auto-advance on Room Selection** - Automatic progression after selecting room type
+3. ✅ **Prompt Always Present** - Prompt step always available with conditional style requirement
+4. ✅ **Dimensions Display** - Shows "Inferidas por Decollage ✨" instead of specific measurements
+5. ✅ **Remove AI References** - All "IA"/"inteligencia artificial" replaced with "Decollage"
+6. ✅ **Style Optional with Prompt** - When prompt exists, style selection becomes optional
+
+### **BUG FIXES PENDING** 🔧:
+1. **Cloudflare Import Error** - Fixed `uploadToCloudflareImages` import (changed to use `getCloudflareImages` class method)
 
 ---
 

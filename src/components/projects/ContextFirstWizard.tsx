@@ -36,7 +36,8 @@ import {
   Wand2,
   Loader2,
   Edit2,
-  Zap
+  Zap,
+  Expand
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -280,9 +281,10 @@ export function ContextFirstWizard({
   }
 
   const canProceedStep1 = formData.roomTypeId !== ''
+  // Si hay prompt, el estilo es opcional. Si no hay prompt, el estilo es obligatorio
   const canProceedStep2 = formData.inspirationMode === 'prompt'
-    ? formData.customPrompt.trim().length > 0
-    : formData.styleId !== ''
+    ? formData.customPrompt.trim().length > 0  // En modo prompt, solo necesita prompt
+    : formData.styleId !== '' || formData.customPrompt.trim().length > 0  // En modo estilo, necesita estilo O prompt
 
   // Support keyboard navigation
   const handleKeyNavigation = (e: KeyboardEvent) => {
@@ -369,7 +371,11 @@ export function ContextFirstWizard({
                           ? "border-[#A3B1A1] bg-[#A3B1A1]/5"
                           : "border-gray-200 hover:border-gray-300"
                       )}
-                      onClick={() => updateFormData({ roomTypeId: room.id })}
+                      onClick={() => {
+                        updateFormData({ roomTypeId: room.id })
+                        // Auto-avanzar al siguiente paso
+                        setTimeout(() => setCurrentStep(2), 300)
+                      }}
                     >
                       <CardContent className="p-3">
                         <div className="flex items-center gap-2">
@@ -393,7 +399,11 @@ export function ContextFirstWizard({
                           ? "border-[#A3B1A1] bg-[#A3B1A1]/5"
                           : "border-gray-200 hover:border-gray-300"
                       )}
-                      onClick={() => updateFormData({ roomTypeId: room.id })}
+                      onClick={() => {
+                        updateFormData({ roomTypeId: room.id })
+                        // Auto-avanzar al siguiente paso
+                        setTimeout(() => setCurrentStep(2), 300)
+                      }}
                     >
                       <CardContent className="p-3">
                         <div className="flex items-center gap-2">
@@ -417,7 +427,11 @@ export function ContextFirstWizard({
                           ? "border-[#A3B1A1] bg-[#A3B1A1]/5"
                           : "border-gray-200 hover:border-gray-300"
                       )}
-                      onClick={() => updateFormData({ roomTypeId: room.id })}
+                      onClick={() => {
+                        updateFormData({ roomTypeId: room.id })
+                        // Auto-avanzar al siguiente paso
+                        setTimeout(() => setCurrentStep(2), 300)
+                      }}
                     >
                       <CardContent className="p-3">
                         <div className="flex items-center gap-2">
@@ -431,14 +445,17 @@ export function ContextFirstWizard({
               </TabsContent>
             </Tabs>
 
-            <Button
-              onClick={() => setCurrentStep(2)}
-              disabled={!canProceedStep1}
-              className="w-full"
-            >
-              Siguiente
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            {/* Botón Siguiente oculto ya que auto-avanza al seleccionar */}
+            {formData.roomTypeId && (
+              <Button
+                onClick={() => setCurrentStep(2)}
+                disabled={!canProceedStep1}
+                className="w-full"
+              >
+                Siguiente
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            )}
           </motion.div>
         )}
 
@@ -546,7 +563,7 @@ export function ContextFirstWizard({
               </TabsContent>
 
               <TabsContent value="prompt" className="mt-4 space-y-3">
-                <Label className="text-xs">Describe tu visión perfecta</Label>
+                <Label className="text-xs">Describe tu visión perfecta {formData.styleId ? '(opcional)' : ''}</Label>
                 <Textarea
                   value={formData.customPrompt}
                   onChange={(e) => updateFormData({ customPrompt: e.target.value })}
@@ -571,12 +588,27 @@ export function ContextFirstWizard({
                     </button>
                   ))}
                 </div>
-                {/* Option to combine with a style */}
-                {formData.styleId && (
-                  <div className="p-2 rounded-lg bg-[#A3B1A1]/5 border border-[#A3B1A1]/20">
-                    <p className="text-xs text-gray-600">💡 Combinando con estilo: <strong>{selectedStyle?.name}</strong></p>
-                  </div>
-                )}
+                {/* Style selector inside prompt tab */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Combinar con estilo (opcional)</Label>
+                  <select
+                    value={formData.styleId}
+                    onChange={(e) => updateFormData({ styleId: e.target.value })}
+                    className="w-full px-3 py-2 text-xs border rounded-md"
+                  >
+                    <option value="">Sin estilo específico</option>
+                    {designData.styles.map((style) => (
+                      <option key={style.id} value={style.id}>
+                        {style.name} ({style.token_cost || 1} token)
+                      </option>
+                    ))}
+                  </select>
+                  {formData.styleId && (
+                    <div className="p-2 rounded-lg bg-[#A3B1A1]/5 border border-[#A3B1A1]/20">
+                      <p className="text-xs text-gray-600">✨ Se combinará con estilo: <strong>{selectedStyle?.name}</strong></p>
+                    </div>
+                  )}
+                </div>
               </TabsContent>
             </Tabs>
 
@@ -666,8 +698,8 @@ export function ContextFirstWizard({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-3">
-                    <div className="p-2 rounded-md bg-blue-50 border border-blue-200">
-                      <p className="text-[10px] text-blue-700">🔍 Detección automática: El sistema analiza las proporciones de tu imagen para ajustar el espacio</p>
+                    <div className="p-2 rounded-md bg-[#A3B1A1]/10 border border-[#A3B1A1]/30">
+                      <p className="text-[10px] text-[#A3B1A1] font-medium">✨ Decollage detecta automáticamente las proporciones de tu espacio</p>
                     </div>
                     <div>
                       <Label className="text-xs">Ancho: {formData.roomWidth}m</Label>
@@ -803,7 +835,7 @@ export function ContextFirstWizard({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium">Dimensiones:</p>
-                  <p className="text-xs text-gray-600">{formData.roomWidth}m × {formData.roomHeight}m</p>
+                  <p className="text-xs text-gray-600">Inferidas por Decollage ✨</p>
                 </div>
                 <Button
                   variant="ghost"

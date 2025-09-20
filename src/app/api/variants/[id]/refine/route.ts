@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { GeminiProvider } from '@/lib/ai/providers/gemini'
-import { uploadToCloudflareImages } from '@/lib/cloudflare-images'
+import { getCloudflareImages } from '@/lib/cloudflare-images'
 
 export async function POST(
   request: NextRequest,
@@ -104,11 +104,19 @@ export async function POST(
 
         if (generatedImageUrl) {
           // Upload to Cloudflare
-          const cloudflareResult = await uploadToCloudflareImages(generatedImageUrl)
+          try {
+            const cloudflareImages = getCloudflareImages()
 
-          if (cloudflareResult?.url) {
-            variations.push(cloudflareResult.url)
-          } else {
+            // Convert data URL to blob if needed
+            const response = await fetch(generatedImageUrl)
+            const blob = await response.blob()
+            const file = new File([blob], `refined-${Date.now()}.jpg`, { type: 'image/jpeg' })
+
+            const uploadResult = await cloudflareImages.uploadImage(file, 'refined-image')
+            const urls = cloudflareImages.getVariantUrls(uploadResult.result.id)
+            variations.push(urls.original)
+          } catch (uploadError) {
+            console.error('Error uploading to Cloudflare:', uploadError)
             // Fallback to original URL for demo
             variations.push(generatedImageUrl)
           }
