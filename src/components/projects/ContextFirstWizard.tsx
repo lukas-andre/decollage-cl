@@ -37,7 +37,9 @@ import {
   Loader2,
   Edit2,
   Zap,
-  Expand
+  Expand,
+  Check,
+  Plus
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -83,6 +85,7 @@ interface ContextFirstWizardProps {
   tokenBalance: number
   onGenerate: (params: any) => void
   onNoTokens: () => void
+  onGenerationComplete?: boolean
 }
 
 // Room type icons mapping
@@ -251,7 +254,8 @@ export function ContextFirstWizard({
   hasTokens,
   tokenBalance,
   onGenerate,
-  onNoTokens
+  onNoTokens,
+  onGenerationComplete = false
 }: ContextFirstWizardProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<FormData>({
@@ -338,6 +342,25 @@ export function ContextFirstWizard({
 
   const jumpToStep = (step: number) => {
     setCurrentStep(step)
+  }
+
+  const handleQuickNewGeneration = () => {
+    // Reset form data to initial state
+    setFormData({
+      roomTypeId: '',
+      roomCategory: 'interiores',
+      inspirationMode: 'style',
+      styleId: '',
+      customPrompt: '',
+      furnitureMode: 'replace_all',
+      roomWidth: 4,
+      roomHeight: 4,
+      colorPaletteId: ''
+    })
+    // Reset to first step
+    setCurrentStep(1)
+    // Reset open accordions
+    setOpenAccordions(['furniture'])
   }
 
   return (
@@ -959,6 +982,30 @@ export function ContextFirstWizard({
               </div>
             )}
 
+            {/* Generation Completion & Quick New Generation */}
+            {onGenerationComplete && !generating && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-lg bg-gradient-to-r from-[#A3B1A1]/10 to-[#C4886F]/10 border border-[#A3B1A1]/20"
+              >
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <Check className="h-5 w-5 text-[#A3B1A1]" />
+                  <span className="text-sm font-medium text-[#A3B1A1]">¡Diseño generado exitosamente!</span>
+                </div>
+                <Button
+                  onClick={handleQuickNewGeneration}
+                  className="w-full bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Crear Nuevo Diseño
+                </Button>
+                <p className="text-xs text-center text-gray-500 mt-2">
+                  Inicia rápidamente una nueva generación con la misma imagen
+                </p>
+              </motion.div>
+            )}
+
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -971,13 +1018,18 @@ export function ContextFirstWizard({
               </Button>
               <Button
                 onClick={handleGenerate}
-                disabled={generating || !hasTokens}
+                disabled={generating || !hasTokens || onGenerationComplete}
                 className="flex-1 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90"
               >
                 {generating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Generando...
+                  </>
+                ) : onGenerationComplete ? (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Diseño Completado
                   </>
                 ) : (
                   <>

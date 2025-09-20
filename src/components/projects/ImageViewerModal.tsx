@@ -33,7 +33,7 @@ interface ImageViewerModalProps {
   colorScheme?: string
   projectId?: string
   variantId?: string
-  onQuickShare?: () => void
+  onQuickShare?: (variantId: string) => void
   onSaveRefinement?: (newVariant: any) => void
   onAddAsBaseImage?: () => void
   initialMode?: 'view' | 'edit'
@@ -314,12 +314,12 @@ export function ImageViewerModal({
                   )}
 
                   {/* Quick Share Button */}
-                  {onQuickShare && (
+                  {onQuickShare && variantId && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={onQuickShare}
-                      className="gap-2"
+                      onClick={() => onQuickShare(variantId)}
+                      className="gap-2 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90 text-white border-none"
                     >
                       <Share2 className="h-4 w-4" />
                       Compartir

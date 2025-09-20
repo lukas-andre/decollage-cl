@@ -52,30 +52,36 @@ export function EnhancedShareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl w-full h-[90vh] flex flex-col p-0 gap-0">
+        {/* Fixed Header */}
+        <div className="px-6 pt-6 pb-4 border-b bg-white shrink-0">
           <DialogTitle className="text-3xl font-light text-[#333333]">
             Compartir tu transformación
           </DialogTitle>
           <DialogDescription className="text-base text-gray-600">
             Selecciona cómo quieres compartir tu proyecto {project.name}
           </DialogDescription>
-        </DialogHeader>
+        </div>
 
-        <Tabs value={shareFormat} onValueChange={(value) => setShareFormat(value as 'quick' | 'story')} className="flex-1 flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="quick" className="data-[state=active]:bg-[#A3B1A1]/10">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Compartir Rápido
-            </TabsTrigger>
-            <TabsTrigger value="story" className="data-[state=active]:bg-[#C4886F]/10">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Crear Historia
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={shareFormat} onValueChange={(value) => setShareFormat(value as 'quick' | 'story')} className="flex-1 flex flex-col min-h-0">
+          {/* Fixed Tabs */}
+          <div className="px-6 pt-4 pb-2 bg-white border-b shrink-0">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="quick" className="data-[state=active]:bg-[#A3B1A1]/10">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Compartir Rápido
+              </TabsTrigger>
+              <TabsTrigger value="story" className="data-[state=active]:bg-[#C4886F]/10">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Crear Historia
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          <div className="flex-1 overflow-y-auto">
-            <TabsContent value="quick" className="space-y-4">
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="px-6 py-4">
+              <TabsContent value="quick" className="space-y-4 mt-0 data-[state=inactive]:hidden">
               <Card className="p-4 bg-[#A3B1A1]/5 border-[#A3B1A1]/20">
                 <div className="flex items-start space-x-3">
                   <MessageSquare className="w-5 h-5 text-[#A3B1A1] mt-0.5" />
@@ -142,82 +148,84 @@ export function EnhancedShareDialog({
               </div>
             </TabsContent>
 
-            <TabsContent value="story" className="space-y-4">
-              <Card className="p-4 bg-[#C4886F]/5 border-[#C4886F]/20">
-                <div className="flex items-start space-x-3">
-                  <Sparkles className="w-5 h-5 text-[#C4886F] mt-0.5" />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-[#333333]">Crear Historia</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Crea una página estilo revista con múltiples diseños, paletas de colores y tu perfil.
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="secondary" className="text-xs">
-                        Múltiples diseños
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs">
-                        Página completa
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs">
-                        SEO optimizado
-                      </Badge>
+              <TabsContent value="story" className="space-y-4 mt-0 pb-6 data-[state=inactive]:hidden">
+                <Card className="p-4 bg-[#C4886F]/5 border-[#C4886F]/20">
+                  <div className="flex items-start space-x-3">
+                    <Sparkles className="w-5 h-5 text-[#C4886F] mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="font-medium text-[#333333]">Crear Historia</h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Crea una página estilo revista con múltiples diseños, paletas de colores y tu perfil.
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="secondary" className="text-xs">
+                          Múltiples diseños
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          Página completa
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          SEO optimizado
+                        </Badge>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
 
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-[#333333]">
-                  Selecciona los diseños para tu historia ({selectedGenerations.size} seleccionados):
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  {generations.map((generation, index) => (
-                    <button
-                      key={generation.id}
-                      onClick={() => toggleSelection(generation.id)}
-                      className={cn(
-                        "relative group overflow-hidden rounded-lg border-2 transition-all duration-300",
-                        selectedGenerations.has(generation.id)
-                          ? "border-[#C4886F] shadow-lg scale-[1.02]"
-                          : "border-gray-200 hover:border-[#C4886F]/50"
-                      )}
-                    >
-                      <div className="aspect-[4/3] relative bg-gray-100">
-                        {generation.result_image_url && (
-                          <img
-                            src={generation.result_image_url}
-                            alt="Diseño generado"
-                            className="w-full h-full object-cover"
-                          />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-[#333333]">
+                    Selecciona los diseños para tu historia ({selectedGenerations.size} seleccionados):
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {generations.map((generation, index) => (
+                      <button
+                        key={generation.id}
+                        onClick={() => toggleSelection(generation.id)}
+                        className={cn(
+                          "relative group overflow-hidden rounded-lg border-2 transition-all duration-300",
+                          selectedGenerations.has(generation.id)
+                            ? "border-[#C4886F] shadow-lg scale-[1.02]"
+                            : "border-gray-200 hover:border-[#C4886F]/50"
                         )}
-                        {selectedGenerations.has(generation.id) && (
-                          <div className="absolute inset-0 bg-[#C4886F]/20 flex items-center justify-center">
-                            <div className="bg-white rounded-full p-2">
-                              <Check className="w-5 h-5 text-[#C4886F]" />
+                      >
+                        <div className="aspect-[4/3] relative bg-gray-100">
+                          {generation.result_image_url && (
+                            <img
+                              src={generation.result_image_url}
+                              alt="Diseño generado"
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                          {selectedGenerations.has(generation.id) && (
+                            <div className="absolute inset-0 bg-[#C4886F]/20 flex items-center justify-center">
+                              <div className="bg-white rounded-full p-2">
+                                <Check className="w-5 h-5 text-[#C4886F]" />
+                              </div>
                             </div>
-                          </div>
-                        )}
-                        {selectedGenerations.has(generation.id) && (
-                          <div className="absolute top-2 right-2 bg-white rounded-full px-2 py-1">
-                            <span className="text-xs font-medium text-[#C4886F]">
-                              {Array.from(selectedGenerations).indexOf(generation.id) + 1}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-2 bg-white">
-                        <p className="text-xs text-gray-600 truncate">
-                          {generation.style_id || 'Sin estilo'}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+                          )}
+                          {selectedGenerations.has(generation.id) && (
+                            <div className="absolute top-2 right-2 bg-white rounded-full px-2 py-1">
+                              <span className="text-xs font-medium text-[#C4886F]">
+                                {Array.from(selectedGenerations).indexOf(generation.id) + 1}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-2 bg-white">
+                          <p className="text-xs text-gray-600 truncate">
+                            {generation.style_id || 'Sin estilo'}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
+            </div>
           </div>
 
-          <div className="pt-4 border-t mt-4 flex items-center justify-between">
+          {/* Fixed Footer */}
+          <div className="px-6 py-4 border-t bg-white shrink-0 flex items-center justify-between">
             <div className="text-sm text-gray-600">
               {shareFormat === 'quick' ? (
                 <span>{isQuickShareValid ? '1 diseño seleccionado' : 'Selecciona 1 diseño'}</span>

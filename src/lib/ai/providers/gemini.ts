@@ -307,7 +307,7 @@ export class GeminiProvider {
 
 ${furnitureInstructions}
 
-**Output:** Generate a single, photorealistic, and beautifully staged image.`
+**Output:** Generate a single, photorealistic based on that prompt`
 
     // Log the new, cleaner prompt for debugging
     console.log('🎨 NEW CONCISE GEMINI PROMPT:')
@@ -711,20 +711,20 @@ ALLOWED GARDEN CHANGES:
   private getFurnitureInstructions(furnitureMode: string): string {
     switch (furnitureMode) {
       case FurnitureMode.KEEP_ALL:
-        return `**Furniture Mode: Keep Existing**. Do not replace or move any furniture. Only change decorative elements like wall color, art, and small accessories. The existing furniture layout must be preserved.`
-
+        return `**Furniture Mode: Keep Existing**. Keep all original furniture in its exact position. Your changes are purely decorative (e.g., wall color, art, plants).`;
+  
       case FurnitureMode.KEEP_REPOSITION:
-        return `**Furniture Mode: Keep & Reposition**. Keep all existing furniture pieces but you may rearrange them for better flow and positioning. Focus on optimizing layout while maintaining all existing pieces.`
-
+        return `**Furniture Mode: Keep & Reposition**. Use all the original furniture pieces but rearrange them for an optimal layout. Do not add or remove items.`;
+  
       case FurnitureMode.KEEP_ADD_MORE:
-        return `**Furniture Mode: Keep & Add**. Preserve all existing furniture exactly as positioned. You may add complementary furniture pieces that enhance the space and work harmoniously with existing items.`
-
+        return `**Furniture Mode: Keep & Add**. Keep the original furniture as is. Add new, complementary items that match the requested style to enhance the space.`;
+  
       case FurnitureMode.MIX:
-        return `**Furniture Mode: Smart Mix**. Intelligently combine some of the existing furniture with new, complementary pieces in the requested style. The goal is a harmonious blend of old and new.`
-
+        return `**Furniture Mode: Smart Mix**. Creatively blend old and new. You may remove some original items and add new ones to create a harmonious design.`;
+  
       case FurnitureMode.REPLACE_ALL:
       default:
-        return `**Furniture Mode: Complete Redesign**. Replace all furniture with a new set that perfectly matches the requested style. You have creative freedom for furniture selection and layout within the existing room structure.`
+        return `**Furniture Mode: Complete Redesign**. Remove all original furniture. Design a completely new layout with new pieces that fit the requested style.`;
     }
   }
 

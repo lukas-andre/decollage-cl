@@ -10,7 +10,7 @@
 ## 🔴 MUST HAVE - Critical for MVP Launch
 
 ### M1: Children's Rooms & Decoration ✅ **COMPLETED**
-**Why Critical**: Market expansion to family segment (largest Chilean demographic)
+**Why Critical**: Market expansion to family segment (largest Chilean demographic) ✅
 - **Kids Categories**: Add "Pieza Niño", "Pieza Niña", "Pieza Bebé" room types ✅
 - **Age-Appropriate Designs**: Safe, educational, and fun decorative elements ✅
 - **Soft Color Palettes**: Gentle, child-friendly color schemes ✅
@@ -77,7 +77,7 @@
 
 ### UX/UI Polish & Improvements 🔴 **CRITICAL FOR LAUNCH**
 **Why Critical**: Essential UX fixes and navigation improvements for MVP launch
-- **Quick New Generation Button**: Add button at end of generation flow to quickly start a new design
+- **Quick New Generation Button**: Add button at end of generation flow to quickly start a new design ✅
 - **Share Button Styling**: Update "Compartir" button to follow app's design system
 - **Share Modal Scroll Fix**: Fix scroll issue in share modal so users can see full image and buttons
 - **ImageViewerModal Quick Share**: Add quick share functionality directly in the image viewer modal
@@ -87,7 +87,8 @@
 - **Profile Page**: Create minimal profile page with basic user configuration options
 - **Remove "Sofía" Hardcoding**: Replace all hardcoded "Sofía" references with actual user first name
 - **Dashboard Cleanup**: Remove moodboard and gallery sections, prioritize "Últimas Generaciones"
-- **Mobile Project View**: Improve mobile responsiveness and prioritize mobile view for "Proyecto" page 
+- **Mobile Project View**: Improve mobile responsiveness and prioritize mobile view for "Proyecto" page
+- **Full English Translation**: Ensure all AI prompts and styles are fully translated to English for better AI generation quality 
 
 ### User Onboarding Flow 🟡 **CONVERSION**
 **Why Important**: Reduce time-to-first-value

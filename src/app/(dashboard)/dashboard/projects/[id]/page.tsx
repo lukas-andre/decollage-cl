@@ -26,9 +26,13 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useTokenBalance } from '@/hooks/useTokenBalance'
+import { createClient } from '@/lib/supabase/client'
+import { shareService } from '@/lib/services/share.service'
 import { NoTokensDialog } from '@/components/tokens/NoTokensDialog'
 import { ContextFirstWizard } from '@/components/projects/ContextFirstWizard'
 import { ShareButton } from '@/components/share/ShareButton'
+import { EnhancedShareDialog } from '@/components/share/EnhancedShareDialog'
+import { ShareSuccessDialog } from '@/components/share/ShareSuccessDialog'
 import { ImageViewerModal } from '@/components/projects/ImageViewerModal'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { motion } from 'framer-motion'
@@ -90,6 +94,13 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
   const [expandedBaseImage, setExpandedBaseImage] = useState(false)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null)
+  const [generationComplete, setGenerationComplete] = useState(false)
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
+  const [shareVariantId, setShareVariantId] = useState<string | null>(null)
+  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
+  const [shareFormat, setShareFormat] = useState<'quick' | 'story'>('quick')
+  const [isSharing, setIsSharing] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
   const { available: tokenBalance, hasTokens, deduct: deductTokens } = useTokenBalance()
 
@@ -101,6 +112,7 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
   useEffect(() => {
     if (selectedBaseImage) {
       fetchVariants(selectedBaseImage.id)
+      setGenerationComplete(false) // Reset generation complete when changing base image
     }
   }, [selectedBaseImage])
 
@@ -346,9 +358,77 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
     toast.success('Refinamiento guardado exitosamente')
   }
 
+  const handleQuickShare = (variantId: string) => {
+    setShareVariantId(variantId)
+    setIsShareDialogOpen(true)
+  }
+
+  const handleShare = async (selectedIds: string[], format: 'quick' | 'story') => {
+    if (!project) return
+
+    try {
+      setIsSharing(true)
+      setShareFormat(format)
+
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('Debes iniciar sesión para compartir')
+        return
+      }
+
+      // Create share using the existing service
+      const shareResponse = await shareService.createShare(project.id, {
+        type: 'project',
+        customTitle: project.name,
+        customDescription: project.description || undefined,
+        featured: selectedIds,
+        visibility: 'public'
+      }, supabase)
+
+      // Update the share with our new format-specific data
+      const whatsappMessage = format === 'quick'
+        ? `¡Mira cómo transformé mi espacio con Decollage! 🏠✨\n\nProyecto: ${project.name}\n\nDescubre más transformaciones en decollage.cl`
+        : null
+
+      await supabase
+        .from('project_shares')
+        .update({
+          share_format: format,
+          whatsapp_message: whatsappMessage
+        })
+        .eq('share_token', shareResponse.shareToken)
+
+      setShareUrl(shareResponse.shareUrl)
+      setIsShareDialogOpen(false)
+      setIsSuccessDialogOpen(true)
+
+      // Track share event (simplified)
+      await fetch('/api/share/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shareToken: shareResponse.shareToken,
+          eventType: 'created',
+          eventData: {
+            format,
+            generation_count: selectedIds.length
+          }
+        })
+      })
+
+    } catch (error) {
+      console.error('Error sharing project:', error)
+      toast.error('Error al compartir el proyecto')
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
   const handleGenerate = async (params: any) => {
     if (!selectedBaseImage) return
     setGenerating(true)
+    setGenerationComplete(false) // Reset generation complete state
 
     try {
       const response = await fetch(`/api/base-images/${selectedBaseImage.id}/generate-variant`, {
@@ -371,9 +451,14 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
             ? '¡Diseño generado!'
             : 'Generando diseño...'
         )
+        // Set generation complete if status is completed
+        if (data.transformation.status === 'completed') {
+          setGenerationComplete(true)
+        }
       } else {
         toast.success('Diseño enviado a generar')
         await fetchVariants(selectedBaseImage.id)
+        setGenerationComplete(true) // Mark as complete for async generations
       }
     } catch (error) {
       console.error('Error generating variant:', error)
@@ -795,6 +880,7 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
                 tokenBalance={tokenBalance}
                 onGenerate={handleGenerate}
                 onNoTokens={() => setShowNoTokensDialog(true)}
+                onGenerationComplete={generationComplete}
               />
             ) : (
               <div className="text-center py-12">
@@ -828,6 +914,7 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
           variantId={viewerModal.variant.id}
           initialMode={viewerModal.initialMode || 'view'}
           onSaveRefinement={handleSaveRefinement}
+          onQuickShare={handleQuickShare}
           onAddAsBaseImage={() => {
             // Refresh base images to show the new one
             fetchProject()
@@ -854,6 +941,29 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Share Dialog */}
+      {project && (
+        <>
+          <EnhancedShareDialog
+            open={isShareDialogOpen}
+            onOpenChange={setIsShareDialogOpen}
+            project={project as any}
+            generations={(shareVariantId
+              ? variants.filter(v => v.id === shareVariantId && v.status === 'completed' && v.result_image_url)
+              : variants.filter(v => v.status === 'completed' && v.result_image_url)
+            ) as any}
+            onShare={handleShare}
+          />
+
+          <ShareSuccessDialog
+            open={isSuccessDialogOpen}
+            onOpenChange={setIsSuccessDialogOpen}
+            shareUrl={shareUrl}
+            format={shareFormat}
+          />
+        </>
       )}
 
       {/* No Tokens Dialog */}

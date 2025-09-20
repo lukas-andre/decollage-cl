@@ -8,6 +8,7 @@ import { ShareSuccessDialog } from './ShareSuccessDialog'
 import { createClient } from '@/lib/supabase/client'
 import { shareService } from '@/lib/services/share.service'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import type { Database } from '@/types/database.types'
 
 type Generation = Database['public']['Tables']['transformations']['Row']
@@ -96,9 +97,11 @@ export function ShareButton({ project, generations, className }: ShareButtonProp
     <>
       <Button
         onClick={() => setIsShareDialogOpen(true)}
-        variant="outline"
         size="sm"
-        className={className}
+        className={cn(
+          "bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90 text-white border-none shadow-md hover:shadow-lg transition-all duration-200",
+          className
+        )}
         disabled={isSharing}
       >
         {isSharing ? (

@@ -12,8 +12,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  ImageIcon,
-  Camera,
   Leaf,
   User,
   LogOut,
@@ -22,6 +20,12 @@ import {
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { LogoutButton } from '@/components/dashboard/logout-button'
 
 interface SidebarItem {
@@ -58,26 +62,6 @@ const sidebarItems: SidebarItem[] = [
     children: [
       { title: 'Gestionar enlaces', href: '/dashboard/shares' },
       { title: 'Analíticas', href: '/dashboard/shares/analytics' }
-    ]
-  },
-  {
-    title: 'Moodboards',
-    href: '/dashboard/moodboards',
-    icon: <Camera className="h-4 w-4" />,
-    badge: 'Nuevo',
-    children: [
-      { title: 'Ver todos', href: '/dashboard/moodboards' },
-      { title: 'Crear nuevo', href: '/dashboard/moodboards/create' }
-    ]
-  },
-  {
-    title: 'Galería',
-    href: '/dashboard/gallery',
-    icon: <ImageIcon className="h-4 w-4" />,
-    children: [
-      { title: 'Explorar', href: '/dashboard/gallery' },
-      { title: 'Tendencias', href: '/dashboard/gallery/trending' },
-      { title: 'Hogares chilenos', href: '/dashboard/gallery/chilean' }
     ]
   },
   {
@@ -125,7 +109,7 @@ export function DashboardSidebar({ onCollapsedChange }: DashboardSidebarProps = 
   }
 
   return (
-    <>
+    <TooltipProvider>
       {/* Mobile Menu Button */}
       <Button
         variant="ghost"
@@ -233,12 +217,28 @@ export function DashboardSidebar({ onCollapsedChange }: DashboardSidebarProps = 
                     )}
 
                     <Link href={item.href} className="flex items-center gap-3 flex-1">
-                      <span className={cn(
-                        "transition-all duration-500 transform",
-                        isActive ? "text-[#A3B1A1] scale-110" : "text-[#333333]/40 group-hover:scale-105"
-                      )}>
-                        {item.icon}
-                      </span>
+                      {isCollapsed ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className={cn(
+                              "transition-all duration-500 transform",
+                              isActive ? "text-[#A3B1A1] scale-110" : "text-[#333333]/40 group-hover:scale-105"
+                            )}>
+                              {item.icon}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            <span className="uppercase tracking-[0.15em] text-[10px]">{item.title}</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <span className={cn(
+                          "transition-all duration-500 transform",
+                          isActive ? "text-[#A3B1A1] scale-110" : "text-[#333333]/40 group-hover:scale-105"
+                        )}>
+                          {item.icon}
+                        </span>
+                      )}
 
                       {!isCollapsed && (
                         <div className="flex items-center justify-between flex-1">
@@ -320,25 +320,45 @@ export function DashboardSidebar({ onCollapsedChange }: DashboardSidebarProps = 
                   >
                     <Settings className="h-3 w-3" />
                   </Button>
-                  <LogoutButton className="h-8 w-8 text-[#333333]/40 hover:text-[#C4886F] hover:bg-[#C4886F]/10 transition-all duration-300" />
+                  <LogoutButton
+                    iconOnly
+                    className="h-8 w-8 text-[#333333]/40 hover:text-[#C4886F] hover:bg-[#C4886F]/10 transition-all duration-300"
+                  />
                 </div>
               )}
               {isCollapsed && (
                 <div className="flex flex-col gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-[#333333]/40 hover:text-[#333333] hover:bg-[#A3B1A1]/10 transition-all duration-300"
-                  >
-                    <Settings className="h-3 w-3" />
-                  </Button>
-                  <LogoutButton className="h-8 w-8 text-[#333333]/40 hover:text-[#C4886F] hover:bg-[#C4886F]/10 transition-all duration-300" />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-[#333333]/40 hover:text-[#333333] hover:bg-[#A3B1A1]/10 transition-all duration-300"
+                      >
+                        <Settings className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <span className="uppercase tracking-[0.15em] text-[10px]">Configuración</span>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <LogoutButton
+                        iconOnly
+                        className="h-8 w-8 text-[#333333]/40 hover:text-[#C4886F] hover:bg-[#C4886F]/10 transition-all duration-300"
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <span className="uppercase tracking-[0.15em] text-[10px]">Cerrar sesión</span>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               )}
             </div>
           </div>
         </div>
       </aside>
-    </>
+    </TooltipProvider>
   )
 }
