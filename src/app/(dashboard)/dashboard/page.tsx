@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { useUserProfile } from '@/hooks/useUserProfile'
 import {
   Heart,
   Camera,
@@ -46,6 +47,7 @@ export default function DashboardPage() {
   const [featuredTransformations, setFeaturedTransformations] = useState<FeaturedTransformation[]>([])
   const [loading, setLoading] = useState(true)
   const [currentSeason, setCurrentSeason] = useState('Otoño Austral')
+  const { getFirstName } = useUserProfile()
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -102,6 +104,25 @@ export default function DashboardPage() {
         recentActivity: transformationCount! > 0 ? 'Hace 1 día' : 'Sin actividad'
       })
 
+      // Get recent transformations for dashboard display
+      const { data: recentTransformations } = await supabase
+        .from('staging_generations')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(6)
+
+      const featured: FeaturedTransformation[] = (recentTransformations || []).map(t => ({
+        id: t.id,
+        spaceName: `Generación ${t.id.slice(0, 8)}`,
+        styleName: 'Estilo AI',
+        imageUrl: t.result_image_url || '',
+        createdAt: t.created_at
+      }))
+
+      setFeaturedTransformations(featured)
+
     } catch (error) {
       console.error('Error fetching user data:', error)
     } finally {
@@ -144,7 +165,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <h1 className={`text-3xl font-light text-[#333333] font-cormorant mb-1 transition-all duration-500 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}`}>
-              Buenos días, Sofía
+              Buenos días, {getFirstName()}
             </h1>
             <p className={`text-sm text-[#333333]/60 font-lato font-light transition-all duration-500 delay-100 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}`}>
               Lista para transformar tu hogar con Decollage
@@ -293,64 +314,87 @@ export default function DashboardPage() {
         </div>
       </Card>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <Card className={`group border-0 shadow-lg hover:shadow-xl transition-all duration-500 delay-250 hover:-translate-y-0.5 cursor-pointer bg-white overflow-hidden ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-          <Link href="/dashboard/moodboards">
-            <CardContent className="p-6 relative">
-              <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#A3B1A1] to-[#A3B1A1]/60" />
-
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-[#A3B1A1]/10 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-                  <Camera className="h-6 w-6 text-[#A3B1A1]" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-lg font-normal text-[#333333] font-cormorant">
-                      Crear Moodboard
-                    </h3>
-                    <Badge className="bg-[#A3B1A1]/10 text-[#A3B1A1] border-0 text-[9px] px-1.5 py-0.5 font-lato uppercase">
-                      Nuevo
+      {/* Recent Generations */}
+      <Card className={`mb-10 border-0 shadow-lg overflow-hidden bg-white transition-all duration-500 delay-300 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+        <CardHeader className="border-b border-[#A3B1A1]/10 bg-gradient-to-r from-white via-[#A3B1A1]/2 to-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#A3B1A1] to-[#C4886F] flex items-center justify-center">
+                <ImageIcon className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-xl font-light text-[#333333] font-cormorant">
+                  Últimas Generaciones
+                </CardTitle>
+                <CardDescription className="font-lato text-sm">
+                  Tus transformaciones más recientes
+                </CardDescription>
+              </div>
+            </div>
+            <Link href="/dashboard/projects/transformations">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[#A3B1A1] hover:bg-[#A3B1A1]/10 font-lato transition-colors duration-300"
+              >
+                Ver todas
+                <ArrowRight className="ml-2 h-3 w-3" />
+              </Button>
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6">
+          {featuredTransformations.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredTransformations.slice(0, 6).map((transformation) => (
+                <div
+                  key={transformation.id}
+                  className="group relative aspect-[4/3] bg-[#F8F8F8] overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-xl"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    <p className="font-cormorant text-sm">{transformation.spaceName}</p>
+                    <p className="font-lato text-xs opacity-80">{transformation.styleName}</p>
+                    <p className="font-lato text-xs opacity-60">
+                      {new Date(transformation.createdAt).toLocaleDateString('es-CL')}
+                    </p>
+                  </div>
+                  {transformation.imageUrl && (
+                    <img
+                      src={transformation.imageUrl}
+                      alt={transformation.spaceName}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  )}
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <Badge className="bg-white/90 text-[#333333] border-0 text-xs font-lato">
+                      Ver proyecto
                     </Badge>
                   </div>
-                  <p className="text-sm text-[#333333]/60 font-lato">
-                    Junta inspiración para tu próximo proyecto
-                  </p>
                 </div>
-                <ArrowRight className="h-4 w-4 text-[#A3B1A1]/50 group-hover:text-[#A3B1A1] group-hover:translate-x-1 transition-all duration-300" />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-[#A3B1A1]/10 flex items-center justify-center mx-auto mb-4">
+                <ImageIcon className="h-8 w-8 text-[#A3B1A1]/40" />
               </div>
-            </CardContent>
-          </Link>
-        </Card>
-
-        <Card className={`group border-0 shadow-lg hover:shadow-xl transition-all duration-500 delay-300 hover:-translate-y-0.5 cursor-pointer bg-white overflow-hidden ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-          <Link href="/dashboard/gallery">
-            <CardContent className="p-6 relative">
-              <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#C4886F] to-[#C4886F]/60" />
-
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-[#C4886F]/10 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-                  <Heart className="h-6 w-6 text-[#C4886F]" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-lg font-normal text-[#333333] font-cormorant">
-                      Explorar Galería
-                    </h3>
-                    <Badge className="bg-[#F8F8F8] text-[#333333]/50 border-0 text-[9px] px-1.5 py-0.5 font-lato uppercase">
-                      Demo
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-[#333333]/60 font-lato">
-                    Descubre transformaciones de la comunidad
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-[#C4886F]/50 group-hover:text-[#C4886F] group-hover:translate-x-1 transition-all duration-300" />
-              </div>
-            </CardContent>
-          </Link>
-        </Card>
-      </div>
+              <h3 className="text-lg font-light text-[#333333] font-cormorant mb-2">
+                Aún no tienes transformaciones
+              </h3>
+              <p className="text-sm text-[#333333]/60 font-lato mb-6 max-w-md mx-auto">
+                Crea tu primer proyecto y comienza a transformar tus espacios con IA
+              </p>
+              <Link href="/dashboard/projects">
+                <Button className="bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white font-lato">
+                  <FolderOpen className="mr-2 h-4 w-4" />
+                  Crear Proyecto
+                </Button>
+              </Link>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent Activity or Getting Started */}
       {stats.totalTransformations === 0 ? (

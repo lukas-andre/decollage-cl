@@ -27,6 +27,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { LogoutButton } from '@/components/dashboard/logout-button'
+import { useUserProfile } from '@/hooks/useUserProfile'
 
 interface SidebarItem {
   title: string
@@ -85,6 +86,7 @@ export function DashboardSidebar({ onCollapsedChange }: DashboardSidebarProps = 
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [expandedItems, setExpandedItems] = useState<string[]>([])
+  const { getDisplayName } = useUserProfile()
 
   // Check if we're in a project page
   const isInProject = pathname?.includes('/dashboard/projects/') && pathname.split('/').length > 3
@@ -307,19 +309,21 @@ export function DashboardSidebar({ onCollapsedChange }: DashboardSidebarProps = 
               </div>
               {!isCollapsed && (
                 <div className="flex-1">
-                  <p className="text-sm font-lato text-[#333333] font-medium">Sofía Mendoza</p>
+                  <p className="text-sm font-lato text-[#333333] font-medium">{getDisplayName()}</p>
                   <p className="text-xs font-lato text-[#333333]/50">Mi espacio creativo</p>
                 </div>
               )}
               {!isCollapsed && (
                 <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-[#333333]/40 hover:text-[#333333] hover:bg-[#A3B1A1]/10 transition-all duration-300"
-                  >
-                    <Settings className="h-3 w-3" />
-                  </Button>
+                  <Link href="/dashboard/profile">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[#333333]/40 hover:text-[#333333] hover:bg-[#A3B1A1]/10 transition-all duration-300"
+                    >
+                      <Settings className="h-3 w-3" />
+                    </Button>
+                  </Link>
                   <LogoutButton
                     iconOnly
                     className="h-8 w-8 text-[#333333]/40 hover:text-[#C4886F] hover:bg-[#C4886F]/10 transition-all duration-300"
@@ -330,16 +334,18 @@ export function DashboardSidebar({ onCollapsedChange }: DashboardSidebarProps = 
                 <div className="flex flex-col gap-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-[#333333]/40 hover:text-[#333333] hover:bg-[#A3B1A1]/10 transition-all duration-300"
-                      >
-                        <Settings className="h-3 w-3" />
-                      </Button>
+                      <Link href="/dashboard/profile">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-[#333333]/40 hover:text-[#333333] hover:bg-[#A3B1A1]/10 transition-all duration-300"
+                        >
+                          <Settings className="h-3 w-3" />
+                        </Button>
+                      </Link>
                     </TooltipTrigger>
                     <TooltipContent side="right">
-                      <span className="uppercase tracking-[0.15em] text-[10px]">Configuración</span>
+                      <span className="uppercase tracking-[0.15em] text-[10px]">Perfil</span>
                     </TooltipContent>
                   </Tooltip>
                   <Tooltip>
