@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -39,8 +39,10 @@ import {
   Zap,
   Expand,
   Check,
-  Plus
+  Plus,
+  Eye
 } from 'lucide-react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -86,6 +88,8 @@ interface ContextFirstWizardProps {
   onGenerate: (params: any) => void
   onNoTokens: () => void
   onGenerationComplete?: boolean
+  lastGeneratedVariant?: any
+  onViewGeneratedImage?: (variant: any) => void
 }
 
 // Room type icons mapping
@@ -247,6 +251,38 @@ const getRecommendedStyles = (roomCode: string, styles: any[]) => {
   ).slice(0, 4)
 }
 
+// Encouraging messages during generation following brand voice
+const encouragingMessages = [
+  "✨ Dando vida a tu visión...",
+  "🏠 Creando magia en tu hogar...",
+  "🎨 Transformando tus ideas en realidad...",
+  "💫 Tu espacio ideal está tomando forma...",
+  "🌟 Estamos diseñando algo increíble para ti...",
+  "✨ Tu hogar soñado se está materializando...",
+  "🎨 Cada detalle está siendo perfeccionado...",
+  "💫 La magia del diseño está sucediendo...",
+  "🏠 Creando un espacio que amarás...",
+  "✨ Tu visión se está convirtiendo en arte..."
+]
+
+function GeneratingMessage() {
+  const [currentMessage, setCurrentMessage] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentMessage((prev) => (prev + 1) % encouragingMessages.length)
+    }, 2500) // Change message every 2.5 seconds
+
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <span className="animate-pulse">
+      {encouragingMessages[currentMessage]}
+    </span>
+  )
+}
+
 export function ContextFirstWizard({
   designData,
   selectedBaseImage,
@@ -255,9 +291,12 @@ export function ContextFirstWizard({
   tokenBalance,
   onGenerate,
   onNoTokens,
-  onGenerationComplete = false
+  onGenerationComplete = false,
+  lastGeneratedVariant,
+  onViewGeneratedImage
 }: ContextFirstWizardProps) {
   const [currentStep, setCurrentStep] = useState(1)
+  const [hasGenerated, setHasGenerated] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     roomTypeId: '',
     roomCategory: 'interiores',
@@ -291,6 +330,7 @@ export function ContextFirstWizard({
       return
     }
 
+    setHasGenerated(true)
     const params: any = {
       room_type_id: formData.roomTypeId,
       furniture_mode: formData.furnitureMode,
@@ -345,22 +385,9 @@ export function ContextFirstWizard({
   }
 
   const handleQuickNewGeneration = () => {
-    // Reset form data to initial state
-    setFormData({
-      roomTypeId: '',
-      roomCategory: 'interiores',
-      inspirationMode: 'style',
-      styleId: '',
-      customPrompt: '',
-      furnitureMode: 'replace_all',
-      roomWidth: 4,
-      roomHeight: 4,
-      colorPaletteId: ''
-    })
-    // Reset to first step
-    setCurrentStep(1)
-    // Reset open accordions
-    setOpenAccordions(['furniture'])
+    // Don't reset the form, just allow another generation
+    setHasGenerated(false)
+    handleGenerate()
   }
 
   return (
@@ -983,26 +1010,70 @@ export function ContextFirstWizard({
             )}
 
             {/* Generation Completion & Quick New Generation */}
-            {onGenerationComplete && !generating && (
+            {(onGenerationComplete || hasGenerated) && !generating && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-4 rounded-lg bg-gradient-to-r from-[#A3B1A1]/10 to-[#C4886F]/10 border border-[#A3B1A1]/20"
+                className="space-y-4"
               >
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <Check className="h-5 w-5 text-[#A3B1A1]" />
-                  <span className="text-sm font-medium text-[#A3B1A1]">¡Diseño generado exitosamente!</span>
+                {/* Success Message */}
+                <div className="p-4 rounded-lg bg-gradient-to-r from-[#A3B1A1]/10 to-[#C4886F]/10 border border-[#A3B1A1]/20">
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <Check className="h-5 w-5 text-[#A3B1A1]" />
+                    <span className="text-sm font-medium text-[#A3B1A1]">¡Diseño generado exitosamente!</span>
+                  </div>
+
+                  {/* Show generated image preview */}
+                  {lastGeneratedVariant && lastGeneratedVariant.result_image_url && (
+                    <div className="mb-4">
+                      <div
+                        className="relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer group"
+                        onClick={() => onViewGeneratedImage && onViewGeneratedImage(lastGeneratedVariant)}
+                      >
+                        <Image
+                          src={lastGeneratedVariant.result_image_url}
+                          alt="Diseño generado"
+                          fill
+                          className="object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 p-2 rounded-full">
+                            <Eye className="h-5 w-5 text-[#333333]" />
+                          </div>
+                        </div>
+                        {/* Style badge */}
+                        {lastGeneratedVariant.style && (
+                          <div className="absolute bottom-2 left-2">
+                            <Badge className="bg-white/90 text-xs">
+                              {lastGeneratedVariant.style.name}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                      <Button
+                        onClick={() => onViewGeneratedImage && onViewGeneratedImage(lastGeneratedVariant)}
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-2"
+                      >
+                        <Expand className="mr-2 h-3 w-3" />
+                        Ver en tamaño completo
+                      </Button>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleQuickNewGeneration}
+                    className="w-full bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90"
+                    disabled={!hasTokens}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Generar Otra Variación
+                  </Button>
+                  <p className="text-xs text-center text-gray-500 mt-2">
+                    Crea otra versión con los mismos ajustes
+                  </p>
                 </div>
-                <Button
-                  onClick={handleQuickNewGeneration}
-                  className="w-full bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Crear Nuevo Diseño
-                </Button>
-                <p className="text-xs text-center text-gray-500 mt-2">
-                  Inicia rápidamente una nueva generación con la misma imagen
-                </p>
               </motion.div>
             )}
 
@@ -1024,12 +1095,12 @@ export function ContextFirstWizard({
                 {generating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generando...
+                    <GeneratingMessage />
                   </>
-                ) : onGenerationComplete ? (
+                ) : (onGenerationComplete || hasGenerated) ? (
                   <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Diseño Completado
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generar Otro Diseño (1 Token)
                   </>
                 ) : (
                   <>

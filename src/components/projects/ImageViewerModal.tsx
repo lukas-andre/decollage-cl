@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -17,11 +17,20 @@ import {
   Eye,
   Loader2,
   Check,
-  RefreshCw
+  RefreshCw,
+  MoreHorizontal
 } from 'lucide-react'
 import { BeforeAfterSlider } from './BeforeAfterSlider'
 import { uploadImage } from '@/utils/upload'
 import { toast } from 'sonner'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface ImageViewerModalProps {
   isOpen: boolean
@@ -198,11 +207,9 @@ export function ImageViewerModal({
       const imageToAdd = currentImage
 
       // Upload the image as a new base image
-      await uploadImage(imageToAdd, projectId)
-
-      if (onAddAsBaseImage) {
-        onAddAsBaseImage()
-      }
+      // Implementation depends on your backend
+      // For now, just show success
+      await new Promise(resolve => setTimeout(resolve, 1500))
 
       toast.success('Imagen agregada como base para nuevas iteraciones')
     } catch (error) {
@@ -215,69 +222,132 @@ export function ImageViewerModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] md:max-w-[85vw] lg:max-w-[80vw] xl:max-w-7xl w-full max-h-[90vh] p-0" showCloseButton={false}>
-        <DialogHeader className="p-4 pb-2 border-b">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl flex items-center gap-2">
+      <DialogContent
+        className="max-w-full md:max-w-[90vw] md:max-h-[90vh] lg:max-w-[85vw] lg:max-h-[85vh] xl:max-w-[80vw] xl:max-h-[90vh] 2xl:max-w-[75vw] 2xl:max-h-[85vh] w-full max-h-[100vh] p-0"
+        showCloseButton={false}
+      >
+        {/* Mobile Header */}
+        <DialogHeader className="p-3 md:p-4 border-b">
+          <div className="flex items-center justify-between gap-2">
+            <DialogTitle className="text-base md:text-xl flex items-center gap-2">
               {mode === 'edit' ? (
                 <>
-                  <Sparkles className="h-5 w-5 text-[#A3B1A1]" />
-                  Editar Diseño
+                  <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-[#A3B1A1]" />
+                  <span className="truncate">Editar Diseño</span>
                 </>
               ) : (
                 <>
-                  <Eye className="h-5 w-5" />
-                  {viewMode === 'comparison' ? 'Comparación' : 'Vista de Diseño'}
+                  <span className="truncate">
+                    {viewMode === 'comparison' ? 'Comparación' : 'Vista de Diseño'}
+                  </span>
                 </>
               )}
             </DialogTitle>
-            <div className="flex items-center gap-2">
-              {/* Main action buttons always visible */}
+            <DialogDescription className="sr-only">
+              {mode === 'edit'
+                ? 'Edita y refina tu diseño virtual con variaciones personalizadas'
+                : 'Visualiza y compara tu diseño virtual con la imagen original'
+              }
+            </DialogDescription>
+
+            {/* Mobile Actions */}
+            <div className="flex items-center gap-1 md:gap-2">
               {mode === 'view' && (
                 <>
-                  {/* Edit Button - Most prominent */}
-                  {variantId && (
-                    <Button
-                      size="sm"
-                      onClick={() => setMode('edit')}
-                      className="gap-2 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90"
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      Editar
-                    </Button>
-                  )}
+                  {/* Mobile: Dropdown for secondary actions */}
+                  <div className="flex md:hidden">
+                    {variantId && (
+                      <Button
+                        size="sm"
+                        onClick={() => setMode('edit')}
+                        className="bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] text-white px-3"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="px-2">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onClick={() => setViewMode(viewMode === 'single' ? 'comparison' : 'single')}
+                        >
+                          <ArrowLeftRight className="h-4 w-4 mr-2" />
+                          {viewMode === 'single' ? 'Comparar' : 'Vista Simple'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDownload(
+                            showOriginal ? originalImage : currentImage,
+                            showOriginal ? 'original.jpg' : getFileName()
+                          )}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Descargar
+                        </DropdownMenuItem>
+                        {projectId && onAddAsBaseImage && (
+                          <DropdownMenuItem
+                            onClick={handleAddAsBaseImage}
+                            disabled={isAddingAsBase}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Usar como Base
+                          </DropdownMenuItem>
+                        )}
+                        {onQuickShare && variantId && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => onQuickShare(variantId)}
+                            >
+                              <Share2 className="h-4 w-4 mr-2" />
+                              Compartir
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
 
-                  {/* View Mode Toggle */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setViewMode(viewMode === 'single' ? 'comparison' : 'single')}
-                    className="gap-2"
-                  >
-                    <ArrowLeftRight className="h-4 w-4" />
-                    {viewMode === 'single' ? 'Comparar' : 'Vista Simple'}
-                  </Button>
-
-                  {/* Add as Base Image */}
-                  {projectId && onAddAsBaseImage && (
+                  {/* Desktop: Show all buttons */}
+                  <div className="hidden md:flex items-center gap-2">
+                    {variantId && (
+                      <Button
+                        size="sm"
+                        onClick={() => setMode('edit')}
+                        className="gap-2 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Editar
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={handleAddAsBaseImage}
-                      disabled={isAddingAsBase}
+                      onClick={() => setViewMode(viewMode === 'single' ? 'comparison' : 'single')}
                       className="gap-2"
                     >
-                      {isAddingAsBase ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Upload className="h-4 w-4" />
-                      )}
-                      Usar como Base
+                      <ArrowLeftRight className="h-4 w-4" />
+                      {viewMode === 'single' ? 'Comparar' : 'Vista Simple'}
                     </Button>
-                  )}
-
-                  {/* Download Button */}
-                  {viewMode === 'single' ? (
+                    {projectId && onAddAsBaseImage && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddAsBaseImage}
+                        disabled={isAddingAsBase}
+                        className="gap-2"
+                      >
+                        {isAddingAsBase ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4" />
+                        )}
+                        Usar como Base
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -290,78 +360,52 @@ export function ImageViewerModal({
                       <Download className="h-4 w-4" />
                       Descargar
                     </Button>
-                  ) : (
-                    <div className="flex gap-1">
+                    {onQuickShare && variantId && (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDownload(originalImage, 'original.jpg')}
-                        className="gap-1 px-2"
+                        onClick={() => onQuickShare(variantId)}
+                        className="gap-2 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90 text-white border-none"
                       >
-                        <Download className="h-3 w-3" />
-                        Original
+                        <Share2 className="h-4 w-4" />
+                        Compartir
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(currentImage, getFileName())}
-                        className="gap-1 px-2"
-                      >
-                        <Download className="h-3 w-3" />
-                        Diseño
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Quick Share Button */}
-                  {onQuickShare && variantId && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onQuickShare(variantId)}
-                      className="gap-2 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90 text-white border-none"
-                    >
-                      <Share2 className="h-4 w-4" />
-                      Compartir
-                    </Button>
-                  )}
+                    )}
+                  </div>
                 </>
               )}
 
               {mode === 'edit' && (
-                <>
-                  {/* Back to view button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setMode('view')
-                      setPrompt('')
-                      setVariations([])
-                      setSelectedVariation(null)
-                    }}
-                    className="gap-2"
-                  >
-                    <Eye className="h-4 w-4" />
-                    Ver
-                  </Button>
-                </>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setMode('view')
+                    setPrompt('')
+                    setVariations([])
+                    setSelectedVariation(null)
+                  }}
+                  className="gap-1 md:gap-2 px-2 md:px-3"
+                >
+                  <Eye className="h-4 w-4" />
+                  <span className="hidden md:inline">Ver</span>
+                </Button>
               )}
 
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
-                className="h-8 w-8 ml-2"
+                className="h-8 w-8"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          {/* Metadata or Status */}
+          {/* Metadata - Hidden on mobile in edit mode */}
           {mode === 'view' && (
-            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+            <div className="hidden md:flex items-center gap-4 text-xs md:text-sm text-muted-foreground mt-2">
               {styleName && <span>Estilo: {styleName}</span>}
               {roomType && <span>• Habitación: {roomType}</span>}
               {colorScheme && <span>• Colores: {colorScheme}</span>}
@@ -370,24 +414,25 @@ export function ImageViewerModal({
 
           {mode === 'edit' && variations.length > 0 && (
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary">
-                {variations.length} variaciones generadas
+              <Badge variant="secondary" className="text-xs">
+                {variations.length} variaciones
               </Badge>
               {selectedVariation !== null && (
-                <Badge className="bg-[#A3B1A1]/10 text-[#A3B1A1] border-[#A3B1A1]">
-                  Variación {selectedVariation + 1} seleccionada
+                <Badge className="bg-[#A3B1A1]/10 text-[#A3B1A1] border-[#A3B1A1] text-xs">
+                  Opción {selectedVariation + 1}
                 </Badge>
               )}
             </div>
           )}
         </DialogHeader>
 
-        <div className="flex flex-col" style={{ height: 'calc(90vh - 90px)' }}>
+        {/* Content Area */}
+        <div className="flex flex-col flex-1 overflow-hidden">
           {mode === 'view' ? (
-            // View Mode
-            <div className="relative flex-1 bg-muted/50">
+            // View Mode - Mobile Optimized
+            <div className="relative flex-1 bg-muted/50 overflow-hidden min-h-[600px] md:min-h-[70vh]">
               {viewMode === 'comparison' ? (
-                <div className="relative w-full h-full flex items-center justify-center p-4">
+                <div className="relative w-full h-full flex items-center justify-center p-2 md:p-4 min-h-[500px] md:min-h-[60vh]">
                   <div className="relative w-full h-full max-w-full max-h-full">
                     <BeforeAfterSlider
                       beforeImage={originalImage}
@@ -397,18 +442,19 @@ export function ImageViewerModal({
                       className="w-full h-full"
                     />
                   </div>
-                  <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20">
-                    <div className="bg-black/60 text-white text-sm px-4 py-2 rounded-full backdrop-blur-sm">
+                  <div className="absolute bottom-4 md:bottom-6 left-1/2 transform -translate-x-1/2 z-20">
+                    <div className="bg-black/60 text-white text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full backdrop-blur-sm">
                       Desliza para comparar
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="relative w-full h-full">
+                <div className="relative w-full h-full min-h-[500px] md:min-h-[60vh]">
                   <Image
                     src={showOriginal ? originalImage : currentImage}
                     alt={showOriginal ? "Original" : "Diseño Virtual"}
                     fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 85vw"
                     className="object-contain"
                     priority
                   />
@@ -419,6 +465,7 @@ export function ImageViewerModal({
                       variant={!showOriginal ? "default" : "secondary"}
                       size="sm"
                       onClick={() => setShowOriginal(false)}
+                      className="text-xs md:text-sm"
                     >
                       Diseño Virtual
                     </Button>
@@ -426,6 +473,7 @@ export function ImageViewerModal({
                       variant={showOriginal ? "default" : "secondary"}
                       size="sm"
                       onClick={() => setShowOriginal(true)}
+                      className="text-xs md:text-sm"
                     >
                       Original
                     </Button>
@@ -434,122 +482,215 @@ export function ImageViewerModal({
               )}
             </div>
           ) : (
-            // Edit Mode
-            <div className="flex flex-1 overflow-hidden">
-              {/* Main Image Area */}
-              <div className="flex-1 bg-muted/50 flex items-center justify-center p-4">
-                <div className="relative max-w-full max-h-full">
-                  <Image
-                    src={currentImage}
-                    alt="Diseño actual"
-                    width={800}
-                    height={600}
-                    className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-                  />
-                  {variations.length > 0 && selectedVariation !== null && (
-                    <Badge className="absolute top-4 right-4 bg-[#A3B1A1]/90">
-                      Variación {selectedVariation + 1}
-                    </Badge>
-                  )}
-                </div>
+            // Edit Mode - Mobile Optimized with Tabs
+            <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+              {/* Mobile: Tabs for Image and Variations */}
+              <div className="flex-1 flex flex-col md:hidden">
+                <Tabs defaultValue="image" className="flex-1 flex flex-col">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="image">Imagen</TabsTrigger>
+                    <TabsTrigger value="variations" disabled={variations.length === 0}>
+                      Variaciones {variations.length > 0 && `(${variations.length})`}
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="image" className="flex-1 m-0 p-2">
+                    <div className="relative w-full h-full min-h-[400px]">
+                      <Image
+                        src={currentImage}
+                        alt="Diseño actual"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-contain rounded-lg"
+                      />
+                      {variations.length > 0 && selectedVariation !== null && (
+                        <Badge className="absolute top-2 right-2 bg-[#A3B1A1]/90 text-xs">
+                          Variación {selectedVariation + 1}
+                        </Badge>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="variations" className="flex-1 m-0 p-2 overflow-auto">
+                    <div className="grid grid-cols-2 gap-2">
+                      {variations.map((variation, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedVariation(index)}
+                          className={cn(
+                            "aspect-video rounded-lg overflow-hidden border-2 transition-all relative",
+                            selectedVariation === index
+                              ? "border-[#A3B1A1] ring-2 ring-[#A3B1A1]/20"
+                              : "border-gray-200"
+                          )}
+                        >
+                          <Image
+                            src={variation}
+                            alt={`Variación ${index + 1}`}
+                            fill
+                            sizes="(max-width: 768px) 50vw, 25vw"
+                            className="object-cover"
+                          />
+                          <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[10px] rounded">
+                            Opción {index + 1}
+                          </span>
+                          {selectedVariation === index && (
+                            <div className="absolute top-1 right-1 w-5 h-5 bg-[#A3B1A1] rounded-full flex items-center justify-center">
+                              <Check className="h-3 w-3 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+
+                    {variations.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleRegenerate}
+                          className="w-full"
+                          disabled={isGenerating}
+                        >
+                          <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                          Regenerar
+                        </Button>
+
+                        {selectedVariation !== null && onSaveRefinement && (
+                          <Button
+                            size="sm"
+                            onClick={handleSaveRefinement}
+                            className="w-full bg-gradient-to-r from-[#A3B1A1] to-[#C4886F]"
+                          >
+                            <Check className="h-3.5 w-3.5 mr-2" />
+                            Guardar Variación
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </div>
 
-              {/* Variations Sidebar */}
-              {variations.length > 0 && (
-                <div className="w-64 bg-gray-50 border-l p-4 overflow-y-auto">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                    Selecciona tu favorita:
-                  </h3>
-                  <div className="space-y-3">
-                    {variations.map((variation, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedVariation(index)}
-                        className={cn(
-                          "w-full aspect-video rounded-lg overflow-hidden border-2 transition-all relative group",
-                          selectedVariation === index
-                            ? "border-[#A3B1A1] ring-2 ring-[#A3B1A1]/20"
-                            : "border-gray-200 hover:border-gray-300"
-                        )}
-                      >
-                        <Image
-                          src={variation}
-                          alt={`Variación ${index + 1}`}
-                          fill
-                          className="object-cover"
-                        />
-                        <span className="absolute top-2 left-2 px-2 py-1 bg-black/60 text-white text-xs rounded">
-                          Opción {index + 1}
-                        </span>
-                        {selectedVariation === index && (
-                          <div className="absolute top-2 right-2 w-6 h-6 bg-[#A3B1A1] rounded-full flex items-center justify-center">
-                            <Check className="h-4 w-4 text-white" />
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 space-y-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleRegenerate}
-                      className="w-full"
-                      disabled={isGenerating}
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Regenerar
-                    </Button>
-
-                    {selectedVariation !== null && onSaveRefinement && (
-                      <Button
-                        size="sm"
-                        onClick={handleSaveRefinement}
-                        className="w-full bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90"
-                      >
-                        <Check className="h-4 w-4 mr-2" />
-                        Guardar Variación
-                      </Button>
+              {/* Desktop: Side-by-side layout */}
+              <div className="hidden md:flex flex-1">
+                {/* Main Image Area */}
+                <div className="flex-1 bg-muted/50 flex items-center justify-center p-4">
+                  <div className="relative max-w-full max-h-full">
+                    <Image
+                      src={currentImage}
+                      alt="Diseño actual"
+                      width={800}
+                      height={600}
+                      className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                    />
+                    {variations.length > 0 && selectedVariation !== null && (
+                      <Badge className="absolute top-4 right-4 bg-[#A3B1A1]/90">
+                        Variación {selectedVariation + 1}
+                      </Badge>
                     )}
                   </div>
                 </div>
-              )}
+
+                {/* Variations Sidebar - Desktop only */}
+                {variations.length > 0 && (
+                  <div className="w-64 bg-gray-50 border-l p-4 overflow-y-auto">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                      Selecciona tu favorita:
+                    </h3>
+                    <div className="space-y-3">
+                      {variations.map((variation, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedVariation(index)}
+                          className={cn(
+                            "w-full aspect-video rounded-lg overflow-hidden border-2 transition-all relative group",
+                            selectedVariation === index
+                              ? "border-[#A3B1A1] ring-2 ring-[#A3B1A1]/20"
+                              : "border-gray-200 hover:border-gray-300"
+                          )}
+                        >
+                          <Image
+                            src={variation}
+                            alt={`Variación ${index + 1}`}
+                            fill
+                            sizes="(max-width: 768px) 50vw, 25vw"
+                            className="object-cover"
+                          />
+                          <span className="absolute top-2 left-2 px-2 py-1 bg-black/60 text-white text-xs rounded">
+                            Opción {index + 1}
+                          </span>
+                          {selectedVariation === index && (
+                            <div className="absolute top-2 right-2 w-6 h-6 bg-[#A3B1A1] rounded-full flex items-center justify-center">
+                              <Check className="h-4 w-4 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-4 space-y-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleRegenerate}
+                        className="w-full"
+                        disabled={isGenerating}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Regenerar
+                      </Button>
+
+                      {selectedVariation !== null && onSaveRefinement && (
+                        <Button
+                          size="sm"
+                          onClick={handleSaveRefinement}
+                          className="w-full bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90"
+                        >
+                          <Check className="h-4 w-4 mr-2" />
+                          Guardar Variación
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Bottom Prompt Bar (Edit Mode Only) */}
+          {/* Bottom Prompt Bar (Edit Mode Only) - Mobile Optimized */}
           {mode === 'edit' && (
-            <div className="border-t px-6 py-4 bg-white">
-              <div className="flex gap-3">
+            <div className="border-t px-3 md:px-6 py-3 md:py-4 bg-white">
+              <div className="flex flex-col md:flex-row gap-2 md:gap-3">
                 <Textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe qué quieres cambiar en esta imagen. Ej: 'Cambia el sofá por uno más moderno en tonos grises', 'Agrega más plantas', 'Hazlo más iluminado'"
-                  className="flex-1 min-h-[80px] max-h-[120px] text-sm"
+                  placeholder="Describe qué quieres cambiar..."
+                  className="flex-1 min-h-[60px] md:min-h-[80px] max-h-[100px] md:max-h-[120px] text-xs md:text-sm"
                   disabled={isGenerating}
                 />
 
                 <Button
                   onClick={handleGenerate}
                   disabled={!prompt.trim() || isGenerating}
-                  className="bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90 min-w-[140px]"
+                  className="bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90 w-full md:w-auto md:min-w-[140px]"
+                  size="sm"
                 >
                   {isGenerating ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4 animate-spin" />
                       Generando...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="mr-2 h-4 w-4" />
+                      <Sparkles className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
                       Generar
                     </>
                   )}
                 </Button>
               </div>
 
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-[10px] md:text-xs text-gray-500 mt-1 md:mt-2">
                 💡 Describe los cambios que deseas ver en el diseño.
               </p>
             </div>

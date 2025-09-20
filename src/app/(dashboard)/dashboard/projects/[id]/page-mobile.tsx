@@ -108,7 +108,6 @@ export default function MobileOptimizedProjectWorkspace({ params }: { params: Pr
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null)
   const [generationComplete, setGenerationComplete] = useState(false)
-  const [lastGeneratedVariant, setLastGeneratedVariant] = useState<Variant | null>(null)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const [shareVariantId, setShareVariantId] = useState<string | null>(null)
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false)
@@ -127,12 +126,9 @@ export default function MobileOptimizedProjectWorkspace({ params }: { params: Pr
   useEffect(() => {
     if (selectedBaseImage) {
       fetchVariants(selectedBaseImage.id)
-      // Don't reset generation state if we're in the middle of generating
-      if (!generating) {
-        setGenerationComplete(false)
-      }
+      setGenerationComplete(false)
     }
-  }, [selectedBaseImage, generating])
+  }, [selectedBaseImage])
 
   const fetchProject = useCallback(async () => {
     try {
@@ -331,7 +327,6 @@ export default function MobileOptimizedProjectWorkspace({ params }: { params: Pr
 
       if (data.transformation) {
         setVariants(prev => [data.transformation, ...prev])
-        setLastGeneratedVariant(data.transformation)
         toast.success(
           data.transformation.status === 'completed'
             ? '¡Diseño generado!'
@@ -339,15 +334,14 @@ export default function MobileOptimizedProjectWorkspace({ params }: { params: Pr
         )
         if (data.transformation.status === 'completed') {
           setGenerationComplete(true)
-          // Don't switch tabs automatically - let user see the result in wizard
-          // setMobileTab('gallery')
+          // Switch to gallery tab on mobile after generation
+          setMobileTab('gallery')
         }
       } else {
         toast.success('Diseño enviado a generar')
         await fetchVariants(selectedBaseImage.id)
         setGenerationComplete(true)
-        // Don't switch tabs automatically
-        // setMobileTab('gallery')
+        setMobileTab('gallery')
       }
     } catch (error) {
       console.error('Error generating variant:', error)
@@ -408,7 +402,6 @@ export default function MobileOptimizedProjectWorkspace({ params }: { params: Pr
                   src={image.url}
                   alt={image.name || 'Imagen'}
                   fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   className="object-cover"
                 />
                 <button
@@ -444,7 +437,6 @@ export default function MobileOptimizedProjectWorkspace({ params }: { params: Pr
                 src={selectedBaseImage.url}
                 alt={selectedBaseImage.name || 'Imagen'}
                 fill
-                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
@@ -505,9 +497,7 @@ export default function MobileOptimizedProjectWorkspace({ params }: { params: Pr
                           src={variant.result_image_url}
                           alt="Variante"
                           fill
-                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                           className="object-cover"
-                          priority
                         />
                         {/* Mobile-friendly Overlay Actions */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent opacity-0 group-hover:opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200">
@@ -625,44 +615,27 @@ export default function MobileOptimizedProjectWorkspace({ params }: { params: Pr
       {selectedBaseImage && (
         <div className="lg:hidden mb-4 p-3 bg-white rounded-lg border border-gray-200">
           <div className="flex items-center gap-3">
-            <div
-              className="w-16 h-16 relative rounded overflow-hidden flex-shrink-0 cursor-pointer group"
-              onClick={() => setExpandedBaseImage(true)}
-            >
+            <div className="w-16 h-16 relative rounded overflow-hidden flex-shrink-0">
               <Image
                 src={selectedBaseImage.url}
                 alt="Imagen seleccionada"
                 fill
-                sizes="(max-width: 768px) 100vw, 40vw"
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                <Expand className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
             </div>
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-900">Imagen seleccionada</p>
               <p className="text-[10px] text-gray-500">
                 {variants.filter(v => v.status === 'completed').length} diseños generados
               </p>
-              <div className="flex gap-3">
-                <Button
-                  size="sm"
-                  variant="link"
-                  className="h-auto p-0 text-xs text-[#A3B1A1]"
-                  onClick={() => setExpandedBaseImage(true)}
-                >
-                  Ver completa
-                </Button>
-                <Button
-                  size="sm"
-                  variant="link"
-                  className="h-auto p-0 text-xs text-[#A3B1A1]"
-                  onClick={() => setMobileTab('gallery')}
-                >
-                  Ver galería →
-                </Button>
-              </div>
+              <Button
+                size="sm"
+                variant="link"
+                className="h-auto p-0 text-xs text-[#A3B1A1]"
+                onClick={() => setMobileTab('gallery')}
+              >
+                Ver galería →
+              </Button>
             </div>
           </div>
         </div>
@@ -682,10 +655,6 @@ export default function MobileOptimizedProjectWorkspace({ params }: { params: Pr
           onGenerate={handleGenerate}
           onNoTokens={() => setShowNoTokensDialog(true)}
           onGenerationComplete={generationComplete}
-          lastGeneratedVariant={lastGeneratedVariant}
-          onViewGeneratedImage={(variant) => {
-            setViewerModal({ isOpen: true, variant, initialMode: 'view' })
-          }}
         />
       ) : (
         <div className="text-center py-12">
@@ -845,16 +814,10 @@ export default function MobileOptimizedProjectWorkspace({ params }: { params: Pr
           </div>
 
           {/* Share Button */}
-          {project && variants.length > 0 && (
-            <Button
-              size="sm"
-              onClick={() => setIsShareDialogOpen(true)}
-              className="h-8 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90 text-white border-none"
-            >
-              <Share2 className="h-3.5 w-3.5 mr-1.5" />
-              Compartir
-            </Button>
-          )}
+          <Button variant="outline" size="sm" className="h-8">
+            <Share2 className="h-3.5 w-3.5 mr-1.5" />
+            Compartir
+          </Button>
         </div>
       </div>
 
@@ -935,21 +898,16 @@ export default function MobileOptimizedProjectWorkspace({ params }: { params: Pr
             />
           </label>
 
-          <Button
-            size="sm"
-            onClick={() => setMobileTab('design')}
-            className="h-9 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90 text-white"
-          >
-            <Wand2 className="h-4 w-4 mr-1.5" />
-            <span className="text-xs">Diseñar</span>
-          </Button>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-full">
+            <Images className="h-4 w-4 text-gray-500" />
+            <span className="text-sm font-medium text-gray-700">
+              {variants.filter(v => v.status === 'completed').length}
+            </span>
+            <span className="text-xs text-gray-500">diseños</span>
+          </div>
 
           {project && variants.length > 0 && (
-            <Button
-              size="sm"
-              onClick={() => setIsShareDialogOpen(true)}
-              className="h-9 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90 text-white border-none"
-            >
+            <Button size="sm" variant="outline" className="h-9">
               <Share2 className="h-4 w-4 mr-1.5" />
               <span className="text-xs">Compartir</span>
             </Button>
@@ -984,35 +942,12 @@ export default function MobileOptimizedProjectWorkspace({ params }: { params: Pr
                 src={selectedBaseImage.url}
                 alt={selectedBaseImage.name || 'Imagen'}
                 fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
                 className="object-contain"
               />
             </div>
           </DialogContent>
         </Dialog>
       )}
-
-      {project && (
-        <EnhancedShareDialog
-          open={isShareDialogOpen}
-          onOpenChange={setIsShareDialogOpen}
-          project={project}
-          generations={variants.filter(v => v.status === 'completed')}
-          onShare={(selectedIds, format) => {
-            // Handle the share logic here
-            console.log('Sharing:', selectedIds, format)
-            setIsShareDialogOpen(false)
-            setIsSuccessDialogOpen(true)
-          }}
-        />
-      )}
-
-      <ShareSuccessDialog
-        open={isSuccessDialogOpen}
-        onOpenChange={setIsSuccessDialogOpen}
-        shareUrl={shareUrl}
-        format={shareFormat}
-      />
 
       <NoTokensDialog
         isOpen={showNoTokensDialog}

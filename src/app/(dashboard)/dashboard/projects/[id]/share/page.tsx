@@ -271,17 +271,17 @@ export default function SharePreviewPage({
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" asChild>
+            <div className="flex items-center gap-2 md:gap-4">
+              <Button variant="ghost" size="sm" asChild className="p-2">
                 <Link href={`/dashboard/projects/${id}`}>
                   <ArrowLeft className="h-4 w-4" />
                 </Link>
               </Button>
 
               <div className="flex items-center gap-2">
-                <h1 className="font-semibold">Compartir Proyecto</h1>
+                <h1 className="text-sm md:text-base font-semibold">Compartir Proyecto</h1>
                 {isDraft && (
                   <Badge variant="outline" className="text-xs">
                     Borrador
@@ -296,9 +296,19 @@ export default function SharePreviewPage({
                 size="sm"
                 onClick={handleSaveDraft}
                 disabled={!isDraft}
+                className="hidden md:flex"
               >
                 <Save className="h-4 w-4 mr-2" />
                 Guardar Borrador
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSaveDraft}
+                disabled={!isDraft}
+                className="flex md:hidden p-2"
+              >
+                <Save className="h-4 w-4" />
               </Button>
 
               {shareResponse ? (
@@ -310,6 +320,7 @@ export default function SharePreviewPage({
                       await navigator.clipboard.writeText(shareResponse.shareUrl)
                       toast.success('Enlace copiado!')
                     }}
+                    className="hidden md:flex"
                   >
                     <Copy className="h-4 w-4 mr-2" />
                     Copiar Enlace
@@ -317,24 +328,46 @@ export default function SharePreviewPage({
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(shareResponse.shareUrl)
+                      toast.success('Enlace copiado!')
+                    }}
+                    className="flex md:hidden p-2"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => window.open(shareResponse.shareUrl, '_blank')}
+                    className="hidden md:flex"
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Ver Compartido
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(shareResponse.shareUrl, '_blank')}
+                    className="flex md:hidden p-2"
+                  >
+                    <ExternalLink className="h-4 w-4" />
                   </Button>
                 </div>
               ) : (
                 <Button
                   onClick={handlePublishShare}
                   disabled={isPublishing || selectedVariants.length === 0}
-                  className="bg-[#A3B1A1] hover:bg-[#A3B1A1]/90"
+                  className="bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-xs md:text-sm"
+                  size="sm"
                 >
                   {isPublishing ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1 md:mr-2" />
                   ) : (
-                    <Share2 className="h-4 w-4 mr-2" />
+                    <Share2 className="h-4 w-4 mr-1 md:mr-2" />
                   )}
-                  Publicar
+                  <span className="hidden md:inline">Publicar</span>
+                  <span className="inline md:hidden">Pub.</span>
                 </Button>
               )}
             </div>
@@ -342,17 +375,17 @@ export default function SharePreviewPage({
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      {/* Main Content - Mobile Optimized */}
+      <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-8">
 
-        {/* Title Section */}
-        <div className="mb-8">
+        {/* Title Section - Mobile Optimized */}
+        <div className="mb-4 md:mb-8">
           {editingTitle ? (
             <div className="flex items-center gap-2 mb-2">
               <Input
                 value={shareConfig.customTitle || ''}
                 onChange={(e) => setShareConfig(prev => ({ ...prev, customTitle: e.target.value }))}
-                className="text-3xl font-bold border-none px-0 shadow-none focus-visible:ring-0"
+                className="text-xl md:text-3xl font-bold border-none px-0 shadow-none focus-visible:ring-0"
                 placeholder="Título de tu proyecto..."
                 autoFocus
               />
@@ -362,7 +395,7 @@ export default function SharePreviewPage({
             </div>
           ) : (
             <div className="flex items-center gap-2 mb-2 group">
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-xl md:text-3xl font-bold text-gray-900">
                 {shareConfig.customTitle || 'Sin título'}
               </h1>
               <Button
@@ -381,7 +414,7 @@ export default function SharePreviewPage({
               <Textarea
                 value={shareConfig.customDescription || ''}
                 onChange={(e) => setShareConfig(prev => ({ ...prev, customDescription: e.target.value }))}
-                className="text-lg border-none px-0 shadow-none focus-visible:ring-0 resize-none"
+                className="text-base md:text-lg border-none px-0 shadow-none focus-visible:ring-0 resize-none"
                 placeholder="Agrega una descripción para tu proyecto..."
                 rows={3}
                 autoFocus
@@ -392,7 +425,7 @@ export default function SharePreviewPage({
             </div>
           ) : (
             <div className="flex items-start gap-2 group">
-              <p className="text-lg text-gray-600 min-h-[2em]">
+              <p className="text-base md:text-lg text-gray-600 min-h-[2em]">
                 {shareConfig.customDescription || 'Agrega una descripción...'}
               </p>
               <Button
@@ -420,7 +453,7 @@ export default function SharePreviewPage({
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                 {selectedVariants.map((variant, index) => (
                   <div
                     key={variant.id}
@@ -445,12 +478,12 @@ export default function SharePreviewPage({
                       </div>
                     )}
 
-                    <div className="p-4">
-                      <h3 className="font-medium text-sm">
+                    <div className="p-3 md:p-4">
+                      <h3 className="font-medium text-xs md:text-sm line-clamp-1">
                         {variant.style?.name || `Diseño ${index + 1}`}
                       </h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {variant.tokens_consumed} tokens usados
+                      <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
+                        {variant.tokens_consumed} tokens
                       </p>
                     </div>
                   </div>
@@ -481,7 +514,7 @@ export default function SharePreviewPage({
           <div>
             <h2 className="text-xl font-semibold mb-4">Configuración de Privacidad</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
               <button
                 onClick={() => setShareConfig(prev => ({ ...prev, visibility: 'public' }))}
                 className={cn(
