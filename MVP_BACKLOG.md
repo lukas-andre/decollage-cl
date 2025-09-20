@@ -98,11 +98,11 @@
 
 ### NEW - Facades & Exteriors Module 🟡
 **Status**: IMPORTANT - Market Expansion
-- **Fachadas Category**: Add exterior house design transformations
-- **Exteriores/Jardines**: Landscaping and outdoor space design
-- **Architectural Elements**: Windows, doors, roof, materials
-- **Chilean Architecture**: Traditional and modern Chilean home styles
-- **Seasonal Gardens**: Native Chilean plants and outdoor aesthetics
+- **Fachadas Category**: Add exterior house design transformations ✅
+- **Exteriores/Jardines**: Landscaping and outdoor space design ✅
+- **Architectural Elements**: Windows, doors, roof, materials 
+- **Chilean Architecture**: Traditional and modern Chilean home styles 
+- **Seasonal Gardens**: Native Chilean plants and outdoor aesthetics 
 
 ### NEW - Save Custom Styles 🟡
 **Status**: IMPORTANT - User Personalization
@@ -330,44 +330,44 @@ All MVP features must maintain strong Chilean cultural identity:
 
 ### **CRITICAL NEW REQUIREMENTS** 🔴 **IMMEDIATE**:
 
-#### **M1A: Wizard UX Improvements** 🔴 **TOP PRIORITY**
-- **Furniture Accordion Open by Default** - Show furniture options expanded initially
-- **Tab Navigation Support** - Enable keyboard navigation between tabs
-- **Style + Prompt Combination** - Allow users to select style AND add custom prompt for ultimate flexibility
-- **Remove "Otro" and "Personalizado"** from Step 3 accordion - clean up interface
-- **Smart Navigation Flow**:
+#### **M1A: Wizard UX Improvements** ✅ 
+- ✅ **Furniture Accordion Open by Default** - Show furniture options expanded initially
+- ✅ **Tab Navigation Support** - Enable keyboard navigation between tabs
+- ✅ **Style + Prompt Combination** - Allow users to select style AND add custom prompt for ultimate flexibility
+- ✅ **Remove "Otro" and "Personalizado"** from Step 3 accordion - clean up interface
+- ✅ **Smart Navigation Flow**:
   - If user selects "Personalizado" → jump directly to prompt step
   - If user selects style → allow optional prompt addition → continue to summary
-- **Step 4 Streamlined Summary** - Combine final review with essential details only
+- ✅ **Step 4 Streamlined Summary** - Combine final review with essential details only
 
-#### **M1B: Room Categories & Style Recommendations** 🔴 **CRITICAL**
-- **Missing Room Categories** - Only seeing "Living Comedor" and "Dormitorio Infantil", need full range
-- **Macrocategory Restoration** - Bring back all style macrocategories (Moderno, Clásico, Lujo, etc.)
-- **Smart Style Recommendations** - When selecting "Dormitorio Infantil" → show child-friendly styles
-- **Complete Room Types** - Add all missing interior/exterior room categories
-- **Interior/Exterior Structure** - Consider reorganizing as main Interior/Exterior categories
+#### **M1B: Room Categories & Style Recommendations** ✅ **CRITICAL**
+- ✅ **Missing Room Categories** - Only seeing "Living Comedor" and "Dormitorio Infantil", need full range
+- ✅ **Macrocategory Restoration** - Bring back all style macrocategories (Moderno, Clásico, Lujo, etc.)
+- ✅ **Smart Style Recommendations** - When selecting "Dormitorio Infantil" → show child-friendly styles
+- ✅ **Complete Room Types** - Add all missing interior/exterior room categories
+- ✅ **Interior/Exterior Structure** - Consider reorganizing as main Interior/Exterior categories
 
-#### **M1C: Project Layout Improvements** 🔴 **UX CRITICAL**
-- **Center Generations List** - Main screen should focus on generated designs, not base image preview
-- **Active Image Highlight** - Visual frame/border to clearly show which image is being edited
-- **Quick Image Expansion** - Click/tap any image to expand instantly (remove eye button requirement)
-- **Fullscreen Image Viewer** - Restore capability to view current editing image in fullscreen
-- **Base Image Size Reduction** - Reduce preview size to give more space to generations
+#### **M1C: Project Layout Improvements** ✅ **UX CRITICAL**
+- ✅ **Center Generations List** - Main screen should focus on generated designs, not base image preview
+- ✅ **Active Image Highlight** - Visual frame/border to clearly show which image is being edited
+- ✅ **Quick Image Expansion** - Click/tap any image to expand instantly (remove eye button requirement)
+- ✅ **Fullscreen Image Viewer** - Restore capability to view current editing image in fullscreen
+- ✅ **Base Image Size Reduction** - Reduce preview size to give more space to generations
 
-#### **M1D: Advanced Generation Controls** 🔴 **FUNCTIONALITY**
-- **Room Dimension Auto-Detection** - Add note that dimensions can be auto-detected (optional user input)
-- **Remove Color Palette Section** - Mark as "En Desarrollo" and temporarily remove
-- **Enhanced Furniture Modes** - Improve furniture handling options and descriptions
+#### **M1D: Advanced Generation Controls** ✅ **FUNCTIONALITY**
+- ✅ **Room Dimension Auto-Detection** - Add note that dimensions can be auto-detected (optional user input)
+- ✅ **Remove Color Palette Section** - Mark as "En Desarrollo" and temporarily remove
+- ✅ **Enhanced Furniture Modes** - Improve furniture handling options and descriptions
 
-### **Previously Identified Priorities**:
-3. **Image Preview UX** - Basic missing functionality for uploaded images
-4. **Facade Module** - Exterior design capabilities for complete home transformation
+### **Previously Identified Priorities**: ✅
+3. ✅ **Image Preview UX** - Basic missing functionality for uploaded images
+4. ✅ **Facade Module** - Exterior design capabilities for complete home transformation
 5. **Login Gates** - Strategic conversion points in sharing flow
 
 ### **Development Status**:
 - ✅ **Modern Layout & Wizard**: Context-First wizard with two-column layout **COMPLETED**
-- 🔄 **Current Focus**: Wizard UX improvements + room categories + layout refinements
-- 🎯 **Next Milestone**: Perfect the generation workflow user experience
+- ✅ **Current Focus**: Wizard UX improvements + room categories + layout refinements
+- ✅ **Next Milestone**: Perfect the generation workflow user experience
 
 ---
 
