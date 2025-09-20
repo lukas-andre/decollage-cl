@@ -84,9 +84,9 @@
 - **Sidebar Cleanup**: Remove "Moodboard" and "Galería" from sidebar for MVP (not necessary) ✅
 - **Sidebar Action Buttons**: Fix "Cerrar sesión" button overlapping when sidebar expands/shrinks ✅
 - **Sidebar Tooltips**: Add tooltips when sidebar is collapsed to show what each icon represents ✅
-- **Profile Page**: Create minimal profile page with basic user configuration options
-- **Remove "Sofía" Hardcoding**: Replace all hardcoded "Sofía" references with actual user first name
-- **Dashboard Cleanup**: Remove moodboard and gallery sections, prioritize "Últimas Generaciones"
+- **Profile Page**: Create minimal profile page with basic user configuration options (BASIC PLEASE) ✅
+- **Remove "Sofía" Hardcoding**: Replace all hardcoded "Sofía" references with actual user first name ✅
+- **Dashboard Cleanup**: Remove moodboard and gallery sections, prioritize "Últimas Generaciones" ✅
 - **Mobile Project View**: Improve mobile responsiveness and prioritize mobile view for "Proyecto" page
 - **Full English Translation**: Ensure all AI prompts and styles are fully translated to English for better AI generation quality 
 
