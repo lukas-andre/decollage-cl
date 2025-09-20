@@ -21,6 +21,7 @@ interface ProjectShare {
   slug?: string
   current_views: number
   conversion_count: number
+  engagement_count: number
   created_at: string
   last_viewed_at?: string
   expires_at?: string

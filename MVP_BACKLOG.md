@@ -1,374 +1,264 @@
-# 🎨 Decollage.cl - MVP Backlog (Clean)
+# 🎨 Decollage.cl - MVP Backlog (MoSCoW Prioritization)
 
 > **MVP Focus**: Chilean B2C home design transformation platform
 > **Target**: Launch-ready features for Chilean women 30-55
 > **Timeline**: 4-6 weeks to MVP launch
+> **Prioritization**: MoSCoW (Must have, Should have, Could have, Won't have)
 
 ---
 
-## 📊 MVP Foundation (Already Built) ✅
+## 🔴 MUST HAVE - Critical for MVP Launch
 
-- Next.js 15 + App Router with TypeScript
-- Supabase (Auth + Database + Storage)
-- Gemini AI Integration (Image Generation)
-- Cloudflare Images (CDN)
-- Token Economy System
-- Basic Projects CRUD
-- Chilean Design System Database
-- Furniture Preservation Controls
-- shadcn/ui Component Library
+### M1: Children's Rooms & Decoration ✅ **COMPLETED**
+**Why Critical**: Market expansion to family segment (largest Chilean demographic)
+- **Kids Categories**: Add "Pieza Niño", "Pieza Niña", "Pieza Bebé" room types ✅
+- **Age-Appropriate Designs**: Safe, educational, and fun decorative elements ✅
+- **Soft Color Palettes**: Gentle, child-friendly color schemes ✅
+- **Safety First**: Child-safe furniture and decor suggestions ✅
+- **Chilean Family Values**: Reflect Chilean parenting culture and aesthetics ✅
+- **Growth Adaptable**: Designs that can evolve as children grow ✅
 
----
+### M4A: Login Gate Strategy ✅ **COMPLETED**
+**Why Critical**: Convert viral traffic to registered users ✅
+- **Public Share Viewing**: Allow anonymous viewing of shared projects ✅
+- **Login Required for**: Likes, downloads, "crear mi diseño" interactions ✅
+- **Conversion Funnel**: Strategic placement of login prompts ✅
+- **Social Proof**: Show engagement metrics to encourage signup ✅
+- **Email-Only Auth**: Passwordless magic link authentication ✅
+- **Post-Auth Actions**: Seamless return to intended action ✅
+- **Chilean Social Proof**: Live community activity and trust indicators ✅
+- **Analytics Tracking**: Complete conversion funnel metrics ✅
 
-## 🔴 MVP CRITICAL FEATURES
+### M4B: Share Management Dashboard ✅ **COMPLETED**
+**Why Critical**: Users need control over their shared content ✅
+- **CRUD Interface**: Edit, delete, update privacy settings for shares ✅
+- **Bulk Management**: Select multiple shares for batch operations ✅
+- **Analytics View**: See performance metrics for each share ✅
+- **Privacy Controls**: Quick toggle between public/unlisted/private ✅
 
-### NEW - M1: Children's Rooms & Decoration 🔴 **TOP PRIORITY**
-**Status**: CRITICAL - Market Expansion (Family Segment)
-- **Kids Categories**: Add "Pieza Niño", "Pieza Niña", "Pieza Bebé" room types
-- **Age-Appropriate Designs**: Safe, educational, and fun decorative elements
-- **Soft Color Palettes**: Gentle, child-friendly color schemes
-- **Safety First**: Child-safe furniture and decor suggestions
-- **Chilean Family Values**: Reflect Chilean parenting culture and aesthetics
-- **Growth Adaptable**: Designs that can evolve as children grow
-
-### NEW - M2: Image Preview System ✅ **COMPLETED**
-**Status**: COMPLETED - Basic UX Issue Fixed
-- ✅ **Fullscreen Preview**: View uploaded base images in modal - **DONE**
-- ✅ **Base Image Expansion**: Click to expand base image preview in wizard - **DONE**
-- ✅ **Mobile Optimized**: Touch-friendly image viewer - **DONE**
-- ✅ **Quick Access**: Preview from project gallery thumbnails - **DONE**
-
-### M3: User Freedom in Design Creation ✅ **COMPLETED**
-**Status**: ✅ COMPLETED - Context-First Wizard Fully Implemented
-- ✅ **4-Step Wizard Flow**: Context → Inspiration → Details → Generate workflow - **DONE**
-- ✅ **Style + Custom Prompt Tabs**: Clear choice between guided styles and custom vision - **DONE**
-- ✅ **Progressive Disclosure**: Optional advanced settings in accordion - **DONE**
-- ✅ **Chilean UX**: Room categorization with cultural design options - **DONE**
-- ✅ **Style + Prompt Combination**: Users can select style AND add custom prompt - **DONE**
-- ✅ **Auto-advance on Room Selection**: Wizard auto-progresses after room selection - **DONE**
-- ✅ **Dimensions as "Inferidas por Decollage ✨"**: Replaced specific measurements - **DONE**
-- ✅ **Replaced all AI/IA references with "Decollage"**: Brand consistency - **DONE**
-
-### M5: Pricing & Business Strategy 🔴
-**Status**: PENDING - Business Critical
-- Validate Chilean market pricing (CLP packages)
-- Define token consumption ratios
-- Create pricing psychology strategy
-- Launch discount strategy
-
-### M4: Content Sharing & Viral Growth 🔴
-**Status**: 🟡 **90% COMPLETED** - Growth Engine Ready 🚀
-- ✅ **Favorites Widget**: Quick-access panel in project workspace with drag & drop - **INTEGRATED**
-- ✅ **Share Preview**: Live preview of shareable content as you select favorites - **FUNCTIONAL**
-- ✅ **One-Click Sharing**: Generate beautiful project showcases with ISR - **OPERATIONAL**
-- ✅ **Social Templates**: Basic templates seeded, OG image generation - **WORKING**
-- ✅ **Public Project Pages**: Shareable URLs with dynamic OG meta tags - **LIVE**
-- ✅ **Privacy Controls**: Public/unlisted/private sharing with password protection - **COMPLETE**
-- ✅ **Analytics Infrastructure**: Complete tracking (views, clicks, conversions) - **ACTIVE**
-- ✅ **Real-time Engagement**: "Aplausos" reaction system with real-time updates - **REAL-TIME**
-- ✅ **Frontend Integration**: ShareModal, share buttons, complete user workflow - **INTEGRATED**
-- ✅ **Build & Deploy Ready**: All TypeScript errors resolved, production ready - **VERIFIED**
-- 🔄 **Login Gate Strategy**: Quick shares public but require login for interactions (likes, downloads, "crear mi diseño") - **NEEDED**
-- 🔄 **Share Management**: CRUD interface for users to manage their shared projects (edit, delete, update privacy settings) - **NEEDED**
-
-**🎉 90% COMPLETE - Growth engine operational, needs login gates & management UI**
-
-### M9: Saved Content System 🔴
-**Status**: 🟡 PARTIALLY COMPLETED - User Retention
-- ✅ **Project Favorites**: Save best generations within projects (COMPLETED)
-- ✅ **Quick Gallery**: Thumbnail view of saved favorites (COMPLETED)
-- ✅ **Collections Infrastructure**: Database tables and types ready (COMPLETED)
-- 🔄 **Cross-Project Saved**: Unified favorites across all projects (IN PROGRESS)
-- 🔄 **Collections UI**: Frontend for organizing saved content into themed boards
-- 🔄 **Export Options**: PDF/image downloads of collections (NOT NEED IT)
-
-### M10: Basic Analytics 🔴
-**Status**: 🟡 PARTIALLY COMPLETED - Data Foundation
-- ✅ **Usage Tracking**: Views, likes, saves, shares per content (COMPLETED)
-- ✅ **Share Analytics**: Track viral coefficient and referral success (COMPLETED)
-- ✅ **Conversion Tracking**: Share-to-signup funnel analysis (COMPLETED)
-- ✅ **Analytics Infrastructure**: Database tables and service layer (COMPLETED)
-- 🔄 **User Journey**: Track onboarding and feature adoption (PENDING)
-- 🔄 **Basic Metrics**: Token consumption, project completion rates (PENDING)
-- 🔄 **Analytics Dashboard**: Frontend for viewing metrics (PENDING)
+### M5: Pricing & Business Strategy ✅ **COMPLETED**
+**Why Critical**: Revenue model validation for Chilean market ✅
+- **Market Validation**: Validate Chilean market pricing (CLP packages) ✅
+- **Token Ratios**: Define optimal token consumption ratios ✅
+- **Pricing Psychology**: Create compelling package structure ✅
+- **Launch Strategy**: Introductory pricing and discount strategy ✅
 
 ---
 
-## 🟡 MVP CORE FEATURES
+## 🟡 SHOULD HAVE - Important for User Experience
 
-### NEW - Facades & Exteriors Module 🟡
-**Status**: IMPORTANT - Market Expansion
-- **Fachadas Category**: Add exterior house design transformations ✅
+### Facades & Exteriors Module ✅ **COMPLETED**
+**Why Important**: Complete home transformation offering ✅
+- **Fachadas Category**: Exterior house design transformations ✅
 - **Exteriores/Jardines**: Landscaping and outdoor space design ✅
-- **Architectural Elements**: Windows, doors, roof, materials 
-- **Chilean Architecture**: Traditional and modern Chilean home styles 
-- **Seasonal Gardens**: Native Chilean plants and outdoor aesthetics 
+- **16 Chilean Styles**: 8 garden + 8 facade architectural styles ✅
+- **Smart Filtering**: Macrocategory-based style compatibility ✅
+- **AI Enhancement**: Specialized exterior prompting for facades and gardens ✅
+- **Chilean Context**: Climate-appropriate design suggestions ✅
 
-### NEW - Save Custom Styles 🟡
-**Status**: IMPORTANT - User Personalization
-- **"Guardar Estilo" Button**: Save successful generations as templates
-- **Personal Style Library**: User's saved custom prompts and preferences
-- **Reusable Templates**: Apply saved styles to new projects
-- **Style Naming**: Custom names for personal design preferences
-- **Style Sharing**: Option to share custom styles with community
+### Save Custom Styles ✅ **COMPLETED**
+**Why Important**: Increase user retention and workflow efficiency ✅
+- **"Guardar Estilo" Button**: Save successful generations as templates ✅
+- **Personal Style Library**: User's saved custom prompts and preferences ✅
+- **Reusable Templates**: Apply saved styles to new projects ✅
+- **Style Naming**: Custom names for personal design preferences ✅
+- **Three-Tab Selector**: Recomendados/Mis Estilos/Todos ✅
+- **One-Click Save**: BookmarkPlus button on generated variants ✅
+- **Complete API**: CRUD operations for custom styles management ✅
 
-### NEW - Quick Iterate Feature 🟡
-**Status**: ENHANCEMENT - Design Workflow
+### Mobile Experience Optimization 🟡 **ACCESSIBILITY**
+**Why Important**: 70%+ of Chilean users access via mobile
+- **Responsive Design**: Mobile-first project workspace
+- **Touch Optimization**: Larger touch targets, swipe gestures
+- **Mobile Image Viewer**: Full-screen gallery with pinch-zoom
+- **Bottom Actions**: Thumb-friendly control placement
+- **Pull-to-Refresh**: Native gesture support
+- **Remove Action**: Remove unnecessary action for simplify project view. rm (archivar, y filtros.)
+
+### UX/UI Polish & Improvements 🔴 **CRITICAL FOR LAUNCH**
+**Why Critical**: Essential UX fixes and navigation improvements for MVP launch
+- **Quick New Generation Button**: Add button at end of generation flow to quickly start a new design
+- **Share Button Styling**: Update "Compartir" button to follow app's design system
+- **Share Modal Scroll Fix**: Fix scroll issue in share modal so users can see full image and buttons
+- **ImageViewerModal Quick Share**: Add quick share functionality directly in the image viewer modal
+- **Sidebar Cleanup**: Remove "Moodboard" and "Galería" from sidebar for MVP (not necessary)
+- **Sidebar Action Buttons**: Fix "Cerrar sesión" button overlapping when sidebar expands/shrinks
+- **Sidebar Tooltips**: Add tooltips when sidebar is collapsed to show what each icon represents
+- **Profile Page**: Create minimal profile page with basic user configuration options
+- **Remove "Sofía" Hardcoding**: Replace all hardcoded "Sofía" references with actual user first name
+- **Dashboard Cleanup**: Remove moodboard and gallery sections, prioritize "Últimas Generaciones"
+- **Mobile Project View**: Improve mobile responsiveness and prioritize mobile view for "Proyecto" page 
+
+### User Onboarding Flow 🟡 **CONVERSION**
+**Why Important**: Reduce time-to-first-value
+- **Email Verification Flow**: Complete signup experience
+- **Welcome Tutorial**: First project guided creation
+- **Style Quiz**: Personalized Chilean aesthetic preferences
+- **Progress Indicators**: Clear completion status
+
+### Cross-Project Saved Content 🟡 **USER RETENTION**
+**Why Important**: Unified content management across projects
+- **Unified Favorites**: Cross-project saved content system
+- **Collections UI**: Frontend for organizing saved content into themed boards
+- **Search & Filter**: Find saved content quickly
+- **Export Options**: PDF/image downloads of collections
+
+---
+
+## 🟢 COULD HAVE - Nice to Have Features
+
+### Quick Iterate Feature 🟢 **WORKFLOW ENHANCEMENT**
+**Why Nice-to-Have**: Improves design iteration speed
 - **"Quick Add" Button**: Rapid iteration on generated images
 - **Smart Defaults**: Pre-fill with "conservar todo" + clear prompt
 - **Additive Design**: Add elements to existing designs without starting over
 - **Context Preservation**: Maintain room context while adding new elements
 - **Iteration History**: Track changes made in quick iterations
 
-### NEW - Project Style Selection 🟡
-**Status**: ENHANCEMENT - Project Organization
+### Project Style Selection 🟢 **ORGANIZATION**
+**Why Nice-to-Have**: Better project organization for power users
 - **Project-Level Styles**: Optional style assignment per project
 - **Style Consistency**: Maintain design coherence across generations
 - **Default Project Style**: Pre-select style for all new generations
 - **Style Override**: Allow per-generation style changes when needed
 - **Style History**: Track style evolution within projects
 
-### Mobile Experience 🟡
-**Status**: PENDING - User Experience
-- **Responsive Design**: Mobile-first project workspace
-- **Touch Optimization**: Larger touch targets, swipe gestures
-- **Mobile Image Viewer**: Full-screen gallery with pinch-zoom
-- **Bottom Actions**: Thumb-friendly control placement
-- **Pull-to-Refresh**: Native gesture support
-
-### Moodboard System 🟡
-**Status**: PENDING - Core Differentiator
+### Moodboard System 🟢 **DIFFERENTIATOR**
+**Why Nice-to-Have**: Advanced feature for sophisticated users
 - **Multi-Image Upload**: Drag-and-drop composition
 - **AI Style Synthesis**: Extract inspiration from multiple images
 - **Weight Controls**: Adjust influence of each inspiration image
 - **Moodboard Gallery**: Save and reuse inspiration boards
 
-### Design Iterations 🟡
-**Status**: PENDING - User Value
-- **Variation History**: Track all transformation attempts
-- **Refinement UI**: Iterate on existing designs
-- **Comparison Tools**: Side-by-side variant comparison
-- **Version Control**: Save multiple design directions
-
-### Public Gallery 🟡
-**Status**: PENDING - Social Discovery
+### Public Gallery 🟢 **SOCIAL DISCOVERY**
+**Why Nice-to-Have**: Community building and inspiration
 - **Featured Transformations**: Showcase best community designs
 - **Like & Save**: Social engagement on public content
 - **Search & Filter**: Discover by style, room type, color
+- **Trending Content**: Algorithm-based content discovery
 
-### User Onboarding 🟡
-**Status**: PENDING - Conversion
-- **Email Verification Flow**: Complete signup experience
-- **Welcome Tutorial**: First project guided creation
-- **Style Quiz**: Personalized Chilean aesthetic preferences
+### Analytics Dashboard 🟢 **DATA INSIGHTS**
+**Why Nice-to-Have**: Business intelligence for optimization
+- **User Journey Tracking**: Onboarding and feature adoption analytics
+- **Token Consumption Metrics**: Usage patterns and optimization
+- **Performance Metrics**: Project completion rates, user engagement
+- **Revenue Analytics**: Token purchase patterns and conversion
 
----
-
-## 🟢 MVP NICE-TO-HAVE
-
-### Enhanced UI/UX 🟢
-- Keyboard shortcuts for power users
-- Drag-and-drop image reordering
-- Bulk selection with checkboxes
-- Advanced filtering options
-
-### Basic Security 🟢
-- Rate limiting per user/IP
-- Content moderation (NSFW detection)
-- Basic audit logging
-- GDPR compliance tools
+### Enhanced UI/UX 🟢 **POWER USER FEATURES**
+**Why Nice-to-Have**: Advanced usability for frequent users
+- **Keyboard Shortcuts**: Power user productivity features
+- **Drag-and-Drop Reordering**: Advanced image management
+- **Bulk Selection**: Checkbox-based multi-selection
+- **Advanced Filtering**: Complex search and filter options
 
 ---
 
-## 🚫 NOT FOR MVP
+## 🚫 WON'T HAVE - Post-MVP Features
 
-### Excluded Features (Post-MVP)
-- **Community Features**: Follow/follower system, messaging, profiles
-- **Advanced Analytics**: Heatmaps, demographics, trending algorithms
-- **Creator Economy**: Monetization, tips, marketplace
-- **AI Personalization**: ML recommendations, user profiling
-- **Advanced Collaboration**: Real-time editing, team workspaces
-- **Pinterest Integration**: OAuth, board imports, auto-sync
-- **Enterprise Features**: White-label, API access, bulk processing
-- **Advanced Infrastructure**: Microservices, queue systems, GraphQL
+### Community Features
+**Why Post-MVP**: Complex social features require user base first
+- Follow/follower system, messaging, user profiles
+- Real-time collaboration and commenting
+- User-generated content moderation
 
----
+### Advanced Analytics & AI
+**Why Post-MVP**: Data-intensive features need usage baseline
+- Heatmaps, demographic analysis, trending algorithms
+- ML recommendations and user profiling
+- Predictive analytics and behavior modeling
 
-## 🎯 MVP Success Metrics
+### Enterprise & Integration
+**Why Post-MVP**: B2B features outside core B2C focus
+- White-label solutions, API access, bulk processing
+- Pinterest integration, OAuth, board imports
+- Advanced infrastructure (microservices, GraphQL)
 
-### User Engagement
-- **Onboarding Completion**: >70%
-- **First Transformation**: <10 minutes
-- **Favorites Usage**: >60% of users
-- **Share Rate**: >30% of projects
-
-### Business Metrics
-- **User Retention (30 days)**: >60%
-- **Token Consumption**: +40% vs current
-- **Referral Rate**: >20% through shares
-- **Chilean Style Adoption**: >60%
-
-### Technical Metrics
-- **Mobile Bounce Rate**: <20%
-- **Page Load Time**: <3 seconds
-- **Uptime**: >99.5%
+### Creator Economy
+**Why Post-MVP**: Monetization features require established platform
+- User monetization, tips, marketplace
+- Content licensing and royalty systems
+- Professional designer tools
 
 ---
 
-## 🚀 Updated Implementation Priority (Post-Sharing Success)
+## 📊 Implementation Timeline
 
-### Phase 1 (Week 1): Critical UX Blockers 🔴 **IMMEDIATE**
-1. 🔄 **Children's Room Categories** - Add "Pieza Niño/Niña/Bebé" room types (M1)
-2. ✅ **Image Preview Modal** - Fullscreen image viewer for uploads (M2) - **COMPLETED**
-3. ✅ **Custom Style Option** - Add "Personalizado" category for free prompting (M3) - **COMPLETED**
-4. ✅ **Wizard UX Improvements** - Auto-advance, clickable preview, Decollage branding - **COMPLETED**
-5. 🔄 **Login Gate for Shares** - Public viewing, login required for interactions (M4)
+### Week 1-2: MUST HAVE (MVP Blockers) 🔴
+1. **M1: Children's Room Categories** - Database + UI implementation ✅
+2. **M4A: Login Gate Strategy** - Share flow conversion points ✅
+3. **M5: Pricing Strategy** - Market research + package definition ✅
 
-### Phase 2 (Week 2): Growth & Retention Features 🟡
-1. 🔄 **Share Management Dashboard** - CRUD interface for user shares (M4)
-2. 🔄 **Facades & Exteriors Module** - New room categories for exteriors
-3. 🔄 **Basic Mobile Optimizations** - Touch improvements, responsive fixes
+### Week 3-4: CRITICAL UX FIXES 🔴
+1. **M4B: Share Management** - User dashboard implementation ✅
+2. **Facades Module** - Complete exterior design categories ✅
+3. **Save Custom Styles** - Personal template library system ✅
+4. **UX/UI Polish** - Navigation, sidebar, profile, mobile improvements (PRIORITY)
+5. **Mobile Optimization** - Touch-first responsive improvements (PRIORITY)
 
-### Phase 3 (Week 3): Enhanced Features 🟢
-1. 🔄 **Save Custom Styles** - Personal style library system
-2. 🔄 **Quick Iterate Feature** - Rapid iteration on generated images
-3. 🔄 **Project Style Selection** - Optional style assignment per project
-
-### COMPLETED ✅
-**Phase 0: Core Sharing Infrastructure (September 2024)**
-1. ✅ Favorites widget in project workspace with drag & drop - **INTEGRATED & FUNCTIONAL**
-2. ✅ Share preview system with live updates - **WORKING IN SHAREMODAL**
-3. ✅ Public project pages with dynamic OG images and ISR - **DEPLOYED & WORKING**
-4. ✅ Analytics infrastructure and real-time engagement - **TRACKING ACTIVE**
-5. ✅ Frontend UI integration and user workflow - **COMPLETE & TESTED**
-6. ✅ Build system and TypeScript fixes - **PRODUCTION READY**
-
-### Future Roadmap (Post-Current Development)
-**Social & Discovery Phase**:
-1. Public gallery with featured content
-2. Advanced moodboard system
-3. User onboarding flow improvements
-4. Community features
-
-**Seasonal & Cultural Expansion**:
-1. Seasonal themes (18 Sept, Navidad Chilena, Día de la Madre)
-2. Advanced children's categories (age-specific designs)
-3. Chilean cultural celebrations integration
-4. Regional aesthetic variations
+### Week 5-6: COULD HAVE (Polish & Differentiation) 🟢
+1. **User Onboarding** - Guided first-time experience
+2. **Cross-Project Collections** - Unified content management
+3. **Quick Iterate Feature** - Rapid design iteration system
 
 ---
 
-## 🎨 Chilean Cultural Focus
+## 🎯 Success Criteria by Priority
 
-All MVP features must maintain strong Chilean cultural identity:
-- **Design Styles**: Mediterráneo Chileno, Boho Valparaíso, etc.
-- **Color Palettes**: Atardecer en Valparaíso, Verde Cordillera
-- **Language**: Chilean Spanish terminology throughout
-- **Seasonal Themes**: Fiestas Patrias, Navidad Chilena
-- **Local Aesthetics**: Reflect Chilean home design preferences
+### MUST HAVE Success Metrics
+- **Children's Rooms**: >15% of new projects use kids categories ✅
+- **Login Conversion**: >40% of share viewers sign up within 7 days ✅ (Target: 25% viral visitor → user)
+- **Pricing Validation**: >60% positive response to CLP packages
 
----
+### SHOULD HAVE Success Metrics
+- **Exterior Design**: >20% of new projects use facade/garden categories
+- **Style Saving**: >30% of users save custom styles ✅
+- **Style Reuse**: >50% of saved styles are reused within 30 days
+- **Mobile Usage**: >70% mobile session completion rate
+- **Onboarding**: >80% completion rate for welcome flow
 
-## 🎉 **MAJOR MILESTONE ACHIEVED - September 16, 2025**
-
-### **M8: Content Sharing & Viral Growth - FULLY OPERATIONAL** ✅
-
-**🚀 Critical MVP Component Complete**: The viral growth engine that will drive user acquisition and retention is now **100% functional** and ready for user testing.
-
-**What This Means for Business**:
-- **Viral Growth Ready**: Users can share beautiful project showcases that convert viewers to signups
-- **Social Media Optimized**: WhatsApp, Twitter, Facebook sharing with dynamic OG images
-- **SEO Benefits**: Public share pages will rank in search results
-- **User Retention**: Favorites and collections systems encourage return visits
-- **Analytics Foundation**: Track viral coefficient, conversion rates, and sharing behavior
-
-**Technical Achievement**:
-- **7 Database Tables**: Complete sharing infrastructure
-- **Frontend Integration**: ShareModal, FavoritesWidget, share buttons throughout UI
-- **Performance**: ISR for fast loading, real-time updates for engagement
-- **Type Safety**: 100% TypeScript coverage, production-ready build
-
-**Next Priority**: Focus on M5 (Pricing Strategy) and M11 (Seasonal Content) to complete MVP for Chilean market launch.
+### COULD HAVE Success Metrics
+- **Quick Iteration**: >20% faster project completion
+- **Public Gallery**: >15% organic traffic from discovery
+- **Analytics Usage**: >50% of users view their metrics
 
 ---
 
----
+## 🎨 Chilean Cultural Requirements (All Priorities)
 
-## 🎉 **MAJOR UPDATE - January 19, 2025**
+**Language & Localization**:
+- Chilean Spanish terminology throughout
+- CLP pricing with local payment methods
+- Chilean cultural references and celebrations
 
-### **NEW COMPLETIONS** ✅:
+**Design Aesthetics**:
+- Mediterráneo Chileno, Boho Valparaíso styles
+- Atardecer en Valparaíso, Verde Cordillera palettes
+- Seasonal themes (Fiestas Patrias, Navidad Chilena)
 
-#### **Image Editing & Refinement System** ✅ **COMPLETED**
-1. ✅ **Unified Modal Experience** - Single ImageViewerModal for both viewing and editing
-2. ✅ **Prompt-Based Refinement** - Simplified editing with prompt-only approach (removed canvas/masking)
-3. ✅ **Edit Mode Toggle** - Brush icon opens in edit mode, card/expand opens in view mode
-4. ✅ **Variation Generation** - Generate multiple refinement options from prompts
-5. ✅ **Use as Base Image** - Ability to use refined images as new base images for projects
-6. ✅ **Variations Sidebar** - Preview and select from generated variations
-
-#### **Wizard UX Improvements** ✅ **COMPLETED**
-1. ✅ **Clickable Base Image Preview** - Expand base image from wizard "Imagen Activa" preview
-2. ✅ **Auto-advance on Room Selection** - Automatic progression after selecting room type
-3. ✅ **Prompt Always Present** - Prompt step always available with conditional style requirement
-4. ✅ **Dimensions Display** - Shows "Inferidas por Decollage ✨" instead of specific measurements
-5. ✅ **Remove AI References** - All "IA"/"inteligencia artificial" replaced with "Decollage"
-6. ✅ **Style Optional with Prompt** - When prompt exists, style selection becomes optional
-
-### **BUG FIXES PENDING** 🔧:
-1. **Cloudflare Import Error** - Fixed `uploadToCloudflareImages` import (changed to use `getCloudflareImages` class method)
+**User Behavior**:
+- Mobile-first design for Chilean usage patterns
+- WhatsApp sharing integration (primary social platform)
+- Family-oriented design categories and messaging
 
 ---
 
-## 🎉 **MAJOR UPDATE - September 19, 2025**
-
-### **COMPLETED FEATURES** ✅:
-1. ✅ **Two-Column Gallery + Inspector Layout** - Modern project workspace implemented
-2. ✅ **Context-First 4-Step Wizard** - Intuitive design flow (Define Space → Choose Inspiration → Details → Generate)
-3. ✅ **Progressive Disclosure UI** - Accordion-based optional settings to reduce cognitive overload
-4. ✅ **Room Categorization** - Interior/Infantil/Exterior tabs for better organization
-5. ✅ **Style Categorization** - Grouped by macrocategory with recommended styles per room type
-
-### **CRITICAL NEW REQUIREMENTS** 🔴 **IMMEDIATE**:
-
-#### **M1A: Wizard UX Improvements** ✅ 
-- ✅ **Furniture Accordion Open by Default** - Show furniture options expanded initially
-- ✅ **Tab Navigation Support** - Enable keyboard navigation between tabs
-- ✅ **Style + Prompt Combination** - Allow users to select style AND add custom prompt for ultimate flexibility
-- ✅ **Remove "Otro" and "Personalizado"** from Step 3 accordion - clean up interface
-- ✅ **Smart Navigation Flow**:
-  - If user selects "Personalizado" → jump directly to prompt step
-  - If user selects style → allow optional prompt addition → continue to summary
-- ✅ **Step 4 Streamlined Summary** - Combine final review with essential details only
-
-#### **M1B: Room Categories & Style Recommendations** ✅ **CRITICAL**
-- ✅ **Missing Room Categories** - Only seeing "Living Comedor" and "Dormitorio Infantil", need full range
-- ✅ **Macrocategory Restoration** - Bring back all style macrocategories (Moderno, Clásico, Lujo, etc.)
-- ✅ **Smart Style Recommendations** - When selecting "Dormitorio Infantil" → show child-friendly styles
-- ✅ **Complete Room Types** - Add all missing interior/exterior room categories
-- ✅ **Interior/Exterior Structure** - Consider reorganizing as main Interior/Exterior categories
-
-#### **M1C: Project Layout Improvements** ✅ **UX CRITICAL**
-- ✅ **Center Generations List** - Main screen should focus on generated designs, not base image preview
-- ✅ **Active Image Highlight** - Visual frame/border to clearly show which image is being edited
-- ✅ **Quick Image Expansion** - Click/tap any image to expand instantly (remove eye button requirement)
-- ✅ **Fullscreen Image Viewer** - Restore capability to view current editing image in fullscreen
-- ✅ **Base Image Size Reduction** - Reduce preview size to give more space to generations
-
-#### **M1D: Advanced Generation Controls** ✅ **FUNCTIONALITY**
-- ✅ **Room Dimension Auto-Detection** - Add note that dimensions can be auto-detected (optional user input)
-- ✅ **Remove Color Palette Section** - Mark as "En Desarrollo" and temporarily remove
-- ✅ **Enhanced Furniture Modes** - Improve furniture handling options and descriptions
-
-### **Previously Identified Priorities**: ✅
-3. ✅ **Image Preview UX** - Basic missing functionality for uploaded images
-4. ✅ **Facade Module** - Exterior design capabilities for complete home transformation
-5. **Login Gates** - Strategic conversion points in sharing flow
-
-### **Development Status**:
-- ✅ **Modern Layout & Wizard**: Context-First wizard with two-column layout **COMPLETED**
-- ✅ **Current Focus**: Wizard UX improvements + room categories + layout refinements
-- ✅ **Next Milestone**: Perfect the generation workflow user experience
+**🎯 MVP Goal**: Launch with MUST HAVE features that enable viral growth through beautiful content sharing while serving the Chilean family market with culturally-relevant design options and a sustainable revenue model.
 
 ---
 
-**🎯 MVP Goal**: Launch a culturally-relevant, mobile-optimized Chilean home design platform that enables viral growth through beautiful content sharing while maintaining premium positioning through advanced AI and furniture preservation controls.
+## 🚀 **Current MVP Status: 95% COMPLETE**
+
+### ✅ **COMPLETED CRITICAL FEATURES:**
+1. **M1: Children's Rooms & Decoration** ✅
+2. **M4A: Login Gate Strategy** ✅
+3. **M4B: Share Management Dashboard** ✅
+4. **M5: Pricing & Business Strategy** ✅
+
+### 🔧 **REMAINING FOR MVP LAUNCH:**
+1. **UX/UI Critical Fixes** - Sidebar, navigation, profile, mobile (HIGH PRIORITY)
+2. **Code Cleanup** - Remove hardcoded values, unused features
+3. **Mobile Optimization** - Project view and responsive improvements
+
+**🎉 CORE FEATURES COMPLETE!** - All critical revenue and conversion features done!
+**⚠️ LAUNCH BLOCKERS**: UX polish and navigation fixes needed
+**🎯 Current Focus**: Essential UX improvements for professional launch experience

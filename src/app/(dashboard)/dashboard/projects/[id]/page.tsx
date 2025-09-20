@@ -18,7 +18,8 @@ import {
   Zap,
   Wand2,
   Brush,
-  Expand
+  Expand,
+  BookmarkPlus
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -57,7 +58,7 @@ interface Variant {
   created_at: string
   tokens_consumed: number
   status: 'pending' | 'processing' | 'completed' | 'failed'
-  style: { name: string } | null
+  style: { id: string; name: string; code: string; category: string; macrocategory: string } | null
   room_type: { name: string } | null
   color_palette: { name: string; hex_colors: string[] } | null
   metadata?: any
@@ -287,6 +288,55 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
     } catch (error) {
       console.error('Error toggling favorite:', error)
       toast.error('Error al actualizar favorito')
+    }
+  }
+
+  const handleSaveCustomStyle = async (variant: Variant) => {
+    try {
+      // Prompt user for style name
+      const styleName = prompt('¿Cómo quieres llamar a este estilo?')
+      if (!styleName || styleName.trim() === '') {
+        return
+      }
+
+      // Get the prompt from metadata or use the style name as base
+      const basePrompt = variant.metadata?.prompt || `${variant.style?.name || 'Custom'} style interior design`
+
+      const customStyleData = {
+        style_name: styleName.trim(),
+        base_prompt: basePrompt,
+        negative_prompt: variant.metadata?.negative_prompt || '',
+        based_on_style_id: variant.style?.id || null,
+        source_space_code: variant.metadata?.room_type || null,
+        preview_image_url: variant.result_image_url,
+        metadata: {
+          original_transformation_id: variant.id,
+          tokens_consumed: variant.tokens_consumed,
+          created_from_project: project?.name,
+          ...variant.metadata
+        }
+      }
+
+      const response = await fetch('/api/custom-styles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(customStyleData)
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al guardar estilo')
+      }
+
+      const result = await response.json()
+      toast.success(`Estilo "${styleName}" guardado correctamente`)
+
+      // Optionally refresh design data to include the new custom style
+      // This would require calling fetchDesignData() again
+
+    } catch (error) {
+      console.error('Error saving custom style:', error)
+      toast.error(error instanceof Error ? error.message : 'Error al guardar estilo')
     }
   }
 
@@ -640,6 +690,16 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
                                     >
                                       <Brush className="h-3.5 w-3.5 text-gray-700" />
                                     </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleSaveCustomStyle(variant)
+                                      }}
+                                      className="w-7 h-7 rounded-full bg-white/95 hover:bg-white flex items-center justify-center transition-all shadow-lg"
+                                      title="Guardar Estilo"
+                                    >
+                                      <BookmarkPlus className="h-3.5 w-3.5 text-gray-700" />
+                                    </button>
                                   </div>
                                   <button
                                     onClick={(e) => {
@@ -671,7 +731,7 @@ export default function ModernProjectWorkspace({ params }: { params: Promise<{ i
                                   </p>
                                 )}
                                 {variant.metadata?.is_refined && (
-                                  <Brush className="h-2.5 w-2.5 text-[#C4886F]" title="Refinado" />
+                                  <Brush className="h-2.5 w-2.5 text-[#C4886F]" />
                                 )}
                               </div>
                             </div>

@@ -121,23 +121,31 @@ const getRoomIcon = (roomCode: string) => {
   return iconMap[roomCode] || <Home className="h-5 w-5" />
 }
 
-// Categorize room types
+// Categorize room types using macrocategory field
 const categorizeRooms = (roomTypes: any[]) => {
   const categories = {
     interiores: roomTypes.filter(room => {
+      // Use macrocategory if available, otherwise fallback to legacy logic
+      if (room.macrocategory) {
+        return room.macrocategory === 'interior'
+      }
+      // Legacy fallback
       const interiorCodes = [
         'dormitorio', 'dormitorio_principal', 'living', 'cocina', 'bano', 'bano_visitas',
         'comedor', 'home_office', 'entrada', 'sala_estar', 'bodega',
-        // Legacy codes
         'bedroom', 'kitchen', 'bathroom', 'dining', 'office'
       ]
       return interiorCodes.includes(room.code) ||
              (room.name.toLowerCase().includes('dormitorio') && !room.name.toLowerCase().includes('niñ') && !room.name.toLowerCase().includes('beb'))
     }),
     infantil: roomTypes.filter(room => {
+      // Use macrocategory if available, otherwise fallback to legacy logic
+      if (room.macrocategory) {
+        return room.macrocategory === 'infantil'
+      }
+      // Legacy fallback
       const infantilCodes = [
         'dormitorio_ninos', 'pieza_bebe', 'pieza_nina', 'pieza_nino', 'sala_juegos',
-        // Legacy codes
         'kids'
       ]
       return infantilCodes.includes(room.code) ||
@@ -146,15 +154,20 @@ const categorizeRooms = (roomTypes: any[]) => {
              room.name.toLowerCase().includes('bebé')
     }),
     exteriores: roomTypes.filter(room => {
+      // Use macrocategory if available, otherwise fallback to legacy logic
+      if (room.macrocategory) {
+        return room.macrocategory === 'exterior'
+      }
+      // Legacy fallback
       const exteriorCodes = [
-        'jardin', 'terraza', 'quincho', 'logia',
-        // Legacy codes
+        'jardin', 'terraza', 'quincho', 'logia', 'fachada',
         'outdoor', 'garden', 'patio'
       ]
       return exteriorCodes.includes(room.code) ||
              room.name.toLowerCase().includes('jardín') ||
              room.name.toLowerCase().includes('terraza') ||
-             room.name.toLowerCase().includes('balcón')
+             room.name.toLowerCase().includes('balcón') ||
+             room.name.toLowerCase().includes('fachada')
     })
   }
   return categories
@@ -171,6 +184,25 @@ const categorizeStyles = (styles: any[]) => {
     categories[category].push(style)
   })
   return categories
+}
+
+// Smart filter styles based on room compatibility
+const getCompatibleStyles = (selectedRoom: any, allStyles: any[]) => {
+  if (!selectedRoom || !selectedRoom.compatible_style_macrocategories) {
+    return allStyles // Return all if no compatibility info
+  }
+
+  const compatibleMacrocategories = selectedRoom.compatible_style_macrocategories
+  return allStyles.filter(style => {
+    if (!style.macrocategory) return true // Include legacy styles without macrocategory
+    return compatibleMacrocategories.includes(style.macrocategory)
+  })
+}
+
+// Get filtered and categorized styles for UI
+const getFilteredStyleCategories = (selectedRoom: any, allStyles: any[]) => {
+  const compatibleStyles = getCompatibleStyles(selectedRoom, allStyles)
+  return categorizeStyles(compatibleStyles)
 }
 
 // Get recommended styles for a room type
@@ -240,11 +272,14 @@ export function ContextFirstWizard({
   }
 
   const categorizedRooms = categorizeRooms(designData.roomTypes)
-  const categorizedStyles = categorizeStyles(designData.styles)
   const selectedRoom = designData.roomTypes.find(r => r.id === formData.roomTypeId)
   const selectedStyle = designData.styles.find(s => s.id === formData.styleId)
   const selectedPalette = designData.colorPalettes.find(p => p.id === formData.colorPaletteId)
-  const recommendedStyles = selectedRoom ? getRecommendedStyles(selectedRoom.code, designData.styles) : []
+
+  // Smart style filtering based on room compatibility
+  const compatibleStyles = selectedRoom ? getCompatibleStyles(selectedRoom, designData.styles) : designData.styles
+  const categorizedStyles = categorizeStyles(compatibleStyles)
+  const recommendedStyles = selectedRoom ? getRecommendedStyles(selectedRoom.code, compatibleStyles) : []
 
   const handleGenerate = () => {
     if (!hasTokens) {
@@ -259,17 +294,12 @@ export function ContextFirstWizard({
       room_height: formData.roomHeight
     }
 
-    // Support combined style + custom prompt
-    if (formData.inspirationMode === 'prompt' || formData.customPrompt) {
-      params.prompt = formData.customPrompt
-      if (formData.styleId && formData.inspirationMode === 'style') {
-        // Combine style with custom prompt
-        const style = designData.styles.find(s => s.id === formData.styleId)
-        if (style) {
-          params.prompt = `${style.name} style. ${formData.customPrompt || ''}`
-        }
-      }
-    } else {
+    // Support three modes: style-only, prompt-only, or style+prompt combination
+    if (formData.customPrompt && formData.customPrompt.trim().length > 0) {
+      params.prompt = formData.customPrompt.trim()
+    }
+
+    if (formData.styleId) {
       params.style_id = formData.styleId
     }
 
@@ -486,57 +516,27 @@ export function ContextFirstWizard({
               </TabsList>
 
               <TabsContent value="style" className="mt-4 space-y-3">
-                {/* Recommended Styles First */}
-                {selectedRoom && recommendedStyles.length > 0 && (
-                  <div className="mb-4">
-                    <Label className="text-xs font-medium text-[#A3B1A1]">✨ Recomendados para {selectedRoom.name}</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {recommendedStyles.map((style) => (
-                        <button
-                          key={style.id}
-                          onClick={() => updateFormData({ styleId: style.id })}
-                          className={cn(
-                            "p-2 rounded-lg border text-left transition-all text-xs",
-                            formData.styleId === style.id
-                              ? "border-[#A3B1A1] bg-[#A3B1A1]/5"
-                              : "border-gray-200 hover:border-gray-300"
-                          )}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{style.name}</span>
-                            <Badge variant="outline" className="text-[10px] px-1">
-                              {style.token_cost || 1}
-                            </Badge>
-                          </div>
-                        </button>
-                      ))}
-                      {/* Personalizado button that switches to prompt tab */}
-                      <button
-                        onClick={() => updateFormData({ inspirationMode: 'prompt' })}
-                        className="p-2 rounded-lg border text-left transition-all text-xs border-dashed border-gray-300 hover:border-[#C4886F] hover:bg-[#C4886F]/5"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium flex items-center gap-1">
-                            <Wand2 className="h-3 w-3" />
-                            Personalizado
-                          </span>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {/* Style Selection Tabs */}
+                <Tabs defaultValue="recomendados" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="recomendados" className="text-xs">
+                      Recomendados
+                    </TabsTrigger>
+                    <TabsTrigger value="mis-estilos" className="text-xs">
+                      Mis Estilos
+                    </TabsTrigger>
+                    <TabsTrigger value="todos" className="text-xs">
+                      Todos
+                    </TabsTrigger>
+                  </TabsList>
 
-                {/* Categorized Styles */}
-                <Label className="text-xs">Explorar por Categoría</Label>
-                <Accordion type="single" collapsible className="w-full" defaultValue="Clásicos">
-                  {Object.entries(categorizedStyles).map(([category, styles]) => (
-                    <AccordionItem key={category} value={category}>
-                      <AccordionTrigger className="text-xs">
-                        {category} ({styles.length})
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="grid grid-cols-2 gap-2">
-                          {styles.map((style) => (
+                  {/* Recommended Styles Tab */}
+                  <TabsContent value="recomendados" className="mt-4 space-y-3">
+                    {selectedRoom && recommendedStyles.length > 0 ? (
+                      <div>
+                        <Label className="text-xs font-medium text-[#A3B1A1]">✨ Perfectos para {selectedRoom.name}</Label>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {recommendedStyles.map((style) => (
                             <button
                               key={style.id}
                               onClick={() => updateFormData({ styleId: style.id })}
@@ -555,11 +555,73 @@ export function ContextFirstWizard({
                               </div>
                             </button>
                           ))}
+                          {/* Personalizado button that switches to prompt tab */}
+                          <button
+                            onClick={() => updateFormData({ inspirationMode: 'prompt' })}
+                            className="p-2 rounded-lg border text-left transition-all text-xs border-dashed border-gray-300 hover:border-[#C4886F] hover:bg-[#C4886F]/5"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium flex items-center gap-1">
+                                <Wand2 className="h-3 w-3" />
+                                Personalizado
+                              </span>
+                            </div>
+                          </button>
                         </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <p className="text-xs">Selecciona un espacio para ver estilos recomendados</p>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* Custom Styles Tab */}
+                  <TabsContent value="mis-estilos" className="mt-4 space-y-3">
+                    <div className="text-center py-8 text-gray-500">
+                      <Wand2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-xs mb-2">Aún no tienes estilos guardados</p>
+                      <p className="text-[10px] text-gray-400">Genera diseños y guarda tus favoritos para usarlos después</p>
+                    </div>
+                  </TabsContent>
+
+                  {/* All Styles Tab */}
+                  <TabsContent value="todos" className="mt-4 space-y-3">
+                    <Label className="text-xs">Explorar todos los estilos</Label>
+                    <Accordion type="single" collapsible className="w-full" defaultValue="Modern">
+                      {Object.entries(categorizedStyles).map(([category, styles]) => (
+                        <AccordionItem key={category} value={category}>
+                          <AccordionTrigger className="text-xs">
+                            {category} ({styles.length})
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="grid grid-cols-2 gap-2">
+                              {styles.map((style) => (
+                                <button
+                                  key={style.id}
+                                  onClick={() => updateFormData({ styleId: style.id })}
+                                  className={cn(
+                                    "p-2 rounded-lg border text-left transition-all text-xs",
+                                    formData.styleId === style.id
+                                      ? "border-[#A3B1A1] bg-[#A3B1A1]/5"
+                                      : "border-gray-200 hover:border-gray-300"
+                                  )}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-medium">{style.name}</span>
+                                    <Badge variant="outline" className="text-[10px] px-1">
+                                      {style.token_cost || 1}
+                                    </Badge>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
 
               <TabsContent value="prompt" className="mt-4 space-y-3">
@@ -792,19 +854,38 @@ export function ContextFirstWizard({
 
               {/* Inspiration */}
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex-1 mr-2">
                   <p className="text-xs font-medium">Inspiración:</p>
-                  <p className="text-xs text-gray-600">
-                    {formData.inspirationMode === 'style'
-                      ? selectedStyle?.name
-                      : 'Visión personalizada'}
-                  </p>
+                  {formData.styleId && formData.customPrompt ? (
+                    // Both style and custom prompt
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-600">
+                        Estilo: <span className="font-medium">{selectedStyle?.name}</span>
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Personalización: <span className="italic">"{formData.customPrompt}"</span>
+                      </p>
+                    </div>
+                  ) : formData.styleId ? (
+                    // Style only
+                    <p className="text-xs text-gray-600">
+                      {selectedStyle?.name}
+                    </p>
+                  ) : formData.customPrompt ? (
+                    // Custom prompt only
+                    <p className="text-xs text-gray-600">
+                      <span className="italic">"{formData.customPrompt}"</span>
+                    </p>
+                  ) : (
+                    // Nothing selected (shouldn't happen if validation works)
+                    <p className="text-xs text-gray-500">Sin inspiración seleccionada</p>
+                  )}
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => jumpToStep(2)}
-                  className="h-6 px-2 text-xs"
+                  className="h-6 px-2 text-xs shrink-0"
                 >
                   <Edit2 className="h-3 w-3 mr-1" />
                   Editar

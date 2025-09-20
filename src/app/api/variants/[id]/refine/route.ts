@@ -95,8 +95,7 @@ export async function POST(
           refinedPrompt,
           {
             style: variant.style?.name || 'modern',
-            roomType: variant.room_type?.name || 'living',
-            furnitureMode: 'mix' // Mix to preserve existing elements while refining
+            roomType: variant.room_type?.name || 'living'
           }
         )
 

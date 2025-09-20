@@ -6,7 +6,6 @@ import { useShareViewTracking } from '@/hooks/use-share-view-tracking'
 import { Heart, Share2, ArrowRight, Download, User, Calendar, Eye, Sparkles, Home, Palette } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useRouter } from 'next/navigation'
 import { shareAnalyticsService } from '@/lib/services/share-analytics.service'
@@ -18,6 +17,7 @@ import { TransformationCarousel } from './TransformationCarousel'
 import { BeforeAfterImage } from './BeforeAfterImage'
 import { BeforeAfterModal } from './BeforeAfterModal'
 import { cn } from '@/lib/utils'
+import { triggerAuth } from '@/hooks/use-auth-modal'
 
 interface PublicShareViewProps {
   shareData: PublicShareData
@@ -34,7 +34,7 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
     isOpen: boolean
     item?: typeof shareData.items[0]
   }>({ isOpen: false })
-  const [imageOrientations, setImageOrientations] = useState<Record<string, 'horizontal' | 'vertical' | 'square'>>({}))
+  const [imageOrientations, setImageOrientations] = useState<Record<string, 'horizontal' | 'vertical' | 'square'>>({})
 
   // Track view using the new hook
   useShareViewTracking({
@@ -98,9 +98,32 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
 
   const handleReaction = async () => {
     if (!shareData.isAuthenticated) {
-      // Redirect to login with return URL
-      const returnUrl = encodeURIComponent(window.location.href)
-      router.push(`/auth/login?redirect=${returnUrl}`)
+      // Track gate impression
+      await fetch('/api/analytics/track-gate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_type: 'gate_shown',
+          action: 'like',
+          share_token: shareData.share.share_token,
+          metadata: {
+            project_name: shareData.project.name,
+            current_views: currentViews,
+            current_reactions: reactionCount
+          }
+        })
+      })
+
+      // Trigger auth modal with context
+      triggerAuth('like', {
+        shareToken: shareData.share.share_token,
+        itemId: shareData.items[0]?.id,
+        title: shareData.project.name,
+        metadata: {
+          reactionCount,
+          currentViews
+        }
+      })
       return
     }
 
@@ -148,6 +171,35 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
   }
 
   const handleDownload = async (imageUrl: string, itemTitle?: string) => {
+    if (!shareData.isAuthenticated) {
+      // Track gate impression for download
+      await fetch('/api/analytics/track-gate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_type: 'gate_shown',
+          action: 'download',
+          share_token: shareData.share.share_token,
+          metadata: {
+            image_url: imageUrl,
+            item_title: itemTitle,
+            project_name: shareData.project.name
+          }
+        })
+      })
+
+      // Trigger auth modal with download context
+      triggerAuth('download', {
+        shareToken: shareData.share.share_token,
+        imageUrl,
+        title: itemTitle || shareData.project.name,
+        metadata: {
+          originalImageUrl: imageUrl
+        }
+      })
+      return
+    }
+
     if (imageUrl) {
       const link = document.createElement('a')
       link.href = imageUrl
@@ -184,12 +236,23 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
             <Button
               size="default"
               className="px-6 py-3 bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white transition-all duration-500 rounded-none shadow-lg hover:shadow-xl"
-              asChild
+              onClick={() => {
+                if (!shareData.isAuthenticated) {
+                  triggerAuth('create-design', {
+                    shareToken: shareData.share.share_token,
+                    title: shareData.project.name,
+                    metadata: {
+                      source: 'header_cta',
+                      inspiration_project: shareData.project.name
+                    }
+                  })
+                } else {
+                  router.push('/dashboard/projects/new')
+                }
+              }}
             >
-              <Link href="/auth/register">
-                <Sparkles className="w-4 h-4 mr-2" />
-                <span style={{ fontFamily: 'Lato, sans-serif' }}>Crear mi espacio</span>
-              </Link>
+              <Sparkles className="w-4 h-4 mr-2" />
+              <span style={{ fontFamily: 'Lato, sans-serif' }}>Crear mi espacio</span>
             </Button>
           </div>
         </div>

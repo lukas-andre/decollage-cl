@@ -8,7 +8,8 @@ export enum FurnitureMode {
   KEEP_ALL = 'keep_all',
   KEEP_REPOSITION = 'keep_reposition',
   KEEP_ADD_MORE = 'keep_add_more',
-  REPLACE_ALL = 'replace_all'
+  REPLACE_ALL = 'replace_all',
+  MIX = 'mix'
 }
 
 export interface ImageGenerationResult {

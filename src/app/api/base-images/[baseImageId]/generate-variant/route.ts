@@ -48,13 +48,18 @@ export async function POST(
       color_scheme_id,
       furniture_mode = 'replace_all',
       custom_prompt,
+      prompt, // Support both custom_prompt and prompt parameters
       dimensions,
       provider = 'gemini' // Default to Gemini for state-of-the-art image generation
     } = body
 
-    if (!style_id) {
+    // Support three modes: style-only, prompt-only, or style+prompt combination
+    const hasStyle = !!style_id
+    const hasPrompt = !!(custom_prompt || prompt)
+
+    if (!hasStyle && !hasPrompt) {
       return NextResponse.json(
-        { error: 'El estilo es requerido' },
+        { error: 'Se requiere un estilo o una descripción personalizada' },
         { status: 400 }
       )
     }
@@ -95,18 +100,22 @@ export async function POST(
       )
     }
 
-    // Get style details including macrocategory
-    const { data: style, error: styleError } = await supabase
-      .from('design_styles')
-      .select('base_prompt, name, code, category, macrocategory')
-      .eq('id', style_id)
-      .single()
+    // Get style details including macrocategory (only if style is provided)
+    let style = null
+    if (hasStyle) {
+      const { data: styleData, error: styleError } = await supabase
+        .from('design_styles')
+        .select('base_prompt, name, code, category, macrocategory')
+        .eq('id', style_id)
+        .single()
 
-    if (styleError || !style) {
-      return NextResponse.json(
-        { error: 'Estilo no encontrado' },
-        { status: 404 }
-      )
+      if (styleError || !styleData) {
+        return NextResponse.json(
+          { error: 'Estilo no encontrado' },
+          { status: 404 }
+        )
+      }
+      style = styleData
     }
 
     const tokenCost = 1 // Standard token cost for transformations
@@ -140,19 +149,38 @@ export async function POST(
       colorPalette = cp
     }
 
-    // Build enhanced prompt
-    let customInstructions = style.base_prompt
-    if (roomType) {
-      customInstructions += ` for a ${roomType.name}`
+    // Build enhanced prompt based on what's available
+    let customInstructions = ''
+
+    // Start with style base prompt if we have a style
+    if (style && style.base_prompt) {
+      customInstructions = style.base_prompt
     }
+
+    // Or start with user's custom prompt if no style
+    const userPrompt = custom_prompt || prompt
+    if (!style && userPrompt && userPrompt.trim()) {
+      customInstructions = userPrompt.trim()
+    }
+
+    // Add room type context
+    if (roomType) {
+      if (customInstructions) {
+        customInstructions += ` for a ${roomType.name}`
+      } else {
+        customInstructions = `Interior design for a ${roomType.name}`
+      }
+    }
+
+    // Add color palette information
     if (colorPalette) {
       const colorNames = colorPalette.name.toLowerCase()
       customInstructions += ` with ${colorNames} color palette`
     }
-    
-    // Add user's custom prompt if provided
-    if (custom_prompt && custom_prompt.trim()) {
-      customInstructions += `. ${custom_prompt.trim()}`
+
+    // Add user's custom prompt if we have both style and custom prompt
+    if (style && userPrompt && userPrompt.trim()) {
+      customInstructions += `. ${userPrompt.trim()}`
     }
     
     // Add dimensions to instructions if provided
@@ -170,25 +198,27 @@ export async function POST(
         user_id: user.id,
         project_id: baseImage.project_id,
         base_image_id: baseImageId,
-        style_id,
+        style_id: style_id || null,
         palette_id: color_scheme_id || null,
         prompt_used: customInstructions,
-        custom_instructions: custom_prompt || null,
+        custom_instructions: userPrompt || null,
         tokens_consumed: tokenCost,
         status: 'processing',
         is_favorite: false,
         is_shared: false,
         share_count: 0,
         metadata: {
-          style_name: style.name,
-          style_category: style.category,
-          style_macrocategory: style.macrocategory,
+          style_name: style?.name || null,
+          style_category: style?.category || null,
+          style_macrocategory: style?.macrocategory || null,
           room_type_name: roomType?.name,
           color_palette_name: colorPalette?.name,
           color_palette: colorPalette?.primary_colors,
           dimensions: dimensions || null,
           provider: provider,
-          furniture_mode: furniture_mode
+          furniture_mode: furniture_mode,
+          has_custom_prompt: !!userPrompt,
+          generation_mode: hasStyle && hasPrompt ? 'style_and_prompt' : hasStyle ? 'style_only' : 'prompt_only'
         }
       })
       .select()
@@ -239,7 +269,7 @@ export async function POST(
         user_id: user.id,
         type: 'consumption',
         amount: -tokenCost,
-        description: `Transformación de diseño ${style.name}`
+        description: `Transformación de diseño ${style?.name || 'personalizado'}`
       })
 
     // Update project transformation count
@@ -263,7 +293,7 @@ export async function POST(
       const result = await processTransformation(
         transformation.id,
         baseImage.url,
-        style.code,
+        style?.code || 'personalizado',
         roomType?.code,
         customInstructions,
         user.id,

@@ -37,8 +37,8 @@ export function ShareSuccessDialog({
 
   const handleWhatsAppShare = () => {
     const message = format === 'quick'
-      ? `¡Mira cómo transformé mi espacio con Decollage! 🏠✨\n\n${shareUrl}`
-      : `¡Creé una historia de diseño increíble en Decollage! 🎨✨\n\n${shareUrl}`
+      ? `¡Mira cómo transformé mi espacio con Decollage! ✨\n\n${shareUrl}`
+      : `¡Creé una historia de diseño increíble en Decollage! ✨\n\n${shareUrl}`
     
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`
     window.open(whatsappUrl, '_blank')

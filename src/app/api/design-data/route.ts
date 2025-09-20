@@ -36,30 +36,46 @@ export async function GET() {
     }
 
     // Fetch all design data in parallel
-    const [stylesResult, roomTypesResult, colorPalettesResult, seasonalThemesResult] = await Promise.all([
+    const [stylesResult, roomTypesResult, colorPalettesResult, seasonalThemesResult, customStylesResult] = await Promise.all([
       supabase
         .from('design_styles')
         .select('*')
         .eq('is_active', true)
         .order('sort_order'),
-      
+
       supabase
         .from('room_types')
         .select('*')
         .eq('is_active', true)
         .order('sort_order'),
-      
+
       supabase
         .from('color_palettes')
         .select('*')
         .eq('is_active', true)
         .order('sort_order'),
-        
+
       supabase
         .from('seasonal_themes')
         .select('*')
         .eq('is_active', true)
         .order('sort_order'),
+
+      // Fetch user's custom styles
+      supabase
+        .from('user_custom_styles')
+        .select(`
+          id,
+          style_name,
+          base_prompt,
+          negative_prompt,
+          preview_image_url,
+          source_space_code,
+          usage_count,
+          created_at
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
     ])
 
     if (stylesResult.error) {
@@ -94,11 +110,17 @@ export async function GET() {
       )
     }
 
+    if (customStylesResult.error) {
+      console.error('Error fetching custom styles:', customStylesResult.error)
+      // Don't fail the entire request if custom styles fail, just log and continue
+    }
+
     return NextResponse.json({
       styles: stylesResult.data || [],
       roomTypes: roomTypesResult.data || [],
       colorPalettes: colorPalettesResult.data || [],
       seasonalThemes: seasonalThemesResult.data || [],
+      customStyles: customStylesResult.data || [],
     })
   } catch (error) {
     console.error('Design data API error:', error)
