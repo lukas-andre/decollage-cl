@@ -17,7 +17,8 @@ import {
   Leaf,
   User,
   LogOut,
-  Settings
+  Settings,
+  Share2
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
@@ -48,6 +49,15 @@ const sidebarItems: SidebarItem[] = [
       { title: 'Gestión de espacios', href: '/dashboard/projects' },
       { title: 'Galería de imágenes', href: '/dashboard/projects/images' },
       { title: 'Historial', href: '/dashboard/projects/transformations' }
+    ]
+  },
+  {
+    title: 'Mis Compartidos',
+    href: '/dashboard/shares',
+    icon: <Share2 className="h-4 w-4" />,
+    children: [
+      { title: 'Gestionar enlaces', href: '/dashboard/shares' },
+      { title: 'Analíticas', href: '/dashboard/shares/analytics' }
     ]
   },
   {

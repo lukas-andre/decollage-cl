@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { useShareViewTracking } from '@/hooks/use-share-view-tracking'
 import { ArrowRight, Download, Share2, User, Calendar } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
@@ -29,6 +30,11 @@ export function QuickShareView({ shareData, generation }: QuickShareViewProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [showCTA, setShowCTA] = useState(false)
   const [imageOrientation, setImageOrientation] = useState<'horizontal' | 'vertical' | 'square'>('horizontal')
+
+  // Track view using the new hook
+  useShareViewTracking({
+    shareToken: share.share_token || share.slug || ''
+  })
 
   // Show CTA after 5 seconds
   useEffect(() => {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useMediaQuery } from '@/hooks/use-media-query'
+import { useShareViewTracking } from '@/hooks/use-share-view-tracking'
 import { Heart, Share2, ArrowRight, Download, User, Calendar, Eye, Sparkles, Home, Palette } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -27,12 +28,18 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
   const [isReacting, setIsReacting] = useState(false)
   const [reactionCount, setReactionCount] = useState(shareData.reactions.total)
   const [showCTA, setShowCTA] = useState(false)
+  const [currentViews, setCurrentViews] = useState(shareData.share.current_views || 0)
   const isMobile = useMediaQuery('(max-width: 768px)')
   const [modalState, setModalState] = useState<{
     isOpen: boolean
     item?: typeof shareData.items[0]
   }>({ isOpen: false })
-  const [imageOrientations, setImageOrientations] = useState<Record<string, 'horizontal' | 'vertical' | 'square'>>({})
+  const [imageOrientations, setImageOrientations] = useState<Record<string, 'horizontal' | 'vertical' | 'square'>>({}))
+
+  // Track view using the new hook
+  useShareViewTracking({
+    shareToken: shareData.share.share_token || shareData.share.slug || ''
+  })
 
   // Detect image orientations on mount
   useEffect(() => {
@@ -68,10 +75,17 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
 
     detectOrientations()
   }, [shareData.items])
-  // Track page view on mount
+  // Listen for view count updates from the tracking hook
   useEffect(() => {
-    shareAnalyticsService.trackShareView(shareData.share.id, 'project')
-  }, [shareData.share.id])
+    const handleViewTracked = (event: CustomEvent) => {
+      setCurrentViews(event.detail.currentViews)
+    }
+
+    window.addEventListener('shareViewTracked', handleViewTracked as EventListener)
+    return () => {
+      window.removeEventListener('shareViewTracked', handleViewTracked as EventListener)
+    }
+  }, [])
 
   // Show CTA after 5 seconds
   useEffect(() => {
@@ -262,7 +276,7 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
                         <div>
                           <p className="text-xs text-gray-500 font-light uppercase tracking-widest" style={{ fontFamily: 'Lato, sans-serif' }}>Vistas</p>
                           <p className="text-sm font-light text-[#333333]" style={{ fontFamily: 'Lato, sans-serif' }}>
-                            {(shareData.share.current_views || 0).toLocaleString('es-CL')}
+                            {currentViews.toLocaleString('es-CL')}
                           </p>
                         </div>
                       </div>

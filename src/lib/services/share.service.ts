@@ -159,14 +159,8 @@ export class ShareService {
         throw new Error('Share view limit reached')
       }
 
-      // Update view count
-      await this.supabase
-        .from('project_shares')
-        .update({ 
-          current_views: (shareData.current_views || 0) + 1,
-          last_viewed_at: new Date().toISOString()
-        })
-        .eq('id', shareData.id)
+      // NOTE: View count tracking moved to server-side API endpoint
+      // /api/shares/track-view to handle anonymous users properly
 
       // Get featured items or latest transformations
       const itemIds = shareData.featured_items?.length 

@@ -102,11 +102,8 @@ export default async function SharePage({ params, searchParams }: SharePageProps
       return <PasswordProtectedView token={token} />
     }
 
-    // Track the view (server-side for ISR)
-    await shareAnalyticsService.trackShareView(
-      shareData.share.id,
-      'project'
-    )
+    // NOTE: View tracking moved to client-side component to handle
+    // rate limiting and proper anonymous user support via /api/shares/track-view
 
     // Check share format and render appropriate view
     if (shareData.share.share_format === 'quick') {
