@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Confirma tu identidad</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#F8F8F8;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F8F8F8;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;background-color:#FFFFFF;border-spacing:0;">
+            <tr>
+              <td style="padding:48px 48px 32px 48px;">
+                <h2 style="margin:0 0 24px 0;font-family:'Cormorant',Georgia,'Times New Roman',serif;font-weight:300;font-size:32px;line-height:1.2;color:#333333;">
+                  Confirma tu identidad
+                </h2>
+                <p style="margin:0 0 24px 0;font-family:'Lato',Arial,'Helvetica Neue',sans-serif;font-size:16px;line-height:1.6;color:#333333;">
+                  Ingresa este c&oacute;digo para continuar con tu reautenticaci&oacute;n:
+                </p>
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;">
+                  <tr>
+                    <td align="center" style="background-color:#F8F8F8;border:1px solid #E3E3E3;padding:16px 24px;">
+                      <span style="display:inline-block;font-family:'Lato',Arial,'Helvetica Neue',sans-serif;font-size:20px;letter-spacing:4px;font-weight:600;color:#333333;">
+                        {{ .Token }}
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:0;font-family:'Lato',Arial,'Helvetica Neue',sans-serif;font-size:14px;line-height:1.6;color:#333333;">
+                  Si no fuiste tú quien solicit&oacute; este c&oacute;digo, ignora este correo para mantener tu cuenta segura.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px 48px;font-family:'Lato',Arial,'Helvetica Neue',sans-serif;font-size:12px;line-height:1.6;color:#777777;background-color:#F8F8F8;">
+                Este mensaje se envi&oacute; desde Decollage para verificar tu identidad antes de realizar cambios sensibles.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

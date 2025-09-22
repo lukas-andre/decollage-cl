@@ -236,7 +236,7 @@ export class GeminiProvider {
   }
 
   /**
-   * Sanitize custom prompts to prevent overriding critical preservation rules
+   * Sanitize and translate custom prompts to ensure everything is in English
    */
   private sanitizeCustomPrompt(prompt: string): string {
     let sanitized = prompt
@@ -248,13 +248,91 @@ export class GeminiProvider {
       .replace(/mantén.*ventana/gi, '')
       .replace(/preserve.*window/gi, '')
 
-    // Basic Spanish to English translations for common phrases
+    // Comprehensive Spanish to English translations
+    const spanishToEnglish: Record<string, string> = {
+      // Room types
+      'cocina': 'kitchen',
+      'baño': 'bathroom',
+      'dormitorio': 'bedroom',
+      'living': 'living room',
+      'comedor': 'dining room',
+      'oficina': 'office',
+      'terraza': 'terrace',
+      'jardín': 'garden',
+
+      // Design terms
+      'moderno': 'modern',
+      'clásico': 'classic',
+      'minimalista': 'minimalist',
+      'rústico': 'rustic',
+      'costero': 'coastal',
+      'contemporáneo': 'contemporary',
+
+      // Common phrases
+      'termina el baño': 'complete the bathroom design',
+      'termina el': 'complete the',
+      'termina la': 'complete the',
+      'transforma en': 'transform into',
+      'transforma este': 'transform this',
+      'transforma esta': 'transform this',
+      'hermoso': 'beautiful',
+      'hermosa': 'beautiful',
+      'diseño interior': 'interior design',
+      'diseño de interiores': 'interior design',
+      'iluminación perfecta': 'perfect lighting',
+      'calidad fotorrealística': 'photorealistic quality',
+      'profesional staging': 'professional staging',
+      'colores claros': 'light colors',
+      'texturas naturales': 'natural textures',
+      'elementos inspirados': 'inspired elements',
+      'elementos del': 'elements of',
+      'para una': 'for a',
+      'para un': 'for a',
+      'donde esta': 'as is',
+      'con': 'with',
+      'sin': 'without',
+      'muy': 'very',
+      'mucho': 'much',
+      'poco': 'little',
+      'grande': 'large',
+      'pequeño': 'small',
+      'pequeña': 'small',
+      'amplio': 'spacious',
+      'amplia': 'spacious',
+      'luminoso': 'bright',
+      'luminosa': 'bright',
+      'oscuro': 'dark',
+      'oscura': 'dark',
+      'cálido': 'warm',
+      'cálida': 'warm',
+      'frío': 'cool',
+      'fría': 'cool',
+      'acogedor': 'cozy',
+      'acogedora': 'cozy',
+      'elegante': 'elegant',
+      'sofisticado': 'sophisticated',
+      'sofisticada': 'sophisticated'
+    }
+
+    // Apply translations
+    Object.keys(spanishToEnglish).forEach(spanish => {
+      const regex = new RegExp(spanish, 'gi')
+      sanitized = sanitized.replace(regex, spanishToEnglish[spanish])
+    })
+
+    // Clean up any remaining Spanish articles and prepositions
     sanitized = sanitized
-      .replace(/termina el baño/gi, 'complete the bathroom design')
-      .replace(/termina el/gi, 'complete the')
-      .replace(/donde esta/gi, 'as is')
-      .replace(/profesional staging/gi, 'professional staging')
-      .replace(/calidad fotorrealística/gi, 'photorealistic quality')
+      .replace(/\bel\b/gi, 'the')
+      .replace(/\bla\b/gi, 'the')
+      .replace(/\blos\b/gi, 'the')
+      .replace(/\blas\b/gi, 'the')
+      .replace(/\bun\b/gi, 'a')
+      .replace(/\buna\b/gi, 'a')
+      .replace(/\bunos\b/gi, 'some')
+      .replace(/\bunas\b/gi, 'some')
+      .replace(/\bde\b/gi, 'of')
+      .replace(/\ben\b/gi, 'in')
+      .replace(/\by\b/gi, 'and')
 
     // Remove excessive punctuation and repetitive phrases
     sanitized = sanitized
@@ -278,7 +356,7 @@ export class GeminiProvider {
     const isExterior = this.isExteriorSpace(roomType)
 
     if (isExterior) {
-      return this.buildExteriorStagingPrompt(basePrompt, style, roomType, colorScheme, options)
+      return this.buildExteriorStagingPrompt(basePrompt, style, roomType, colorScheme)
     }
 
     // Translate to English for model consistency
@@ -291,23 +369,43 @@ export class GeminiProvider {
     // Get the simplified furniture instructions
     const furnitureInstructions = this.getFurnitureInstructions(furnitureMode)
 
+    // Get extra preservation reminders for problematic room types
+    const preservationReminder = this.getPreservationReminder(roomType)
+
     // Assemble the new, concise prompt
-    const prompt = `**Primary Goal:** Your task is professional virtual staging (decoration only).
+    const prompt = `**CRITICAL RULES - DO NOT VIOLATE UNDER ANY CIRCUMSTANCE:**
 
-**Core Instructions (Non-negotiable):**
-1. **Preserve Architecture:** The original image's structure—walls, windows, doors, ceiling, floor, and any built-ins—must remain completely unchanged.
-2. **Preserve Window View:** The view seen outside the windows must be identical to the original. Do not add curtains or blinds unless they already exist.
-3. **Realistic Placement:** Place furniture naturally within the visible space. Do not overcrowd the room.
+🛑 **ABSOLUTE PRESERVATION REQUIREMENTS:**
+1. **NEVER modify walls** - Keep ALL walls exactly where they are. Do not move, remove, add, or cover any walls.
+2. **NEVER change windows** - Windows must stay EXACTLY the same size, shape, and position. Do not make them bigger, smaller, or block them.
+3. **NEVER alter perspective** - Keep the EXACT same camera angle and viewpoint. Do not rotate, shift, or change the perspective.
+4. **NEVER create new structures** - Do not add walls, columns, beams, or any structural elements that don't exist.
+5. **NEVER block openings** - Keep all doorways, windows, and openings completely visible and unobstructed.
 
-**Design Brief:**
-* **Room Type:** ${roomTypeEnglish}
+✅ **YOUR TASK:**
+You are doing VIRTUAL STAGING - this means you ONLY add/change:
+- Furniture (sofas, chairs, tables, beds, etc.)
+- Decorations (art, plants, lamps, rugs, etc.)
+- Window treatments (curtains/blinds that match the ${styleEnglish} style)
+- Wall colors/paint (but NOT wall structure)
+- Accessories and styling elements
+
+🎨 **Design Requirements:**
+* **Room Type:** ${roomTypeEnglish} (even if image looks different, treat it as ${roomTypeEnglish})
 * **Design Style:** ${styleEnglish}
 * **Color Palette:** ${colorScheme}
-* **User Request:** "${sanitizedCustomPrompt || 'No specific user request.'}"
+* **Special Request:** "${sanitizedCustomPrompt || 'Apply the selected style beautifully'}"
 
 ${furnitureInstructions}
 
-**Output:** Generate a single, photorealistic based on that prompt`
+${preservationReminder}
+
+📷 **IMPORTANT:**
+- If the room doesn't look like a typical ${roomTypeEnglish}, still preserve ALL structural elements
+- Focus on making it beautiful through decoration ONLY
+- Think of this like decorating a real room - you cannot knock down walls or change windows!
+
+**Generate a single photorealistic image following these rules exactly.**`
 
     // Log the new, cleaner prompt for debugging
     console.log('🎨 NEW CONCISE GEMINI PROMPT:')
@@ -344,18 +442,30 @@ ${furnitureInstructions}
     const translations: Record<string, string> = {
       // Interior rooms
       'bano': 'bathroom',
-      'bano_visitas': 'guest bathroom',
-      'dormitorio': 'bedroom',
-      'dormitorio_principal': 'master bedroom',
-      'dormitorio_infantil': 'children bedroom',
-      'pieza_nino': 'boy bedroom',
-      'pieza_nina': 'girl bedroom',
-      'pieza_bebe': 'baby nursery',
-      'sala_juegos': 'playroom',
-      'living': 'living room',
-      'salon': 'living room',
-      'comedor': 'dining room',
+      'bano_visitas': 'powder room',
+      'bodega': 'storage room',
       'cocina': 'kitchen',
+      'comedor': 'dining room',
+      'dormitorio': 'bedroom',
+      'dormitorio_ninos': 'kids room',
+      'dormitorio_principal': 'master bedroom',
+      'entrada': 'entrance',
+      'home_office': 'home office',
+      'living': 'living room',
+      'logia': 'utility room',
+      'pieza_bebe': 'nursery',
+      'pieza_nina': 'girl room',
+      'pieza_nino': 'boy room',
+      'quincho': 'BBQ area',
+      'sala_estar': 'family room',
+      'sala_juegos': 'playroom',
+      'terraza': 'terrace',
+      // Exterior spaces
+      'fachada': 'facade',
+      'jardin': 'garden',
+      // Legacy/fallback
+      'dormitorio_infantil': 'children bedroom',
+      'salon': 'living room',
       'oficina': 'home office',
       'escritorio': 'home office',
       'estudio': 'study room',
@@ -365,15 +475,8 @@ ${furnitureInstructions}
       'pasillo': 'hallway',
       'escalera': 'staircase',
       'balcon': 'balcony',
-      'terraza': 'terrace',
-      // Exterior spaces
-      'jardin': 'garden',
       'patio': 'patio',
-      'fachada': 'building facade',
-      'entrada': 'entrance',
       'antejarding': 'front yard',
-      'quincho': 'outdoor entertainment area',
-      // Commercial/other
       'recepcion': 'reception',
       'sala_espera': 'waiting room',
       'consultorio': 'office',
@@ -387,7 +490,6 @@ ${furnitureInstructions}
    * Validate style compatibility with room type and provide appropriate fallback
    */
   private validateStyleForRoom(style: string, roomType: string): string {
-    const roomTypeEnglish = this.getRoomTypeTranslation(roomType)
     const isExteriorRoom = this.isExteriorSpace(roomType)
 
     // Garden/exterior styles should only apply to exterior spaces
@@ -425,64 +527,121 @@ ${furnitureInstructions}
 
   /**
    * Translate Spanish style codes to English for better AI understanding
+   * Uses the name_en field from the database when available
    */
   private getStyleTranslation(styleCode: string): string {
+    // Comprehensive translations matching database values
     const translations: Record<string, string> = {
-      // Interior styles
-      'moderno': 'modern',
-      'moderno_clasico': 'modern classic',
-      'clasico': 'classic',
-      'minimalista': 'minimalist',
-      'industrial': 'industrial',
-      'escandinavo': 'scandinavian',
-      'boho': 'bohemian',
-      'tradicional': 'traditional',
-      'rustico': 'rustic',
-      'contemporaneo': 'contemporary',
-      'vintage': 'vintage',
-      'eclectico': 'eclectic',
-      'mediterráneo': 'mediterranean',
-      'mediterraneo': 'mediterranean',
-      'chileno': 'chilean',
-      'personalizado': 'custom',
+      // Regional styles
+      'boho_valparaiso': 'Valparaiso Bohemian',
+      'etnico_mapuche': 'Contemporary Mapuche Ethnic',
+      'mediterraneo_chileno': 'Chilean Coastal Mediterranean',
+      'mediterraneo_hacienda': 'Hacienda Mediterranean',
+      'rustico_sur': 'Southern Rustic',
+      'rustico_patagonico': 'Patagonian Rustic',
+      'sur_chilote': 'Magical Chiloé',
+      'modernismo_andino': 'Andean Modernism',
+      'minimalista_santiago': 'Andean Minimalist',
 
-      // Garden styles
-      'jardin_zen': 'zen garden',
-      'jardin_mediterraneo': 'mediterranean garden',
-      'jardin_moderno': 'modern garden',
-      'jardin_campo_ingles': 'english cottage garden',
-      'jardin_tropical': 'tropical garden',
-      'jardin_seco': 'dry garden',
-      'huerto_urbano': 'urban vegetable garden',
-      'jardin_plantas_nativas': 'native plants garden',
+      // Classic styles
+      'romantico_frances': 'French Romantic',
+      'campestre_frances': 'French Country',
+      'colonial_britanico': 'British Colonial',
+      'reina_ana': 'Queen Anne',
+      'neoclasico': 'Neoclassical',
+      'arts_crafts': 'Arts & Crafts',
+      'victoriano': 'Victorian',
 
-      // Facade styles
-      'fachada_moderna': 'modern facade',
-      'fachada_tradicional': 'traditional facade',
-      'fachada_colonial': 'colonial facade',
-      'fachada_minimalista': 'minimalist facade',
-      'fachada_rustica': 'rustic facade',
-      'fachada_industrial': 'industrial facade',
-      'fachada_contemporanea': 'contemporary facade',
-      'fachada_chilena': 'chilean style facade',
+      // Modern styles
+      'contemporaneo_global': 'Contemporary',
+      'escandinavo_global': 'Scandinavian',
+      'minimalismo_global': 'Minimalist',
+      'modern_farmhouse_global': 'Modern Farmhouse',
+      'moderno_clasico': 'Modern Classic',
+      'moderno_costero': 'Modern Coastal',
+      'nordico_adaptado': 'Adapted Nordic',
+      'transicional_global': 'Transitional',
+      'brutalismo': 'Brutalism',
+      'industrial_global': 'Industrial',
+      'industrial_urbano': 'Urban Industrial',
+      'mid_century_modern': 'Mid-Century Modern',
+
+      // Lifestyle styles
+      'bohemio_global': 'Bohemian',
+      'cottagecore_global': 'Cottagecore',
+      'dark_academia_global': 'Dark Academia',
+      'eclectico_global': 'Eclectic',
+      'glam_global': 'Glam',
+      'maximalismo_global': 'Maximalism',
+      'shabby_chic_global': 'Shabby Chic',
+
+      // Nature styles
+      'costero_global': 'Coastal',
+      'tropical_global': 'Tropical',
+      'biofilico_global': 'Biophilic',
+      'wabi_sabi_global': 'Wabi-Sabi',
+
+      // Hybrid styles
+      'alpino_chic': 'Alpine Chic',
+      'americana_global': 'Americana',
+      'desierto_moderno': 'Desert Modern',
+      'dopamine_decor': 'Dopamine Decor',
+      'japandi_global': 'Japandi',
+      'organico_moderno': 'Organic Modern',
+      'rustico_moderno_global': 'Rustic Modern',
+
+      // Historic/Luxury styles
+      'art_deco': 'Art Deco',
+      'art_nouveau': 'Art Nouveau',
+      'gotico': 'Gothic',
+
+      // Global/Regional styles
+      'marroqui_global': 'Moroccan',
+      'mediterraneo_global': 'Mediterranean',
+      'suroeste_global': 'Southwestern',
+      'toscano_global': 'Tuscan',
 
       // Children's styles
-      'aventura_exploracion': 'adventure and exploration',
-      'princesa_moderna': 'modern princess',
-      'montessori_chileno': 'chilean montessori',
-      'mundo_colores': 'colorful world',
-      'espacio_compartido': 'shared siblings space',
-      'bebe_sereno': 'serene baby'
+      'mundo_colores': 'World of Colors',
+      'montessori_chileno': 'Chilean Montessori',
+      'espacio_compartido': 'Shared Sibling Space',
+      'bebe_sereno': 'Serene Nursery',
+      'aventura_exploracion': 'Adventure & Exploration',
+      'princesa_moderna': 'Modern Princess',
+
+      // Garden styles
+      'jardin_zen': 'Japanese Zen Garden',
+      'jardin_mediterraneo': 'Rustic Mediterranean Garden',
+      'jardin_moderno': 'Modern Sculptural Garden',
+      'jardin_campo_ingles': 'English Cottage Garden',
+      'jardin_tropical': 'Lush Tropical Garden',
+      'jardin_seco': 'Dry Climate Xeriscape',
+      'huerto_urbano': 'Urban Edible Garden',
+      'jardin_nativo_chileno': 'Native Chilean Wild Garden',
+
+      // Facade styles
+      'fachada_colonial_chilena': 'Chilean Hacienda Colonial Facade',
+      'fachada_moderna_concreto': 'Modern Concrete and Wood Facade',
+      'fachada_valparaiso': 'Valparaíso Port-Style Facade',
+      'fachada_industrial_loft': 'Industrial Loft Facade',
+      'fachada_surena_tejuelas': 'Southern Chilean Wood Shingle Facade',
+      'fachada_mediterranea_costera': 'Coastal Mediterranean Facade',
+      'fachada_tudor': 'Tudor Style Facade',
+      'fachada_brutalista': 'Brutalist Facade',
+
+      // Custom
+      'personalizado': 'Custom'
     }
 
-    // Fallback to a cleaned-up version of the code if no translation exists
+    // Return the translation or clean up the code as fallback
     return translations[styleCode] || styleCode.replace(/_/g, ' ')
   }
 
   /**
    * Get room-specific requirements and considerations
    */
-  private getRoomSpecificRequirements(roomType: string, roomTypeEnglish: string): string {
+  private getRoomSpecificRequirements(roomType: string): string {
+    const roomTypeEnglish = this.getRoomTypeTranslation(roomType)
     const requirements: Record<string, string> = {
       'bano': `BATHROOM-SPECIFIC REQUIREMENTS:
 - Maintain all plumbing fixtures in their current positions
@@ -570,14 +729,22 @@ ${furnitureInstructions}
     basePrompt: string,
     style: string,
     roomType: string,
-    colorScheme: string,
-    options?: any
+    colorScheme: string
   ): string {
     const isFacade = roomType === 'fachada'
-    const spaceType = isFacade ? 'fachada' : 'jardín'
+    const spaceType = isFacade ? 'facade' : 'garden'
     const spaceDescription = isFacade ? 'facade/exterior' : 'garden/landscape'
+    const styleEnglish = this.getStyleTranslation(style)
 
-    const prompt = `Create a picture of this ${spaceDescription} transformed with professional ${style} design.
+    const prompt = `**CRITICAL RULES FOR EXTERIOR TRANSFORMATION:**
+
+🛑 **NEVER VIOLATE THESE RULES:**
+1. **Keep EXACT building shape** - Do not change the building's size, height, or proportions
+2. **Preserve ALL windows and doors** - Keep them exactly where they are, same size
+3. **Maintain perspective** - Use the EXACT same camera angle
+4. **No structural changes** - Only change colors, materials, and decorative elements
+
+✅ **Transform this ${spaceDescription} with ${styleEnglish} design:
 
 CRITICAL PRESERVATION RULES FOR EXTERIOR SPACES - ABSOLUTELY MANDATORY:
 ${isFacade ? this.getFacadePreservationRules() : this.getGardenPreservationRules()}
@@ -706,6 +873,27 @@ ALLOWED GARDEN CHANGES:
   }
 
   /**
+   * Add critical preservation reminder for problematic cases
+   */
+  private getPreservationReminder(roomType: string): string {
+    // Extra reminders for rooms where AI tends to modify structures
+    const problematicRooms = ['cocina', 'kitchen', 'bano', 'bathroom', 'terraza', 'terrace', 'balcon', 'balcony']
+    const roomTypeNormalized = roomType.toLowerCase()
+
+    if (problematicRooms.includes(roomTypeNormalized)) {
+      return `
+⚠️ **EXTRA CRITICAL FOR ${roomType.toUpperCase()}:**
+- This room often has windows/openings - DO NOT block or modify them
+- Kitchen/bathroom fixtures stay EXACTLY where they are
+- If there's a large window or glass door, it must remain FULLY visible
+- Counters and cabinets can be restyled but NOT moved or resized
+- The room layout and structure is PERMANENT - only decoration changes`
+    }
+
+    return ''
+  }
+
+  /**
    * Get furniture-specific instructions based on preservation mode
    */
   private getFurnitureInstructions(furnitureMode: string): string {
@@ -743,7 +931,10 @@ ALLOWED GARDEN CHANGES:
       return this.buildExteriorTextToImagePrompt(basePrompt, style, roomType, colorScheme)
     }
 
-    return `Create a picture of a professionally staged ${roomType} interior.
+    const roomTypeEnglish = this.getRoomTypeTranslation(roomType)
+    const styleEnglish = this.getStyleTranslation(style)
+
+    return `Create a picture of a professionally staged ${roomTypeEnglish} interior.
 
 IMPORTANT DESIGN PRINCIPLES:
 1. REALISTIC WINDOWS - Include windows with natural light, proper glass reflections
@@ -788,7 +979,7 @@ Generate a single, photorealistic staged interior that looks professionally phot
     colorScheme: string
   ): string {
     const isFacade = roomType === 'fachada'
-    const spaceType = isFacade ? 'fachada' : 'jardín'
+    const spaceType = isFacade ? 'facade' : 'garden'
     const spaceDescription = isFacade ? 'house facade/exterior' : 'garden/landscape'
 
     return `Create a picture of a professionally designed ${spaceDescription}.
