@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -40,23 +40,15 @@ import {
   Expand,
   Check,
   Plus,
-  Eye
+  Eye,
+  RotateCcw
 } from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { DEFAULT_WIZARD_FORM_DATA, type WizardFormData } from './context-first-wizard.types'
 import { motion, AnimatePresence } from 'framer-motion'
 
-interface FormData {
-  roomTypeId: string
-  roomCategory: string
-  inspirationMode: 'style' | 'prompt'
-  styleId: string
-  customPrompt: string
-  furnitureMode: string
-  roomWidth: number
-  roomHeight: number
-  colorPaletteId: string
-}
+export type FormData = WizardFormData
 
 interface ContextFirstWizardProps {
   designData: {
@@ -81,7 +73,6 @@ interface ContextFirstWizardProps {
       hex_colors: string[]
     }>
   }
-  selectedBaseImage?: any
   generating: boolean
   hasTokens: boolean
   tokenBalance: number
@@ -90,6 +81,12 @@ interface ContextFirstWizardProps {
   onGenerationComplete?: boolean
   lastGeneratedVariant?: any
   onViewGeneratedImage?: (variant: any) => void
+  // Estado controlado del wizard (opcional)
+  currentStep?: number
+  formData?: FormData
+  onStepChange?: Dispatch<SetStateAction<number>>
+  onFormDataChange?: Dispatch<SetStateAction<FormData>>
+  onStartNewDesign?: () => void
 }
 
 // Room type icons mapping
@@ -285,7 +282,6 @@ function GeneratingMessage() {
 
 export function ContextFirstWizard({
   designData,
-  selectedBaseImage,
   generating,
   hasTokens,
   tokenBalance,
@@ -293,21 +289,46 @@ export function ContextFirstWizard({
   onNoTokens,
   onGenerationComplete = false,
   lastGeneratedVariant,
-  onViewGeneratedImage
+  onViewGeneratedImage,
+  currentStep: controlledStep,
+  onStepChange,
+  formData: controlledFormData,
+  onFormDataChange,
+  onStartNewDesign
 }: ContextFirstWizardProps) {
-  const [currentStep, setCurrentStep] = useState(1)
+  // Check if mobile
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+  // SIEMPRE usar estado controlado si se proporciona
+  const isControlled =
+    controlledStep !== undefined &&
+    typeof onStepChange === 'function' &&
+    controlledFormData !== undefined &&
+    typeof onFormDataChange === 'function'
+
+  // Estado local solo como fallback
+  const [localStep, setLocalStep] = useState(1)
+  const [localFormData, setLocalFormData] = useState<FormData>(() => ({
+    ...DEFAULT_WIZARD_FORM_DATA
+  }))
+
+  // Usar estado controlado si está disponible
+  const currentStep = isControlled ? controlledStep : localStep
+  const setCurrentStep = isControlled ? onStepChange! : setLocalStep
+  const formData = isControlled ? controlledFormData! : localFormData
+  const setFormData = isControlled ? onFormDataChange! : setLocalFormData
+
   const [hasGenerated, setHasGenerated] = useState(false)
-  const [formData, setFormData] = useState<FormData>({
-    roomTypeId: '',
-    roomCategory: 'interiores',
-    inspirationMode: 'style',
-    styleId: '',
-    customPrompt: '',
-    furnitureMode: 'replace_all',
-    roomWidth: 4,
-    roomHeight: 4,
-    colorPaletteId: ''
-  })
+  const [showGenerationSuccess, setShowGenerationSuccess] = useState(false)
+  const hasOpenedImage = useRef(false)
+  const wasGenerating = useRef(false)
   const [openAccordions, setOpenAccordions] = useState(['furniture']) // Furniture accordion open by default
 
   const updateFormData = (updates: Partial<FormData>) => {
@@ -330,7 +351,11 @@ export function ContextFirstWizard({
       return
     }
 
+    // SAVE STATE BEFORE GENERATION
+    wasGenerating.current = true
     setHasGenerated(true)
+    setShowGenerationSuccess(false) // Reset success state for new generation
+    hasOpenedImage.current = false // Reset image opened flag
     const params: any = {
       room_type_id: formData.roomTypeId,
       furniture_mode: formData.furnitureMode,
@@ -360,25 +385,7 @@ export function ContextFirstWizard({
     ? formData.customPrompt.trim().length > 0  // En modo prompt, solo necesita prompt
     : formData.styleId !== '' || formData.customPrompt.trim().length > 0  // En modo estilo, necesita estilo O prompt
 
-  // Support keyboard navigation
-  const handleKeyNavigation = (e: KeyboardEvent) => {
-    if (e.key === 'Tab' && !e.shiftKey && currentStep < 4 && canProceedToNext()) {
-      e.preventDefault()
-      setCurrentStep(prev => prev + 1)
-    } else if (e.key === 'Tab' && e.shiftKey && currentStep > 1) {
-      e.preventDefault()
-      setCurrentStep(prev => prev - 1)
-    }
-  }
 
-  const canProceedToNext = () => {
-    switch (currentStep) {
-      case 1: return canProceedStep1
-      case 2: return canProceedStep2
-      case 3: return true
-      default: return false
-    }
-  }
 
   const jumpToStep = (step: number) => {
     setCurrentStep(step)
@@ -387,8 +394,63 @@ export function ContextFirstWizard({
   const handleQuickNewGeneration = () => {
     // Don't reset the form, just allow another generation
     setHasGenerated(false)
+    setShowGenerationSuccess(false)
+    hasOpenedImage.current = false
     handleGenerate()
   }
+
+  const handleStartNewDesign = () => {
+    if (isControlled) {
+      onFormDataChange?.({ ...DEFAULT_WIZARD_FORM_DATA })
+      onStepChange?.(1)
+    } else {
+      setLocalFormData({ ...DEFAULT_WIZARD_FORM_DATA })
+      setLocalStep(1)
+    }
+    onStartNewDesign?.()
+    setHasGenerated(false)
+    setShowGenerationSuccess(false)
+    hasOpenedImage.current = false
+    wasGenerating.current = false
+  }
+
+  // Effect to handle generation completion
+  useEffect(() => {
+    if (onGenerationComplete && !generating && hasGenerated && !hasOpenedImage.current) {
+      setShowGenerationSuccess(true)
+      // Auto-open the generated image after a short delay
+      if (lastGeneratedVariant && onViewGeneratedImage) {
+        const timer = setTimeout(() => {
+          if (!hasOpenedImage.current) {
+            hasOpenedImage.current = true
+            onViewGeneratedImage(lastGeneratedVariant)
+          }
+        }, 1500) // Give user time to see the success message
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [onGenerationComplete, generating, hasGenerated, lastGeneratedVariant, onViewGeneratedImage])
+
+  // FORCE step 4 during and after generation
+  useEffect(() => {
+    if (generating && wasGenerating.current && currentStep !== 4) {
+      setCurrentStep(4)
+    }
+  }, [generating, currentStep, setCurrentStep])
+
+  // Keep form data during generation
+  useEffect(() => {
+    if (generating) {
+      wasGenerating.current = true
+    } else if (wasGenerating.current && !generating) {
+      // Generation just finished, ensure we're on step 4
+      if (currentStep !== 4) {
+        console.log('[ContextFirstWizard] Generation finished, restoring step 4')
+        setCurrentStep(4)
+      }
+      wasGenerating.current = false
+    }
+  }, [generating, currentStep, setCurrentStep])
 
   return (
     <div className="space-y-6">
@@ -999,8 +1061,35 @@ export function ContextFirstWizard({
               )}
             </div>
 
+            {/* Generation in Progress - Mobile Friendly */}
+            {generating && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-4"
+              >
+                <div className="p-6 rounded-lg bg-gradient-to-r from-[#A3B1A1]/10 to-[#C4886F]/10 border border-[#A3B1A1]/20">
+                  <div className="flex flex-col items-center justify-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#A3B1A1]" />
+                    <div className="text-center space-y-2">
+                      <p className="text-sm font-medium text-[#333333]">Generando tu diseño...</p>
+                      <GeneratingMessage />
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-[#A3B1A1] to-[#C4886F]"
+                        initial={{ width: '0%' }}
+                        animate={{ width: '100%' }}
+                        transition={{ duration: 20, ease: 'linear' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {/* Token Warning */}
-            {tokenBalance <= 2 && (
+            {tokenBalance <= 2 && !generating && (
               <div className="p-3 rounded-lg bg-yellow-50 border border-yellow-200">
                 <div className="flex items-center gap-2 text-xs text-yellow-800">
                   <Zap className="h-3.5 w-3.5" />
@@ -1010,7 +1099,7 @@ export function ContextFirstWizard({
             )}
 
             {/* Generation Completion & Quick New Generation */}
-            {(onGenerationComplete || hasGenerated) && !generating && (
+            {showGenerationSuccess && !generating && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1023,43 +1112,50 @@ export function ContextFirstWizard({
                     <span className="text-sm font-medium text-[#A3B1A1]">¡Diseño generado exitosamente!</span>
                   </div>
 
-                  {/* Show generated image preview */}
-                  {lastGeneratedVariant && lastGeneratedVariant.result_image_url && (
-                    <div className="mb-4">
-                      <div
-                        className="relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer group"
-                        onClick={() => onViewGeneratedImage && onViewGeneratedImage(lastGeneratedVariant)}
-                      >
-                        <Image
-                          src={lastGeneratedVariant.result_image_url}
-                          alt="Diseño generado"
-                          fill
-                          className="object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 p-2 rounded-full">
-                            <Eye className="h-5 w-5 text-[#333333]" />
+                  {/* Only show image preview on mobile */}
+                  {isMobile ? (
+                    <>
+                      <p className="text-xs text-center text-gray-600 mb-3">
+                        Se abrirá automáticamente en unos segundos...
+                      </p>
+
+                      {/* Show generated image preview - Mobile Only */}
+                      {lastGeneratedVariant && lastGeneratedVariant.result_image_url && (
+                        <div className="mb-4">
+                          <div
+                            className="relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer group"
+                            onClick={() => onViewGeneratedImage && onViewGeneratedImage(lastGeneratedVariant)}
+                          >
+                            <Image
+                              src={lastGeneratedVariant.result_image_url}
+                              alt="Diseño generado"
+                              fill
+                              className="object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 p-2 rounded-full">
+                                <Eye className="h-5 w-5 text-[#333333]" />
+                              </div>
+                            </div>
+                            {/* NO BADGE - Just the clean image */}
                           </div>
+                          <Button
+                            onClick={() => onViewGeneratedImage && onViewGeneratedImage(lastGeneratedVariant)}
+                            variant="outline"
+                            size="sm"
+                            className="w-full mt-2"
+                          >
+                            <Expand className="mr-2 h-3 w-3" />
+                            Ver en tamaño completo
+                          </Button>
                         </div>
-                        {/* Style badge */}
-                        {lastGeneratedVariant.style && (
-                          <div className="absolute bottom-2 left-2">
-                            <Badge className="bg-white/90 text-xs">
-                              {lastGeneratedVariant.style.name}
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
-                      <Button
-                        onClick={() => onViewGeneratedImage && onViewGeneratedImage(lastGeneratedVariant)}
-                        variant="outline"
-                        size="sm"
-                        className="w-full mt-2"
-                      >
-                        <Expand className="mr-2 h-3 w-3" />
-                        Ver en tamaño completo
-                      </Button>
-                    </div>
+                      )}
+                    </>
+                  ) : (
+                    // Desktop: Just show success message
+                    <p className="text-xs text-center text-gray-600 mb-3">
+                      Tu diseño se ha añadido a la galería.
+                    </p>
                   )}
 
                   <Button
@@ -1073,43 +1169,42 @@ export function ContextFirstWizard({
                   <p className="text-xs text-center text-gray-500 mt-2">
                     Crea otra versión con los mismos ajustes
                   </p>
+                  <Button
+                    onClick={handleStartNewDesign}
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-2"
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Iniciar nuevo diseño
+                  </Button>
                 </div>
               </motion.div>
             )}
 
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentStep(3)}
-                disabled={generating}
-                className="flex-1"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Anterior
-              </Button>
-              <Button
-                onClick={handleGenerate}
-                disabled={generating || !hasTokens || onGenerationComplete}
-                className="flex-1 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90"
-              >
-                {generating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <GeneratingMessage />
-                  </>
-                ) : (onGenerationComplete || hasGenerated) ? (
-                  <>
+            {!generating && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentStep(3)}
+                  disabled={generating}
+                  className="flex-1"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Anterior
+                </Button>
+                {!showGenerationSuccess && (
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={generating || !hasTokens}
+                    className="flex-1 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90"
+                  >
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Generar Otro Diseño (1 Token)
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Generar Diseño (1 Token)
-                  </>
+                    {hasGenerated ? 'Generar Otro Diseño' : 'Generar Diseño'} (1 Token)
+                  </Button>
                 )}
-              </Button>
-            </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
