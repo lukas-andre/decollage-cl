@@ -99,7 +99,7 @@ export function ShareButton({ project, generations, className }: ShareButtonProp
         onClick={() => setIsShareDialogOpen(true)}
         size="sm"
         className={cn(
-          "bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90 text-white border-none shadow-md hover:shadow-lg transition-all duration-200",
+          "bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white border-none shadow-md hover:shadow-lg transition-all duration-200",
           className
         )}
         disabled={isSharing}

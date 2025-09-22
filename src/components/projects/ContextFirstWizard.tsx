@@ -248,18 +248,18 @@ const getRecommendedStyles = (roomCode: string, styles: any[]) => {
   ).slice(0, 4)
 }
 
-// Encouraging messages during generation following brand voice
+// Encouraging messages during generation following brand voice and LOOK.md guidelines
 const encouragingMessages = [
-  "✨ Dando vida a tu visión...",
-  "🏠 Creando magia en tu hogar...",
-  "🎨 Transformando tus ideas en realidad...",
-  "💫 Tu espacio ideal está tomando forma...",
-  "🌟 Estamos diseñando algo increíble para ti...",
-  "✨ Tu hogar soñado se está materializando...",
-  "🎨 Cada detalle está siendo perfeccionado...",
-  "💫 La magia del diseño está sucediendo...",
-  "🏠 Creando un espacio que amarás...",
-  "✨ Tu visión se está convirtiendo en arte..."
+  "Dando vida a tu visión",
+  "Creando magia en tu hogar",
+  "Transformando tus ideas en realidad",
+  "Tu espacio ideal está tomando forma",
+  "Diseñando algo increíble para ti",
+  "Tu hogar soñado se está materializando",
+  "Cada detalle está siendo perfeccionado",
+  "La magia del diseño está sucediendo",
+  "Creando un espacio que amarás",
+  "Tu visión se está convirtiendo en arte"
 ]
 
 function GeneratingMessage() {
@@ -274,7 +274,10 @@ function GeneratingMessage() {
   }, [])
 
   return (
-    <span className="animate-pulse">
+    <span
+      className="text-sm font-light text-[#333333] tracking-wide transition-opacity duration-700"
+      style={{ fontFamily: 'Lato, sans-serif' }}
+    >
       {encouragingMessages[currentMessage]}
     </span>
   )
@@ -1071,8 +1074,12 @@ export function ContextFirstWizard({
                 <div className="p-6 rounded-lg bg-gradient-to-r from-[#A3B1A1]/10 to-[#C4886F]/10 border border-[#A3B1A1]/20">
                   <div className="flex flex-col items-center justify-center gap-4">
                     <Loader2 className="h-8 w-8 animate-spin text-[#A3B1A1]" />
-                    <div className="text-center space-y-2">
-                      <p className="text-sm font-medium text-[#333333]">Generando tu diseño...</p>
+                    <div className="text-center space-y-3">
+                      <h4
+                        className="text-lg font-light text-[#333333] tracking-wide"
+                      >
+                        Generando tu diseño
+                      </h4>
                       <GeneratingMessage />
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
@@ -1200,7 +1207,12 @@ export function ContextFirstWizard({
                     className="flex-1 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90"
                   >
                     <Sparkles className="mr-2 h-4 w-4" />
-                    {hasGenerated ? 'Generar Otro Diseño' : 'Generar Diseño'} (1 Token)
+                    <span className="hidden sm:inline">
+                      {hasGenerated ? 'Generar Otro Diseño' : 'Generar Diseño'} (1 Token)
+                    </span>
+                    <span className="sm:hidden">
+                      {hasGenerated ? 'Otro Diseño' : 'Generar'} (1 Token)
+                    </span>
                   </Button>
                 )}
               </div>

@@ -1,15 +1,20 @@
 'use client'
 
-import { use, useEffect, useState, useCallback, memo } from 'react'
+import { use, useEffect, useState, memo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ArrowLeft, Loader2, Zap, Wand2, Images, Share2, Expand } from 'lucide-react'
+import { ArrowLeft, Loader2, Zap, Wand2, Images, Expand, Upload, Share2 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useMediaQuery } from '@/hooks/use-media-query'
+import { ShareButton } from '@/components/share/ShareButton'
+import { EnhancedShareDialog } from '@/components/share/EnhancedShareDialog'
+import { ShareSuccessDialog } from '@/components/share/ShareSuccessDialog'
+import { createClient } from '@/lib/supabase/client'
+import { shareService } from '@/lib/services/share.service'
 
 // Contexts
 import { ProjectProvider, useProject } from '@/contexts/ProjectContext'
@@ -27,7 +32,7 @@ import { useTokenBalance } from '@/hooks/useTokenBalance'
 import { useWizardState } from '@/hooks/useWizardState'
 
 // Gallery Section Component (Memoized to prevent re-renders)
-const GallerySection = memo(function GallerySection() {
+const GallerySection = memo(function GallerySection({ onQuickShare }: { onQuickShare?: (variantId: string) => void }) {
   const {
     project,
     selectedBaseImage,
@@ -213,6 +218,7 @@ const GallerySection = memo(function GallerySection() {
           projectId={project?.id || ''}
           variantId={viewerModal.variant.id}
           initialMode={viewerModal.initialMode}
+          onQuickShare={onQuickShare}
         />
       )}
 
@@ -442,12 +448,20 @@ const DesignPanel = memo(function DesignPanel({
 // Main Page Component
 function ProjectPageContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { project, setProject, setSelectedBaseImage } = useProject()
+  const { project, setProject, selectedBaseImage, setSelectedBaseImage, variants } = useProject()
   const { available: tokenBalance } = useTokenBalance()
   const [loading, setLoading] = useState(true)
   const [mobileTab, setMobileTab] = useState<'gallery' | 'design'>('gallery')
   const [designData, setDesignData] = useState<any>(null)
   const [designDataLoading, setDesignDataLoading] = useState(false)
+  const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [shareSuccessDialogOpen, setShareSuccessDialogOpen] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
+  const [shareFormat, setShareFormat] = useState<'quick' | 'story'>('quick')
+  const [selectedShareVariants, setSelectedShareVariants] = useState<string[]>([])
+  const [isSharing, setIsSharing] = useState(false)
+  const isMobile = useMediaQuery('(max-width: 1024px)')
+  const supabase = createClient()
 
   useEffect(() => {
     fetchProject()
@@ -470,6 +484,56 @@ function ProjectPageContent({ params }: { params: Promise<{ id: string }> }) {
       toast.error('Error al cargar opciones de diseño')
     } finally {
       setDesignDataLoading(false)
+    }
+  }
+
+  const handleQuickShare = (variantId: string) => {
+    setSelectedShareVariants([variantId])
+    setShareDialogOpen(true)
+  }
+
+  const handleShare = async (selectedIds: string[], format: 'quick' | 'story') => {
+    try {
+      setIsSharing(true)
+      setShareFormat(format)
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || !project) {
+        toast.error('Debes iniciar sesión para compartir')
+        return
+      }
+
+      // Create share using the existing service
+      const shareResponse = await shareService.createShare(project.id, {
+        type: 'project',
+        customTitle: project.name,
+        customDescription: project.description || undefined,
+        featured: selectedIds,
+        visibility: 'public'
+      }, supabase)
+
+      // Update the share with our new format-specific data
+      const whatsappMessage = format === 'quick'
+        ? `¡Mira cómo transformé mi espacio con Decollage! 🏠✨\n\nProyecto: ${project.name}\n\nDescubre más transformaciones en decollage.cl`
+        : null
+
+      await supabase
+        .from('project_shares')
+        .update({
+          share_format: format,
+          whatsapp_message: whatsappMessage
+        })
+        .eq('share_token', shareResponse.shareToken)
+
+      setShareUrl(shareResponse.shareUrl)
+      setShareDialogOpen(false)
+      setShareSuccessDialogOpen(true)
+
+    } catch (error) {
+      console.error('Error sharing project:', error)
+      toast.error('Error al compartir el proyecto')
+    } finally {
+      setIsSharing(false)
     }
   }
 
@@ -535,14 +599,16 @@ function ProjectPageContent({ params }: { params: Promise<{ id: string }> }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-[#A3B1A1]/10 to-[#C4886F]/10 border border-[#A3B1A1]/20">
-              <Zap className="h-3 w-3 text-[#A3B1A1]" />
-              <span className="text-xs font-semibold text-gray-700">{tokenBalance}</span>
-            </div>
-            <Button variant="outline" size="sm" className="h-8 hidden lg:flex">
-              <Share2 className="h-3.5 w-3.5 mr-1.5" />
-              Compartir
-            </Button>
+            {/* Desktop Share Button */}
+            {project && variants.length > 0 && (
+              <div className="hidden lg:block">
+                <ShareButton
+                  project={project as any}
+                  generations={variants as any}
+                  className="h-8"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -572,11 +638,13 @@ function ProjectPageContent({ params }: { params: Promise<{ id: string }> }) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto">
+      <div className={`flex-1 overflow-auto lg:pb-0 ${
+        isMobile && mobileTab === 'gallery' ? 'pb-32' : 'pb-0'
+      }`}>
         {/* Mobile View */}
         <div className="lg:hidden">
           <div className={mobileTab === 'gallery' ? '' : 'hidden'}>
-            <GallerySection />
+            <GallerySection onQuickShare={handleQuickShare} />
           </div>
           <div className={mobileTab === 'design' ? '' : 'hidden'}>
             {designDataLoading ? (
@@ -597,7 +665,7 @@ function ProjectPageContent({ params }: { params: Promise<{ id: string }> }) {
         {/* Desktop View */}
         <div className="hidden lg:flex h-full">
           <div className="flex-1 bg-white overflow-auto">
-            <GallerySection />
+            <GallerySection onQuickShare={handleQuickShare} />
           </div>
           <div className="w-[380px] bg-gray-50 border-l flex flex-col">
             <div className="p-4 border-b bg-white">
@@ -621,6 +689,95 @@ function ProjectPageContent({ params }: { params: Promise<{ id: string }> }) {
           </div>
         </div>
       </div>
+
+      {/* Mobile Bottom Bar - Only in Gallery view */}
+      {isMobile && project && mobileTab === 'gallery' && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 z-20">
+          <div className="px-4 py-4">
+            {/* Three Action Buttons */}
+            <div className="grid grid-cols-3 gap-3">
+              {/* Subir Foto */}
+              <Button
+                variant="ghost"
+                className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 text-[#333333] hover:bg-[#F8F8F8] transition-all duration-300"
+                onClick={() => {
+                  // Trigger file upload for base image
+                  const fileInput = document.createElement('input')
+                  fileInput.type = 'file'
+                  fileInput.accept = 'image/*'
+                  fileInput.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0]
+                    if (file) {
+                      // Use existing handleImageUpload logic from GallerySection
+                      // This would need to be lifted up or accessed via context
+                      toast.success('Función de subida próximamente')
+                    }
+                  }
+                  fileInput.click()
+                }}
+              >
+                <Upload className="h-5 w-5" />
+                <span className="text-xs font-light tracking-wide" style={{ fontFamily: 'Lato, sans-serif' }}>
+                  Subir
+                </span>
+              </Button>
+
+              {/* Diseñar */}
+              <Button
+                variant="ghost"
+                className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 bg-[#A3B1A1]/10 text-[#A3B1A1] hover:bg-[#A3B1A1]/20 transition-all duration-300 border border-[#A3B1A1]/20"
+                onClick={() => setMobileTab('design')}
+                disabled={!selectedBaseImage}
+              >
+                <Wand2 className="h-5 w-5" />
+                <span className="text-xs font-light tracking-wide" style={{ fontFamily: 'Lato, sans-serif' }}>
+                  Diseñar
+                </span>
+              </Button>
+
+              {/* Compartir */}
+              <Button
+                variant="ghost"
+                className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 text-[#333333] hover:bg-[#F8F8F8] transition-all duration-300"
+                onClick={() => {
+                  if (variants.length > 0) {
+                    setSelectedShareVariants(variants.map(v => v.id))
+                    setShareDialogOpen(true)
+                  } else {
+                    toast.error('Necesitas generar al menos un diseño para compartir')
+                  }
+                }}
+                disabled={variants.length === 0}
+              >
+                <Share2 className="h-5 w-5" />
+                <span className="text-xs font-light tracking-wide" style={{ fontFamily: 'Lato, sans-serif' }}>
+                  Compartir
+                </span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Dialogs */}
+      {project && (
+        <>
+          <EnhancedShareDialog
+            open={shareDialogOpen}
+            onOpenChange={setShareDialogOpen}
+            project={project as any}
+            generations={variants as any}
+            onShare={handleShare}
+          />
+
+          <ShareSuccessDialog
+            open={shareSuccessDialogOpen}
+            onOpenChange={setShareSuccessDialogOpen}
+            shareUrl={shareUrl}
+            format={shareFormat}
+          />
+        </>
+      )}
     </div>
   )
 }

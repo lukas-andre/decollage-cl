@@ -42,7 +42,7 @@ interface ImageViewerModalProps {
   colorScheme?: string
   projectId?: string
   variantId?: string
-  onQuickShare?: (variantId: string) => void
+  onQuickShare?: (variantId: string) => Promise<void> | void
   onSaveRefinement?: (newVariant: any) => void
   onAddAsBaseImage?: () => void
   initialMode?: 'view' | 'edit'
@@ -254,17 +254,45 @@ export function ImageViewerModal({
             <div className="flex items-center gap-1 md:gap-2">
               {mode === 'view' && (
                 <>
-                  {/* Mobile: Dropdown for secondary actions */}
-                  <div className="flex md:hidden">
+                  {/* Mobile: Primary actions visible + dropdown for secondary */}
+                  <div className="flex md:hidden items-center gap-1">
                     {variantId && (
                       <Button
                         size="sm"
                         onClick={() => setMode('edit')}
-                        className="bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] text-white px-3"
+                        className="bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] text-white px-2"
                       >
                         <Sparkles className="h-3.5 w-3.5" />
                       </Button>
                     )}
+
+                    {/* Comparar button - always visible */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setViewMode(viewMode === 'single' ? 'comparison' : 'single')}
+                      className="px-2"
+                    >
+                      <ArrowLeftRight className="h-3.5 w-3.5" />
+                    </Button>
+
+                    {/* Compartir button - visible when available */}
+                    {onQuickShare && variantId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          if (onQuickShare) {
+                            await onQuickShare(variantId)
+                          }
+                        }}
+                        className="px-2"
+                      >
+                        <Share2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+
+                    {/* Dropdown for secondary actions */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm" className="px-2">
@@ -272,12 +300,6 @@ export function ImageViewerModal({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem
-                          onClick={() => setViewMode(viewMode === 'single' ? 'comparison' : 'single')}
-                        >
-                          <ArrowLeftRight className="h-4 w-4 mr-2" />
-                          {viewMode === 'single' ? 'Comparar' : 'Vista Simple'}
-                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDownload(
                             showOriginal ? originalImage : currentImage,
@@ -295,17 +317,6 @@ export function ImageViewerModal({
                             <Upload className="h-4 w-4 mr-2" />
                             Usar como Base
                           </DropdownMenuItem>
-                        )}
-                        {onQuickShare && variantId && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => onQuickShare(variantId)}
-                            >
-                              <Share2 className="h-4 w-4 mr-2" />
-                              Compartir
-                            </DropdownMenuItem>
-                          </>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -364,8 +375,10 @@ export function ImageViewerModal({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => onQuickShare(variantId)}
-                        className="gap-2 bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] hover:from-[#A3B1A1]/90 hover:to-[#C4886F]/90 text-white border-none"
+                        onClick={async () => {
+                          await onQuickShare(variantId)
+                        }}
+                        className="gap-2"
                       >
                         <Share2 className="h-4 w-4" />
                         Compartir
