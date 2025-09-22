@@ -82,9 +82,10 @@ const GallerySection = memo(function GallerySection({ onQuickShare }: { onQuickS
       }
 
       toast.success('Imagen subida correctamente')
-      if (data.baseImage) {
-        addImage(data.baseImage)
-        setSelectedBaseImage(data.baseImage)
+      // The API returns projectImage, not baseImage
+      if (data.projectImage) {
+        addImage(data.projectImage)
+        setSelectedBaseImage(data.projectImage)
       }
     } catch (error) {
       console.error('Error uploading image:', error)
