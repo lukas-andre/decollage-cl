@@ -82,7 +82,6 @@ const GallerySection = memo(function GallerySection({ onQuickShare }: { onQuickS
       }
 
       toast.success('Imagen subida correctamente')
-      // The API returns projectImage, not baseImage
       if (data.projectImage) {
         addImage(data.projectImage)
         setSelectedBaseImage(data.projectImage)
@@ -130,7 +129,6 @@ const GallerySection = memo(function GallerySection({ onQuickShare }: { onQuickS
         throw new Error('Error al actualizar favorito')
       }
 
-      // Update variant locally
       updateVariant(variantId, { is_favorite: !variant.is_favorite })
       toast.success(variant.is_favorite ? 'Removido de favoritos' : 'Agregado a favoritos')
     } catch (error) {
