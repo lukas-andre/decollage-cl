@@ -3,6 +3,22 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { getCloudflareImages } from '@/lib/cloudflare-images'
 
+// Helper function to get MIME type from filename
+function getMimeTypeFromFileName(fileName: string): string | null {
+  if (!fileName) return null
+
+  const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'))
+  const mimeTypes: Record<string, string> = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.webp': 'image/webp',
+    '.gif': 'image/gif',
+  }
+
+  return mimeTypes[extension] || null
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -64,18 +80,45 @@ export async function POST(
     }
 
     const formData = await request.formData()
-    const file = formData.get('file') as File
+    const fileEntry = formData.get('file')
     const name = formData.get('name') as string | null
 
-    if (!file) {
+    if (!fileEntry) {
       return NextResponse.json(
         { error: 'No se proporcionó archivo' },
         { status: 400 }
       )
     }
 
+    // Convert to Buffer for Node.js compatibility
+    let fileBuffer: Buffer
+    let fileName: string
+    let fileSize: number
+
+    if (typeof File !== 'undefined' && fileEntry instanceof File) {
+      // Browser/newer Node.js with File support
+      fileBuffer = Buffer.from(await fileEntry.arrayBuffer())
+      fileName = fileEntry.name
+      fileSize = fileEntry.size
+    } else if (fileEntry instanceof Blob) {
+      // Fallback for Blob
+      fileBuffer = Buffer.from(await fileEntry.arrayBuffer())
+      fileName = name || 'upload.jpg'
+      fileSize = fileEntry.size
+    } else {
+      // Handle other cases (should not happen normally)
+      return NextResponse.json(
+        { error: 'Formato de archivo no válido' },
+        { status: 400 }
+      )
+    }
+
     // Validate image file using Cloudflare validation
-    const validation = cloudflareImages.validateImageFile(file)
+    const validation = cloudflareImages.validateImageFile({
+      name: fileName,
+      size: fileSize,
+      type: getMimeTypeFromFileName(fileName) || undefined
+    })
     if (!validation.valid) {
       return NextResponse.json(
         { error: validation.error },
@@ -84,21 +127,21 @@ export async function POST(
     }
 
     // Get image dimensions
-    const dimensions = await cloudflareImages.getImageDimensions(file)
+    const dimensions = await cloudflareImages.getImageDimensions(fileBuffer)
 
     // Compress image if needed
-    let imageToUpload: File | Buffer = file
-    if (file.size > 5 * 1024 * 1024) { // If larger than 5MB, compress it
+    let imageToUpload: Buffer = fileBuffer
+    if (fileSize > 5 * 1024 * 1024) { // If larger than 5MB, compress it
       try {
-        imageToUpload = await cloudflareImages.compressImage(file)
+        imageToUpload = await cloudflareImages.compressImage(fileBuffer)
       } catch (error) {
         console.warn('Could not compress image, uploading original:', error)
-        imageToUpload = file
+        imageToUpload = fileBuffer
       }
     }
 
     // Generate unique filename
-    const uniqueFileName = cloudflareImages.generateUniqueFilename(file.name, user.id)
+    const uniqueFileName = cloudflareImages.generateUniqueFilename(fileName, user.id)
 
     // Upload to Cloudflare Images
     const uploadResponse = await cloudflareImages.uploadImage(
@@ -109,7 +152,7 @@ export async function POST(
           userId: user.id,
           projectId,
           type: 'project_base_image',
-          originalName: file.name,
+          originalName: fileName,
           uploadedAt: new Date().toISOString(),
           width: dimensions.width.toString(),
           height: dimensions.height.toString(),
@@ -145,7 +188,7 @@ export async function POST(
         thumbnail_url: imageUrls.thumbnail,
         image_type: 'room',
         source: 'upload',
-        name: name || file.name.split('.')[0], // Use filename without extension as default name
+        name: name || fileName.split('.')[0], // Use filename without extension as default name
         upload_order: (count || 0) + 1,
         is_primary: (count || 0) === 0 // First image is primary
       })

@@ -77,23 +77,25 @@ export class CloudflareImages {
   ): Promise<CloudflareUploadResponse> {
     const formData = new FormData()
 
-    if (file instanceof File) {
+    // Handle different input types
+    if (typeof File !== 'undefined' && file instanceof File) {
+      // Browser environment with File support
       formData.append('file', file)
     } else if (file instanceof Buffer) {
-      // Detect MIME type from filename or use default
+      // Node.js environment with Buffer
       const mimeType = getMimeTypeFromFileName(fileName) || 'image/jpeg'
-      const fileBlob = new File([new Uint8Array(file)], fileName || 'upload', {
-        type: mimeType,
-      })
-      formData.append('file', fileBlob)
-    } else if (file instanceof Blob) {
-      // Ensure we have a proper File object with filename
+      // Create a Blob from Buffer (Blob is available in Node.js 16+)
+      const blob = new Blob([new Uint8Array(file)], { type: mimeType })
+      formData.append('file', blob, fileName || 'upload')
+    } else if (typeof Blob !== 'undefined' && file instanceof Blob) {
+      // Blob is available (Node.js 16+ or browser)
       const mimeType =
         file.type || getMimeTypeFromFileName(fileName) || 'image/jpeg'
-      const fileBlob = new File([file], fileName || 'upload', {
-        type: mimeType,
-      })
-      formData.append('file', fileBlob)
+      const blob = new Blob([file], { type: mimeType })
+      formData.append('file', blob, fileName || 'upload')
+    } else {
+      // Fallback for any other type
+      formData.append('file', file as any, fileName || 'upload')
     }
 
     // Add metadata if provided - Cloudflare expects JSON string
@@ -329,11 +331,21 @@ export class CloudflareImages {
   /**
    * Compress image using Sharp (server-side only)
    */
-  async compressImage(file: File, maxWidth: number = 2048): Promise<Buffer> {
+  async compressImage(file: File | Buffer | Blob, maxWidth: number = 2048): Promise<Buffer> {
     try {
       const sharp = (await import('sharp')).default
-      const buffer = Buffer.from(await file.arrayBuffer())
-      
+      let buffer: Buffer
+
+      if (file instanceof Buffer) {
+        buffer = file
+      } else if (typeof File !== 'undefined' && file instanceof File) {
+        buffer = Buffer.from(await file.arrayBuffer())
+      } else if (typeof Blob !== 'undefined' && file instanceof Blob) {
+        buffer = Buffer.from(await file.arrayBuffer())
+      } else {
+        throw new Error('Unsupported file type for compression')
+      }
+
       return await sharp(buffer)
         .resize(maxWidth, undefined, {
           withoutEnlargement: true,
@@ -350,12 +362,23 @@ export class CloudflareImages {
   /**
    * Get image dimensions using Sharp (server-side only)
    */
-  async getImageDimensions(file: File): Promise<{ width: number; height: number }> {
+  async getImageDimensions(file: File | Buffer | Blob): Promise<{ width: number; height: number }> {
     try {
       const sharp = (await import('sharp')).default
-      const buffer = Buffer.from(await file.arrayBuffer())
+      let buffer: Buffer
+
+      if (file instanceof Buffer) {
+        buffer = file
+      } else if (typeof File !== 'undefined' && file instanceof File) {
+        buffer = Buffer.from(await file.arrayBuffer())
+      } else if (typeof Blob !== 'undefined' && file instanceof Blob) {
+        buffer = Buffer.from(await file.arrayBuffer())
+      } else {
+        throw new Error('Unsupported file type for getting dimensions')
+      }
+
       const metadata = await sharp(buffer).metadata()
-      
+
       return {
         width: metadata.width || 0,
         height: metadata.height || 0,
@@ -392,11 +415,18 @@ export class CloudflareImages {
   /**
    * Validate image file
    */
-  validateImageFile(file: File): { valid: boolean; error?: string } {
+  validateImageFile(file: File | { type?: string; size: number; name?: string }): { valid: boolean; error?: string } {
     const MAX_SIZE = 10 * 1024 * 1024 // 10MB
     const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    // Get file type either from file.type or from filename
+    let fileType = file.type
+    if (!fileType && file.name) {
+      const mimeType = getMimeTypeFromFileName(file.name)
+      if (mimeType) fileType = mimeType
+    }
+
+    if (fileType && !ALLOWED_TYPES.includes(fileType)) {
       return {
         valid: false,
         error: 'Formato de archivo no soportado. Por favor usa JPG, PNG, WebP o GIF.',
