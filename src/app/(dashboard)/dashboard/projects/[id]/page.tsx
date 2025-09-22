@@ -239,7 +239,15 @@ const GallerySection = memo(function GallerySection() {
 })
 
 // Design Panel Component (Memoized)
-const DesignPanel = memo(function DesignPanel({ projectId }: { projectId: string }) {
+const DesignPanel = memo(function DesignPanel({ 
+  projectId, 
+  designData, 
+  isVisible 
+}: { 
+  projectId: string
+  designData: any
+  isVisible: boolean
+}) {
   const { selectedBaseImage, addVariant, setSelectedVariant, variants } = useProject()
   const {
     generating,
@@ -252,7 +260,6 @@ const DesignPanel = memo(function DesignPanel({ projectId }: { projectId: string
 
   const { available: tokenBalance, hasTokens, deduct: deductTokens } = useTokenBalance()
   const [showNoTokensDialog, setShowNoTokensDialog] = useState(false)
-  const [designData, setDesignData] = useState<any>(null)
   const [expandedImage, setExpandedImage] = useState(false)
   const [viewerModal, setViewerModal] = useState<{
     isOpen: boolean
@@ -269,26 +276,6 @@ const DesignPanel = memo(function DesignPanel({ projectId }: { projectId: string
     setFormData: setWizardFormData,
     reset: resetWizardState
   } = useWizardState({ projectId, baseImageId: selectedBaseImage?.id })
-
-  useEffect(() => {
-    fetchDesignData()
-  }, [])
-
-  const fetchDesignData = async () => {
-    try {
-      const response = await fetch('/api/design-data')
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al cargar datos de diseño')
-      }
-
-      setDesignData(data)
-    } catch (error) {
-      console.error('Error fetching design data:', error)
-      toast.error('Error al cargar opciones de diseño')
-    }
-  }
 
   const handleGenerate = async (params: any) => {
     if (!selectedBaseImage) return
@@ -352,7 +339,7 @@ const DesignPanel = memo(function DesignPanel({ projectId }: { projectId: string
   }
 
   return (
-    <div className="p-4">
+    <div className={`p-4 ${!isVisible ? 'hidden' : ''}`}>
       {/* Mobile: Show selected image preview at top */}
       {isMobile && selectedBaseImage && (
         <div className="lg:hidden mb-4 p-3 bg-white rounded-lg border border-gray-200">
@@ -459,10 +446,32 @@ function ProjectPageContent({ params }: { params: Promise<{ id: string }> }) {
   const { available: tokenBalance } = useTokenBalance()
   const [loading, setLoading] = useState(true)
   const [mobileTab, setMobileTab] = useState<'gallery' | 'design'>('gallery')
+  const [designData, setDesignData] = useState<any>(null)
+  const [designDataLoading, setDesignDataLoading] = useState(false)
 
   useEffect(() => {
     fetchProject()
+    fetchDesignData()
   }, [id])
+
+  const fetchDesignData = async () => {
+    try {
+      setDesignDataLoading(true)
+      const response = await fetch('/api/design-data')
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al cargar datos de diseño')
+      }
+
+      setDesignData(data)
+    } catch (error) {
+      console.error('Error fetching design data:', error)
+      toast.error('Error al cargar opciones de diseño')
+    } finally {
+      setDesignDataLoading(false)
+    }
+  }
 
   const fetchProject = async () => {
     try {
@@ -566,11 +575,23 @@ function ProjectPageContent({ params }: { params: Promise<{ id: string }> }) {
       <div className="flex-1 overflow-auto">
         {/* Mobile View */}
         <div className="lg:hidden">
-          {mobileTab === 'gallery' ? (
+          <div className={mobileTab === 'gallery' ? '' : 'hidden'}>
             <GallerySection />
-          ) : (
-            <DesignPanel projectId={id} />
-          )}
+          </div>
+          <div className={mobileTab === 'design' ? '' : 'hidden'}>
+            {designDataLoading ? (
+              <div className="p-4 text-center">
+                <Loader2 className="h-6 w-6 animate-spin text-[#A3B1A1] mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Cargando opciones de diseño...</p>
+              </div>
+            ) : (
+              <DesignPanel 
+                projectId={id} 
+                designData={designData}
+                isVisible={mobileTab === 'design'}
+              />
+            )}
+          </div>
         </div>
 
         {/* Desktop View */}
@@ -584,7 +605,18 @@ function ProjectPageContent({ params }: { params: Promise<{ id: string }> }) {
               <p className="text-xs text-gray-500 mt-0.5">Personaliza tu transformación</p>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <DesignPanel projectId={id} />
+              {designDataLoading ? (
+                <div className="p-4 text-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-[#A3B1A1] mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">Cargando opciones de diseño...</p>
+                </div>
+              ) : (
+                <DesignPanel 
+                  projectId={id} 
+                  designData={designData}
+                  isVisible={true}
+                />
+              )}
             </div>
           </div>
         </div>
