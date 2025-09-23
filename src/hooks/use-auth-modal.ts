@@ -10,6 +10,9 @@ export type AuthAction =
   | 'view-gallery'
   | 'share'
   | 'comment'
+  | 'follow'
+
+export type AuthActionType = AuthAction // Alias for compatibility
 
 export interface AuthModalData {
   returnUrl?: string
@@ -24,6 +27,8 @@ export interface AuthModalData {
 interface AuthModalState {
   isOpen: boolean
   data: AuthModalData | null
+  actionType: AuthAction | null  // For MagicLinkModal compatibility
+  actionContext: any  // For MagicLinkModal compatibility
 
   // Actions
   openModal: (data?: AuthModalData) => void
@@ -34,18 +39,28 @@ interface AuthModalState {
 export const useAuthModal = create<AuthModalState>((set) => ({
   isOpen: false,
   data: null,
+  actionType: null,
+  actionContext: null,
 
   openModal: (data) => set({
     isOpen: true,
-    data: data || {}
+    data: data || {},
+    actionType: data?.action || null,
+    actionContext: data?.metadata || data
   }),
 
   closeModal: () => set({
     isOpen: false,
-    data: null
+    data: null,
+    actionType: null,
+    actionContext: null
   }),
 
-  setData: (data) => set({ data }),
+  setData: (data) => set({
+    data,
+    actionType: data?.action || null,
+    actionContext: data?.metadata || data
+  }),
 }))
 
 // Helper function to trigger auth with context
@@ -62,8 +77,13 @@ export const triggerAuth = (action: AuthAction, data?: Partial<AuthModalData>) =
     ...data
   }
 
-  // Store in sessionStorage for persistence across page reloads
+  // Store in both sessionStorage and localStorage for different components
   sessionStorage.setItem('pendingAuthAction', JSON.stringify(actionData))
+  localStorage.setItem('pendingAuthAction', JSON.stringify({
+    action,
+    context: data,
+    timestamp: Date.now()
+  }))
 
   openModal(actionData)
 }
@@ -126,6 +146,11 @@ export const getActionMessage = (action: AuthAction): {
       title: 'Únete a la conversación',
       description: 'Comparte tu opinión y conecta con otras apasionadas del diseño',
       ctaText: 'Comentar'
+    },
+    follow: {
+      title: 'Sigue a este creador',
+      description: 'No te pierdas los nuevos diseños de tus creadores favoritos',
+      ctaText: 'Seguir creador'
     }
   }
 

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,105 +8,64 @@ export async function POST(request: NextRequest) {
       event_type,
       action,
       share_token,
-      page_url,
-      user_agent,
-      referrer,
+      email,
       metadata
     } = body
 
-    if (!event_type) {
-      return NextResponse.json(
-        { error: 'event_type es requerido' },
-        { status: 400 }
-      )
-    }
+    // Get anonymous session from headers or create one
+    const anonymousSession = request.headers.get('x-anonymous-session') ||
+      `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
-            })
-          },
-        },
-      }
-    )
-
-    // Get current user if authenticated
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Get IP for anonymous tracking
-    const ip = request.headers.get('x-forwarded-for') ||
-               request.headers.get('x-real-ip') ||
-               'unknown'
+    // Track the gate event
+    const { error } = await supabase
+      .from('analytics_events')
+      .insert({
+        event_type: `auth_gate_${event_type}`,
+        event_action: action,
+        user_id: user?.id,
+        session_id: anonymousSession,
+        metadata: {
+          share_token,
+          email,
+          ...metadata,
+          timestamp: new Date().toISOString(),
+          referrer: request.headers.get('referer'),
+          user_agent: request.headers.get('user-agent')
+        }
+      })
 
-    // Generate session ID for anonymous users
-    const sessionId = user?.id || `anon_${ip}_${Date.now()}`
-
-    // Create tracking event
-    const eventData = {
-      session_id: sessionId,
-      user_id: user?.id || null,
-      event_type,
-      action: action || null,
-      share_token: share_token || null,
-      page_url: page_url || request.headers.get('referer'),
-      user_agent: user_agent || request.headers.get('user-agent'),
-      referrer: referrer || request.headers.get('referer'),
-      ip_address: ip,
-      metadata: metadata || {},
-      created_at: new Date().toISOString()
+    if (error) {
+      console.error('Error tracking gate event:', error)
+      // Don't fail the request if analytics fails
     }
 
-    // For now, we'll log to console and could later save to a tracking table
-    console.log('Conversion Gate Event:', eventData)
-
-    // If we have a conversion_events table, save the event
-    // For MVP, we'll track in console and potentially use external analytics
-
-    // You could also send to external analytics services here:
-    // - Google Analytics
-    // - Mixpanel
-    // - PostHog
-    // - Custom analytics service
-
-    // Track specific gate events
-    if (event_type === 'gate_shown') {
-      // Track when login gate is displayed
-      console.log(`Login gate shown for action: ${action}`)
-    } else if (event_type === 'gate_clicked') {
-      // Track when user clicks through gate
-      console.log(`Login gate clicked for action: ${action}`)
-    } else if (event_type === 'auth_started') {
-      // Track when user starts auth process
-      console.log(`Auth started for action: ${action}`)
-    } else if (event_type === 'auth_completed') {
-      // Track when user completes auth
-      console.log(`Auth completed for action: ${action}`)
-    } else if (event_type === 'action_completed') {
-      // Track when user completes the intended action post-auth
-      console.log(`Action completed: ${action}`)
+    // If this is a magic link sent event, also track conversion funnel
+    if (event_type === 'magic_link_sent' && email) {
+      await supabase
+        .from('auth_conversion_funnel')
+        .insert({
+          email,
+          action_type: action,
+          share_token,
+          session_id: anonymousSession,
+          status: 'email_sent',
+          metadata
+        })
     }
 
     return NextResponse.json({
       success: true,
-      session_id: sessionId,
-      tracked_at: new Date().toISOString()
+      session_id: anonymousSession
     })
 
   } catch (error) {
-    console.error('Gate tracking error:', error)
+    console.error('Track gate error:', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: 'Failed to track event' },
       { status: 500 }
     )
   }
 }
-

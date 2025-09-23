@@ -18,6 +18,7 @@ import { BeforeAfterImage } from './BeforeAfterImage'
 import { BeforeAfterModal } from './BeforeAfterModal'
 import { cn } from '@/lib/utils'
 import { triggerAuth } from '@/hooks/use-auth-modal'
+import { createClient } from '@/lib/supabase/client'
 
 interface PublicShareViewProps {
   shareData: PublicShareData
@@ -35,11 +36,34 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
     item?: typeof shareData.items[0]
   }>({ isOpen: false })
   const [imageOrientations, setImageOrientations] = useState<Record<string, 'horizontal' | 'vertical' | 'square'>>({})
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   // Track view using the new hook
   useShareViewTracking({
     shareToken: shareData.share.share_token || shareData.share.slug || ''
   })
+
+  // Check authentication status client-side
+  useEffect(() => {
+    const supabase = createClient()
+
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setIsAuthenticated(!!user)
+    }
+
+    // Check initial auth state
+    checkAuth()
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session?.user)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
 
   // Detect image orientations on mount
   useEffect(() => {
@@ -97,7 +121,7 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
   }, [])
 
   const handleReaction = async () => {
-    if (!shareData.isAuthenticated) {
+    if (!isAuthenticated) {
       // Track gate impression
       await fetch('/api/analytics/track-gate', {
         method: 'POST',
@@ -171,7 +195,7 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
   }
 
   const handleDownload = async (imageUrl: string, itemTitle?: string) => {
-    if (!shareData.isAuthenticated) {
+    if (!isAuthenticated) {
       // Track gate impression for download
       await fetch('/api/analytics/track-gate', {
         method: 'POST',
@@ -237,7 +261,7 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
               size="default"
               className="px-6 py-3 bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white transition-all duration-500 rounded-none shadow-lg hover:shadow-xl"
               onClick={() => {
-                if (!shareData.isAuthenticated) {
+                if (!isAuthenticated) {
                   triggerAuth('create-design', {
                     shareToken: shareData.share.share_token,
                     title: shareData.project.name,
@@ -384,7 +408,7 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
                         <span className="text-xl font-light text-[#C4886F]">{reactionCount}</span> {reactionCount === 1 ? 'aplauso' : 'aplausos'}
                       </p>
 
-                      {!shareData.isAuthenticated && (
+                      {!isAuthenticated && (
                         <p className="text-xs text-gray-400 font-light italic mt-2" style={{ fontFamily: 'Lato, sans-serif' }}>
                           Únete para aplaudir
                         </p>
@@ -616,7 +640,7 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
                   className="group px-12 py-6 bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white transition-all duration-500 rounded-none shadow-2xl hover:shadow-3xl transform hover:-translate-y-1"
                   asChild
                 >
-                  <Link href="/auth/register">
+                  <Link href="/signup">
                     <Sparkles className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform duration-500" />
                     <span className="text-lg" style={{ fontFamily: 'Lato, sans-serif' }}>Descubre tu hogar soñado</span>
                     <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-1 transition-transform duration-300" />
@@ -636,12 +660,12 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
               </div>
 
               {/* Trust Indicator */}
-              <p
+              {/* <p
                 className="mt-12 text-sm text-gray-500 font-light italic"
                 style={{ fontFamily: 'Lato, sans-serif' }}
               >
                 Más de 5,000 espacios transformados en todo Chile
-              </p>
+              </p> */}
             </div>
           </section>
         )}

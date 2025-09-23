@@ -13,6 +13,7 @@ const PUBLIC_ROUTES = [
   '/auth-code-error',
   '/',
   '/pricing',
+  '/share', // Add share pages as public routes
 ]
 
 const AUTH_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password']
@@ -163,8 +164,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - share (public share pages)
+     * - api/share (share API routes)
      * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|share|api/share|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

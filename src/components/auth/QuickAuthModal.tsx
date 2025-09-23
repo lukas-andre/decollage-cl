@@ -12,10 +12,65 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useAuthModal, getActionMessage, AuthAction, getPendingAuthAction } from '@/hooks/use-auth-modal'
 import { MagicLinkForm } from './MagicLinkForm'
 import { X, Sparkles, Heart, Download, Bookmark, Share2, Eye, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+// Note: Using the existing QuickAuthModal hook, not the new magic link one
+// This modal is for the existing quick auth flow, not the new magic link flow
+
+// Helper functions for QuickAuthModal
+const getActionMessage = (action: string) => {
+  const messages: Record<string, any> = {
+    like: {
+      title: '¡Dale aplausos a este diseño!',
+      description: 'Ingresa tu email para continuar aplaudiendo diseños que te inspiran.'
+    },
+    comment: {
+      title: 'Comparte tu opinión',
+      description: 'Ingresa tu email para comentar y conectar con la comunidad.'
+    },
+    save: {
+      title: 'Guarda tus favoritos',
+      description: 'Ingresa tu email para crear tu colección de diseños inspiradores.'
+    },
+    download: {
+      title: 'Descarga este diseño',
+      description: 'Ingresa tu email para descargar diseños en alta calidad.'
+    },
+    follow: {
+      title: 'Sigue a este creador',
+      description: 'Ingresa tu email para seguir creadores y no perderte sus nuevos diseños.'
+    }
+  }
+  return messages[action] || messages.save
+}
+
+type AuthAction = 'like' | 'comment' | 'save' | 'download' | 'follow' | 'share' | 'create-design' | 'view-gallery'
+
+const getPendingAuthAction = () => {
+  const stored = localStorage.getItem('pendingAuthAction')
+  if (stored) {
+    return JSON.parse(stored)
+  }
+  return null
+}
+
+// Import the actual hook from use-auth-modal
+import { useAuthModal as useRealAuthModal } from '@/hooks/use-auth-modal'
+
+// Use a wrapper to adapt the hook for QuickAuthModal's needs
+const useAuthModal = () => {
+  const isOpen = useRealAuthModal(state => state.isOpen)
+  const data = useRealAuthModal(state => state.data)
+  const closeModal = useRealAuthModal(state => state.closeModal)
+
+  return {
+    isOpen,
+    data,
+    closeModal
+  }
+}
 
 export function QuickAuthModal() {
   const router = useRouter()
@@ -61,7 +116,7 @@ export function QuickAuthModal() {
     const pendingAction = getPendingAuthAction()
     if (pendingAction && !isOpen) {
       // Reopen modal with pending action data
-      useAuthModal.getState().openModal(pendingAction)
+      useRealAuthModal.getState().openModal(pendingAction)
     }
   }, [isOpen])
 
@@ -100,7 +155,15 @@ export function QuickAuthModal() {
   return (
     <Dialog open={isOpen} onOpenChange={closeModal}>
       <DialogOverlay className="bg-black/60 backdrop-blur-sm" />
-      <DialogContent className="max-w-md mx-auto bg-white border-none shadow-2xl rounded-none p-0 overflow-hidden">
+      <DialogContent className="max-w-md mx-auto bg-white border-none shadow-2xl rounded-none p-0 overflow-hidden" aria-describedby="quick-auth-description">
+        {/* Add DialogHeader with DialogTitle and DialogDescription for accessibility */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>Autenticación Rápida</DialogTitle>
+          <DialogDescription id="quick-auth-description">
+            Crea tu cuenta o inicia sesión para continuar
+          </DialogDescription>
+        </DialogHeader>
+
         {/* Header */}
         <div className="relative bg-gradient-to-r from-[#A3B1A1] to-[#C4886F] p-6 text-white">
           <button

@@ -9,6 +9,9 @@ import Link from 'next/link'
 import type { Database } from '@/types/database.types'
 import type { PublicShareData } from '@/types/sharing'
 import { ColorPalette } from './ColorPalette'
+import { InteractionBar } from './InteractionBar'
+import { triggerAuth } from '@/hooks/use-auth-modal'
+import { createClient } from '@/lib/supabase/client'
 
 type ProjectShare = Database['public']['Tables']['project_shares']['Row']
 type Transformation = Database['public']['Tables']['transformations']['Row'] & {
@@ -30,11 +33,35 @@ export function QuickShareView({ shareData, generation }: QuickShareViewProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [showCTA, setShowCTA] = useState(false)
   const [imageOrientation, setImageOrientation] = useState<'horizontal' | 'vertical' | 'square'>('horizontal')
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [reactionCount, setReactionCount] = useState(0)
 
   // Track view using the new hook
   useShareViewTracking({
     shareToken: share.share_token || share.slug || ''
   })
+
+  // Check authentication status and listen for changes
+  useEffect(() => {
+    const supabase = createClient()
+
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setIsAuthenticated(!!user)
+    }
+
+    // Always check client-side auth state
+    checkAuth()
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session?.user)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
 
   // Show CTA after 5 seconds
   useEffect(() => {
@@ -113,6 +140,34 @@ export function QuickShareView({ shareData, generation }: QuickShareViewProps) {
   }
 
   const handleDownload = async () => {
+    if (!isAuthenticated) {
+      // Track gate impression for download
+      await fetch('/api/analytics/track-gate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_type: 'gate_shown',
+          action: 'download',
+          share_token: share.share_token,
+          metadata: {
+            image_url: generation.result_image_url,
+            project_name: project.name
+          }
+        })
+      })
+
+      // Trigger auth modal with download context
+      triggerAuth('download', {
+        shareToken: share.share_token || undefined,
+        imageUrl: generation.result_image_url || undefined,
+        title: project.name || 'design',
+        metadata: {
+          originalImageUrl: generation.result_image_url
+        }
+      })
+      return
+    }
+
     if (generation.result_image_url) {
       const link = document.createElement('a')
       link.href = generation.result_image_url
@@ -147,7 +202,7 @@ export function QuickShareView({ shareData, generation }: QuickShareViewProps) {
               className="px-4 py-2 bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white transition-all duration-300 rounded-none"
               asChild
             >
-              <Link href="/auth/register">
+              <Link href="/auth/signup">
                 <span className="text-sm sm:text-base">Crear mi espacio</span>
               </Link>
             </Button>
@@ -289,6 +344,23 @@ export function QuickShareView({ shareData, generation }: QuickShareViewProps) {
                   </div>
                 </div>
 
+                {/* Social Interactions */}
+                <div className="pt-6 border-t border-gray-100">
+                  <InteractionBar
+                    shareId={share.id}
+                    shareToken={share.share_token || share.slug || ''}
+                    initialLikes={(share.engagement_metrics as any)?.likes || reactionCount || 0}
+                    initialComments={(share.engagement_metrics as any)?.comments || 0}
+                    initialSaves={(share.engagement_metrics as any)?.saves || 0}
+                    isAuthenticated={isAuthenticated}
+                    onShare={handleShare}
+                    onDownload={handleDownload}
+                    orientation="horizontal"
+                    showLabels={true}
+                    className="justify-start"
+                  />
+                </div>
+
               </div>
 
               {/* Color Palette - Right Side */}
@@ -319,7 +391,7 @@ export function QuickShareView({ shareData, generation }: QuickShareViewProps) {
                 className="px-8 py-4 bg-[#A3B1A1] hover:bg-[#A3B1A1]/90 text-white transition-all duration-300 rounded-none"
                 asChild
               >
-                <Link href="/auth/register">
+                <Link href="/auth/signup">
                   <span style={{ fontFamily: 'Lato, sans-serif' }}>Descubre tu hogar soñado</span>
                   <ArrowRight className="w-4 h-4 ml-3" />
                 </Link>
@@ -330,7 +402,7 @@ export function QuickShareView({ shareData, generation }: QuickShareViewProps) {
                 className="px-8 py-4 border border-[#333333] text-[#333333] hover:bg-[#333333] hover:text-white transition-all duration-300 rounded-none"
                 asChild
               >
-                <Link href="/galeria">
+                <Link href="/signup">
                   <span style={{ fontFamily: 'Lato, sans-serif' }}>Ver más transformaciones</span>
                 </Link>
               </Button>

@@ -151,6 +151,14 @@ export function ConversionPrompt({
         benefits: ['Comunidad activa', 'Consejos de expertas', 'Networking de diseño'],
         icon: <Users className="w-5 h-5" />,
         color: 'from-[#A3B1A1] to-[#C4886F]'
+      },
+      follow: {
+        title: 'Sigue a este creador',
+        description: 'No te pierdas los nuevos diseños de tus creadores favoritos',
+        ctaText: 'Seguir creador',
+        benefits: ['Notificaciones de nuevos diseños', 'Contenido exclusivo', 'Acceso anticipado'],
+        icon: <Users className="w-5 h-5" />,
+        color: 'from-[#C4886F] to-[#A3B1A1]'
       }
     }
 

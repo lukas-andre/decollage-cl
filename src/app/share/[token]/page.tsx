@@ -109,21 +109,44 @@ export default async function SharePage({ params, searchParams }: SharePageProps
     if (shareData.share.share_format === 'quick') {
       // For quick shares, we need to get the generation data
       const supabase = await createClient()
+
+      // Share pages now handle auth entirely client-side
+      // Server-side auth was not working correctly due to cookie handling issues
+
       const featured = shareData.share.featured_items || []
-      console.log({ featured })
       if (featured.length > 0) {
-        const { data: generation } = await supabase
+        // First try to get transformation, if fails try staging_generations
+        let generation = null
+
+        // Try transformations table first
+        const { data: transformationData } = await supabase
           .from('transformations')
-          .select(`
-            *,
-            base_image:images!transformations_base_image_id_fkey(
-              url,
-              cloudflare_id
-            )
-          `)
+          .select('*')
           .eq('id', featured[0])
           .single()
-        console.log({generation})
+
+        if (transformationData) {
+          generation = transformationData
+        } else {
+          // Try staging_generations as fallback
+          const { data: stagingData } = await supabase
+            .from('staging_generations')
+            .select('*')
+            .eq('id', featured[0])
+            .single()
+
+          if (stagingData) {
+            // Map staging_generations fields to match transformation structure
+            generation = {
+              ...stagingData,
+              result_image_url: stagingData.result_image_url,
+              base_image: stagingData.original_image_url ? {
+                url: stagingData.original_image_url,
+                cloudflare_id: null
+              } : null
+            }
+          }
+        }
         if (generation) {
           return <QuickShareView
             shareData={shareData}

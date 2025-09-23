@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { AuthModalProvider } from "@/components/auth/QuickAuthModal";
+// import { AuthModalProvider } from "@/components/auth/QuickAuthModal";
+import { MagicLinkModal } from "@/components/auth/MagicLinkModal";
 
 // Force all routes to be dynamic to avoid SSG issues
 export const dynamic = 'force-dynamic';
@@ -52,9 +53,8 @@ export default function RootLayout({
       <body
         className="antialiased"
       >
-        <AuthModalProvider>
-          {children}
-        </AuthModalProvider>
+        {children}
+        <MagicLinkModal />
       </body>
     </html>
   );
