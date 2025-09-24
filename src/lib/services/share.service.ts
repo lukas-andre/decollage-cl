@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import type { 
   ShareConfig, 
   ShareResponse, 
@@ -170,15 +171,8 @@ export class ShareService {
       let items: any[] = []
       
       if (itemIds) {
-        // Get specific featured items using service role client to bypass RLS
-        const { createClient: createServiceClient } = await import('@supabase/supabase-js')
-        const serverClient = createServiceClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!,
-          {
-            auth: { autoRefreshToken: false, persistSession: false }
-          }
-        )
+        // Get specific featured items using service-role client to bypass RLS
+        const serverClient = createServiceRoleClient()
 
         const { data: transformations, error } = await serverClient
           .from('transformations')
@@ -187,7 +181,8 @@ export class ShareService {
             result_image_url,
             custom_instructions,
             metadata,
-            base_image_id
+            base_image_id,
+            images!transformations_base_image_id_fkey (url)
           `)
           .in('id', itemIds)
           .eq('status', 'completed')
@@ -197,7 +192,7 @@ export class ShareService {
           type: 'transformation',
           title: t.custom_instructions || 'Transformación',
           imageUrl: t.result_image_url || '',
-          beforeImageUrl: '', // Will fetch separately if needed
+          beforeImageUrl: t.images?.url || '', // Now properly fetching the base image URL
           metadata: t.metadata
         })) || []
       } else {
@@ -227,16 +222,35 @@ export class ShareService {
         })) || []
       }
 
-      // Get reaction counts for the project
-      const { data: reactions } = await this.supabase
-        .from('content_reactions')
-        .select('reaction_type')
-        .eq('content_type', 'project')
-        .eq('content_id', shareData.project_id)
+      // Get reaction counts for the share
+      let reactionCounts = { aplausos: 0, total: 0 }
 
-      const reactionCounts = {
-        aplausos: reactions?.filter(r => r.reaction_type === 'aplausos').length || 0,
-        total: reactions?.length || 0
+      try {
+        const serviceClient = createServiceRoleClient()
+        const { data: reactionRows, error: reactionError } = await serviceClient
+          .rpc('get_reaction_counts', {
+            p_content_type: 'share',
+            p_content_id: shareData.id
+          })
+
+        if (reactionError) {
+          console.error('Error fetching reaction counts:', reactionError)
+        } else if (Array.isArray(reactionRows)) {
+          const breakdown = reactionRows.reduce<Record<string, number>>((acc, row) => {
+            const type = row.reaction_type || 'unknown'
+            const count = Number(row.reaction_count || 0)
+            acc[type] = count
+            return acc
+          }, {})
+
+          const total = Object.values(breakdown).reduce((sum, value) => sum + value, 0)
+          reactionCounts = {
+            aplausos: breakdown.aplausos || 0,
+            total
+          }
+        }
+      } catch (error) {
+        console.error('Service role reaction count error:', error)
       }
 
       // Check if user is authenticated

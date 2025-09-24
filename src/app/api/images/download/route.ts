@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
-import type { Database } from '@/types/database'
+import type { Database } from '@/types/database.types'
 
 interface TransformationData {
   id: string;

@@ -146,6 +146,10 @@ export default function AuthConfirmClient() {
 
       try {
         // Verify the OTP token
+        if (!token_hash) {
+          throw new Error('Token hash is missing')
+        }
+
         const { data, error } = await supabase.auth.verifyOtp({
           token_hash,
           type: type as 'email'

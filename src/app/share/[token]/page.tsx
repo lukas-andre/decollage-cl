@@ -118,10 +118,16 @@ export default async function SharePage({ params, searchParams }: SharePageProps
         // First try to get transformation, if fails try staging_generations
         let generation = null
 
-        // Try transformations table first
+        // Try transformations table first with base_image relation
         const { data: transformationData } = await supabase
           .from('transformations')
-          .select('*')
+          .select(`
+            *,
+            base_image:images!transformations_base_image_id_fkey (
+              url,
+              cloudflare_id
+            )
+          `)
           .eq('id', featured[0])
           .single()
 

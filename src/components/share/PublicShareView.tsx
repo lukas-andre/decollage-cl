@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { useShareViewTracking } from '@/hooks/use-share-view-tracking'
-import { Heart, Share2, ArrowRight, Download, User, Calendar, Eye, Sparkles, Home, Palette } from 'lucide-react'
+import { Heart, Share2, ArrowRight, Download, User, Calendar, Eye, Sparkles, Home, Palette, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -15,7 +15,7 @@ import Link from 'next/link'
 import { ColorPalette } from './ColorPalette'
 import { TransformationCarousel } from './TransformationCarousel'
 import { BeforeAfterImage } from './BeforeAfterImage'
-import { BeforeAfterModal } from './BeforeAfterModal'
+import { BeforeAfterSlider } from './BeforeAfterSlider'
 import { cn } from '@/lib/utils'
 import { triggerAuth } from '@/hooks/use-auth-modal'
 import { createClient } from '@/lib/supabase/client'
@@ -27,43 +27,61 @@ interface PublicShareViewProps {
 export function PublicShareView({ shareData }: PublicShareViewProps) {
   const router = useRouter()
   const [isReacting, setIsReacting] = useState(false)
-  const [reactionCount, setReactionCount] = useState(shareData.reactions.total)
+  const [reactionCount, setReactionCount] = useState(shareData.reactions?.aplausos || shareData.reactions?.total || 0)
+  const [hasReacted, setHasReacted] = useState(false)
   const [showCTA, setShowCTA] = useState(false)
   const [currentViews, setCurrentViews] = useState(shareData.share.current_views || 0)
   const isMobile = useMediaQuery('(max-width: 768px)')
-  const [modalState, setModalState] = useState<{
-    isOpen: boolean
-    item?: typeof shareData.items[0]
-  }>({ isOpen: false })
   const [imageOrientations, setImageOrientations] = useState<Record<string, 'horizontal' | 'vertical' | 'square'>>({})
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [showBeforeAfter, setShowBeforeAfter] = useState(false)
 
   // Track view using the new hook
   useShareViewTracking({
     shareToken: shareData.share.share_token || shareData.share.slug || ''
   })
 
-  // Check authentication status client-side
+  // Check authentication status and reaction state client-side
   useEffect(() => {
     const supabase = createClient()
 
-    const checkAuth = async () => {
+    const checkAuthAndReaction = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setIsAuthenticated(!!user)
+
+      // Check if user has already reacted
+      const sessionToken = localStorage.getItem('anonymousSession') ||
+        `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+      if (!localStorage.getItem('anonymousSession')) {
+        localStorage.setItem('anonymousSession', sessionToken)
+      }
+
+      try {
+        const response = await fetch(`/api/reactions?contentType=share&contentId=${shareData.share.id}&sessionId=${sessionToken}`)
+        if (response.ok) {
+          const data = await response.json()
+          setHasReacted(!!data.reaction)
+        }
+      } catch (error) {
+        console.error('Error checking reaction state:', error)
+      }
     }
 
-    // Check initial auth state
-    checkAuth()
+    // Check initial auth and reaction state
+    checkAuthAndReaction()
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session?.user)
+      // Re-check reaction state when auth changes
+      checkAuthAndReaction()
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [shareData.share.id])
 
   // Detect image orientations on mount
   useEffect(() => {
@@ -121,7 +139,15 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
   }, [])
 
   const handleReaction = async () => {
-    if (!isAuthenticated) {
+    // Get anonymous session for non-authenticated users
+    const sessionToken = localStorage.getItem('anonymousSession') ||
+      `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+    if (!localStorage.getItem('anonymousSession')) {
+      localStorage.setItem('anonymousSession', sessionToken)
+    }
+
+    if (!isAuthenticated && !sessionToken) {
       // Track gate impression
       await fetch('/api/analytics/track-gate', {
         method: 'POST',
@@ -153,16 +179,52 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
 
     try {
       setIsReacting(true)
-      // Track reaction
+
+      // Check if user has already reacted
+      const checkResponse = await fetch(`/api/reactions?contentType=share&contentId=${shareData.share.id}&sessionId=${sessionToken}`)
+      const checkData = await checkResponse.json()
+
+      const alreadyReacted = !!checkData.reaction
+      const action = alreadyReacted ? 'remove' : 'add'
+
+      // Optimistic update
+      setHasReacted(!alreadyReacted)
+      setReactionCount(prev => action === 'add' ? prev + 1 : Math.max(0, prev - 1))
+
+      // Send reaction to backend
+      const response = await fetch('/api/reactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          contentType: 'share',
+          contentId: shareData.share.id,
+          reactionType: 'aplausos',
+          sessionId: !isAuthenticated ? sessionToken : undefined
+        })
+      })
+
+      if (!response.ok) {
+        // Revert optimistic update on error
+        setHasReacted(alreadyReacted)
+        setReactionCount(prev => action === 'add' ? Math.max(0, prev - 1) : prev + 1)
+        throw new Error('Failed to update reaction')
+      }
+
+      const data = await response.json()
+
+      // Update count from server response if available
+      if (data?.counts?.aplausos !== undefined) {
+        setReactionCount(data.counts.aplausos)
+      }
+
+      // Track analytics
       await shareAnalyticsService.trackEvent({
         shareType: 'project',
         shareId: shareData.share.id,
         action: 'clicked',
         platform: 'reaction'
       })
-
-      // Optimistically update count
-      setReactionCount(prev => prev + 1)
     } catch (error) {
       console.error('Error adding reaction:', error)
     } finally {
@@ -291,19 +353,51 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
 
               {/* Carousel Section - Takes 3/5 of the width */}
               <div className="lg:col-span-3">
-                <TransformationCarousel
-                  items={shareData.items.map(item => ({
-                    id: item.id,
-                    title: item.title,
-                    description: item.description,
-                    imageUrl: item.imageUrl,
-                    beforeImageUrl: item.beforeImageUrl,
-                    style: (item.metadata as any)?.style || undefined,
-                    room: (item.metadata as any)?.room || undefined
-                  }))}
-                  autoPlay={true}
-                  interval={6000}
-                />
+                {/* Before/After Toggle Button */}
+                {shareData.items.some(item => item.beforeImageUrl) && (
+                  <div className="mb-4 flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowBeforeAfter(!showBeforeAfter)}
+                      className={cn(
+                        "gap-2 transition-all duration-300 rounded-none",
+                        showBeforeAfter
+                          ? "bg-[#A3B1A1] text-white border-[#A3B1A1] hover:bg-[#A3B1A1]/90"
+                          : "border-gray-200 hover:border-[#A3B1A1] hover:bg-[#A3B1A1]/10"
+                      )}
+                    >
+                      <Layers className="w-4 h-4" />
+                      <span className="font-lato text-sm">
+                        {showBeforeAfter ? 'Ver galería' : 'Ver antes y después'}
+                      </span>
+                    </Button>
+                  </div>
+                )}
+
+                {showBeforeAfter ? (
+                  // Before/After Slider View
+                  <div className="relative">
+                    <BeforeAfterSlider
+                      items={shareData.items.filter(item => item.beforeImageUrl)}
+                    />
+                  </div>
+                ) : (
+                  // Regular Carousel View
+                  <TransformationCarousel
+                    items={shareData.items.map(item => ({
+                      id: item.id,
+                      title: item.title,
+                      description: item.description,
+                      imageUrl: item.imageUrl,
+                      beforeImageUrl: item.beforeImageUrl,
+                      style: (item.metadata as any)?.style || undefined,
+                      room: (item.metadata as any)?.room || undefined
+                    }))}
+                    autoPlay={true}
+                    interval={6000}
+                  />
+                )}
               </div>
 
               {/* Project Info Section - Takes 2/5 of the width */}
@@ -384,7 +478,7 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
                           size={20}
                           className={cn(
                             "mr-3 transition-all duration-500",
-                            reactionCount > 0 ? "fill-current text-[#C4886F]" : "group-hover:scale-110"
+                            hasReacted ? "fill-current text-[#C4886F]" : "group-hover:scale-110"
                           )}
                         />
                         <span style={{ fontFamily: 'Lato, sans-serif' }}>
@@ -463,69 +557,50 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
                   >
                     <div className="space-y-6">
                       {/* Interactive Before/After Image with smart aspect ratios */}
-                      <div className="relative shadow-2xl group cursor-pointer">
-                        <div
-                          onClick={() => {
-                            setModalState({ isOpen: true, item })
-                          }}
-                          className="cursor-pointer"
-                        >
-                          {item.beforeImageUrl ? (
-                            <BeforeAfterImage
-                              beforeImageUrl={item.beforeImageUrl}
-                              afterImageUrl={item.imageUrl}
-                              title={item.title || `Transformación ${index + 1}`}
-                              isVertical={orientation === 'vertical'}
-                              isMobile={isMobile}
-                              className={cn(
-                                // First item gets hero treatment only if more than 2 items
-                                isFirst && shareData.items.length > 2 && "aspect-[21/9]",
-                                // For 2 items or regular grid items
-                                (!isFirst || shareData.items.length <= 2) && (
-                                  orientation === 'vertical' ? "aspect-[3/4]" :
-                                  orientation === 'square' ? "aspect-square" :
-                                  "aspect-[4/3]"
-                                )
-                              )}
-                            />
-                          ) : (
-                            // Fallback for images without before
-                            <div className={cn(
-                              "relative overflow-hidden bg-[#F8F8F8]",
+                      <div className="relative shadow-2xl group">
+                        {item.beforeImageUrl ? (
+                          <BeforeAfterImage
+                            beforeImageUrl={item.beforeImageUrl}
+                            afterImageUrl={item.imageUrl}
+                            title={item.title || `Transformación ${index + 1}`}
+                            isVertical={orientation === 'vertical'}
+                            isMobile={isMobile}
+                            className={cn(
+                              // First item gets hero treatment only if more than 2 items
                               isFirst && shareData.items.length > 2 && "aspect-[21/9]",
+                              // For 2 items or regular grid items
                               (!isFirst || shareData.items.length <= 2) && (
                                 orientation === 'vertical' ? "aspect-[3/4]" :
                                 orientation === 'square' ? "aspect-square" :
                                 "aspect-[4/3]"
                               )
-                            )}>
-                              <img
-                                src={item.imageUrl}
-                                alt={item.title || `Transformación ${index + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Click to expand hint */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-center justify-center pointer-events-none">
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg">
-                            <p className="text-sm text-[#333333] font-light" style={{ fontFamily: 'Lato, sans-serif' }}>
-                              {item.beforeImageUrl ? 'Ver comparación' : 'Ver en detalle'}
-                            </p>
+                            )}
+                          />
+                        ) : (
+                          // Fallback for images without before
+                          <div className={cn(
+                            "relative overflow-hidden bg-[#F8F8F8]",
+                            isFirst && shareData.items.length > 2 && "aspect-[21/9]",
+                            (!isFirst || shareData.items.length <= 2) && (
+                              orientation === 'vertical' ? "aspect-[3/4]" :
+                              orientation === 'square' ? "aspect-square" :
+                              "aspect-[4/3]"
+                            )
+                          )}>
+                            <img
+                              src={item.imageUrl}
+                              alt={item.title || `Transformación ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
-                        </div>
+                        )}
 
                         {/* Action Buttons - Always visible but subtle */}
                         <div className="absolute top-4 right-4">
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDownload(item.imageUrl, item.title)
-                            }}
+                            onClick={() => handleDownload(item.imageUrl, item.title)}
                             className="bg-white/80 backdrop-blur-sm hover:bg-white text-[#333333] h-10 w-10 rounded-none shadow-lg transition-all duration-300 hover:scale-110"
                           >
                             <Download className="w-4 h-4" />
@@ -671,22 +746,6 @@ export function PublicShareView({ shareData }: PublicShareViewProps) {
         )}
       </main>
 
-      {/* Before/After Modal */}
-      <BeforeAfterModal
-        isOpen={modalState.isOpen}
-        onClose={() => setModalState({ isOpen: false })}
-        beforeImageUrl={modalState.item?.beforeImageUrl}
-        afterImageUrl={modalState.item?.imageUrl || ''}
-        title={modalState.item?.title}
-        onDownload={() => {
-          if (modalState.item) {
-            handleDownload(modalState.item.imageUrl, modalState.item.title)
-          }
-        }}
-        onShare={() => {
-          handleShare()
-        }}
-      />
     </div>
   )
 }

@@ -3,13 +3,12 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useShareViewTracking } from '@/hooks/use-share-view-tracking'
-import { ArrowRight, Download, Share2, User, Calendar } from 'lucide-react'
+import { ArrowRight, Download, Share2, User, Calendar, Heart } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
 import type { Database } from '@/types/database.types'
 import type { PublicShareData } from '@/types/sharing'
 import { ColorPalette } from './ColorPalette'
-import { InteractionBar } from './InteractionBar'
 import { triggerAuth } from '@/hooks/use-auth-modal'
 import { createClient } from '@/lib/supabase/client'
 
@@ -34,34 +33,56 @@ export function QuickShareView({ shareData, generation }: QuickShareViewProps) {
   const [showCTA, setShowCTA] = useState(false)
   const [imageOrientation, setImageOrientation] = useState<'horizontal' | 'vertical' | 'square'>('horizontal')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [reactionCount, setReactionCount] = useState(0)
+  const [reactionCount, setReactionCount] = useState(shareData.reactions?.total || 0)
+  const [hasReacted, setHasReacted] = useState(false)
+  const [isReacting, setIsReacting] = useState(false)
 
   // Track view using the new hook
   useShareViewTracking({
     shareToken: share.share_token || share.slug || ''
   })
 
-  // Check authentication status and listen for changes
+  // Check authentication status and reaction state
   useEffect(() => {
     const supabase = createClient()
 
-    const checkAuth = async () => {
+    const checkAuthAndReaction = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setIsAuthenticated(!!user)
+
+      // Check if user has already reacted
+      const sessionToken = localStorage.getItem('anonymousSession') ||
+        `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+      if (!localStorage.getItem('anonymousSession')) {
+        localStorage.setItem('anonymousSession', sessionToken)
+      }
+
+      try {
+        const response = await fetch(`/api/reactions?contentType=share&contentId=${share.id}&sessionId=${sessionToken}`)
+        if (response.ok) {
+          const data = await response.json()
+          setHasReacted(!!data.reaction)
+        }
+      } catch (error) {
+        console.error('Error checking reaction state:', error)
+      }
     }
 
-    // Always check client-side auth state
-    checkAuth()
+    // Check initial auth and reaction state
+    checkAuthAndReaction()
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session?.user)
+      // Re-check reaction state when auth changes
+      checkAuthAndReaction()
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [share.id])
 
   // Show CTA after 5 seconds
   useEffect(() => {
@@ -113,6 +134,62 @@ export function QuickShareView({ shareData, generation }: QuickShareViewProps) {
     const x = touch.clientX - rect.left
     const percentage = (x / rect.width) * 100
     setSliderPosition(Math.min(100, Math.max(0, percentage)))
+  }
+
+  const handleReaction = async () => {
+    // Get anonymous session for non-authenticated users
+    const sessionToken = localStorage.getItem('anonymousSession') ||
+      `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+    if (!localStorage.getItem('anonymousSession')) {
+      localStorage.setItem('anonymousSession', sessionToken)
+    }
+
+    try {
+      setIsReacting(true)
+
+      // Check if user has already reacted
+      const checkResponse = await fetch(`/api/reactions?contentType=share&contentId=${share.id}&sessionId=${sessionToken}`)
+      const checkData = await checkResponse.json()
+
+      const alreadyReacted = !!checkData.reaction
+      const action = alreadyReacted ? 'remove' : 'add'
+
+      // Optimistic update
+      setHasReacted(!alreadyReacted)
+      setReactionCount(prev => action === 'add' ? prev + 1 : Math.max(0, prev - 1))
+
+      // Send reaction to backend
+      const response = await fetch('/api/reactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          contentType: 'share',
+          contentId: share.id,
+          reactionType: 'aplausos',
+          sessionId: !isAuthenticated ? sessionToken : undefined
+        })
+      })
+
+      if (!response.ok) {
+        // Revert optimistic update on error
+        setHasReacted(alreadyReacted)
+        setReactionCount(prev => action === 'add' ? Math.max(0, prev - 1) : prev + 1)
+        throw new Error('Failed to update reaction')
+      }
+
+      const data = await response.json()
+
+      // Update state from server response if available
+      if (data?.counts?.aplausos !== undefined) {
+        setReactionCount(data.counts.aplausos)
+      }
+    } catch (error) {
+      console.error('Error handling reaction:', error)
+    } finally {
+      setIsReacting(false)
+    }
   }
 
   const trackEngagement = async (eventType: string) => {
@@ -229,18 +306,30 @@ export function QuickShareView({ shareData, generation }: QuickShareViewProps) {
             onTouchMove={handleTouchMove}
           >
             {/* Original Image */}
-            {generation.base_image?.url ? (
+            {generation.base_image?.url || (generation as any).original_image_url ? (
               <img
-                src={generation.base_image.url}
+                src={generation.base_image?.url || (generation as any).original_image_url}
                 alt="Antes"
                 className={`absolute inset-0 w-full h-full ${
                   imageOrientation === 'vertical' ? 'object-contain' : 'object-cover'
                 }`}
               />
+            ) : generation.result_image_url ? (
+              // If no before image but we have an after image, show a placeholder
+              <div className="absolute inset-0 w-full h-full bg-[#F8F8F8] flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-gray-400 font-light mb-2" style={{ fontFamily: 'Lato, sans-serif' }}>
+                    Imagen original no disponible
+                  </p>
+                  <p className="text-sm text-gray-300 font-light" style={{ fontFamily: 'Lato, sans-serif' }}>
+                    Desliza para ver la transformación
+                  </p>
+                </div>
+              </div>
             ) : (
               <div className="absolute inset-0 w-full h-full bg-[#F8F8F8] flex items-center justify-center">
                 <p className="text-gray-400 font-light" style={{ fontFamily: 'Lato, sans-serif' }}>
-                  Imagen original no disponible
+                  Imagen no disponible
                 </p>
               </div>
             )}
@@ -344,21 +433,55 @@ export function QuickShareView({ shareData, generation }: QuickShareViewProps) {
                   </div>
                 </div>
 
-                {/* Social Interactions */}
+                {/* Social Interactions - Only Applaud */}
                 <div className="pt-6 border-t border-gray-100">
-                  <InteractionBar
-                    shareId={share.id}
-                    shareToken={share.share_token || share.slug || ''}
-                    initialLikes={(share.engagement_metrics as any)?.likes || reactionCount || 0}
-                    initialComments={(share.engagement_metrics as any)?.comments || 0}
-                    initialSaves={(share.engagement_metrics as any)?.saves || 0}
-                    isAuthenticated={isAuthenticated}
-                    onShare={handleShare}
-                    onDownload={handleDownload}
-                    orientation="horizontal"
-                    showLabels={true}
-                    className="justify-start"
-                  />
+                  <div className="flex items-center gap-4">
+                    <Button
+                      variant="ghost"
+                      size="lg"
+                      onClick={handleReaction}
+                      disabled={isReacting}
+                      className="group px-6 py-3 border-2 border-[#C4886F] hover:bg-[#C4886F]/10 transition-all duration-300 rounded-none"
+                    >
+                      <Heart
+                        className={`w-5 h-5 mr-2 transition-all duration-300 ${
+                          hasReacted ? 'fill-[#C4886F] text-[#C4886F]' : 'text-[#C4886F] group-hover:scale-110'
+                        }`}
+                      />
+                      <span style={{ fontFamily: 'Lato, sans-serif' }}>
+                        Aplaudir
+                      </span>
+                    </Button>
+
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <span className="text-xl font-light text-[#C4886F]" style={{ fontFamily: 'Lato, sans-serif' }}>
+                        {reactionCount}
+                      </span>
+                      <span className="text-sm font-light" style={{ fontFamily: 'Lato, sans-serif' }}>
+                        {reactionCount === 1 ? 'aplauso' : 'aplausos'}
+                      </span>
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="default"
+                      onClick={handleShare}
+                      className="px-4 py-2 border border-gray-200 hover:border-[#A3B1A1] hover:bg-[#A3B1A1]/10"
+                    >
+                      <Share2 className="w-4 h-4 mr-2 text-gray-600" />
+                      <span className="font-lato text-sm">Compartir</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="default"
+                      onClick={handleDownload}
+                      className="px-4 py-2 border border-gray-200 hover:border-gray-400 hover:bg-gray-100"
+                    >
+                      <Download className="w-4 h-4 mr-2 text-gray-600" />
+                      <span className="font-lato text-sm">Descargar</span>
+                    </Button>
+                  </div>
                 </div>
 
               </div>

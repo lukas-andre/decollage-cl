@@ -39,12 +39,14 @@ export function SignupForm() {
 
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
+            password_set: true,  // Mark that user has set a password
+            auth_method: 'password'  // Explicitly mark auth method
           },
         },
       })
